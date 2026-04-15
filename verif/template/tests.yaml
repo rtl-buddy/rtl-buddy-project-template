@@ -1,0 +1,69 @@
+# RTL-Buddy Test Configuration File
+rtl-buddy-filetype: test_config
+
+# List testbenches contained in this verif dir
+testbenches :
+  - name: "tb_top"
+    filelist: 
+      - "+incdir+../../common"
+      - "tb_top.sv"
+
+# List tests supported in this verif dir
+tests:
+  - name: "basic"
+    desc: "basic testcase"
+    # reglvl: priority for reg. use with --reg-level
+    # 0 (always run) ... 9999 (lowest priority)
+    # reglvl can be specified per builder
+    reglvl:
+      default: 4000
+      vcs: 0
+      verilator: 4000
+    # plusargs: vlog runtime arguments
+    plusargs:
+      test_cycles : 30
+      # set a to less than 8 to intentionally fail
+      a : "10"
+      # verbosity 0 (most verbose), 2 (error and above)
+      lvm_verbosity : 2
+    # specify which RTL module to run with (defined in models.yaml)
+    model: "template_top"
+    model_path: "../../design/template/models.yaml"
+    # specify which TB module to use as top (defined here in tests.yaml)
+    testbench: "tb_top"
+
+  - name: "preproc"
+    desc: "preproc example"
+    plusargs:
+      test_cycles : 30
+      a : "10"
+      lvm_verbosity : 2
+      # Args for preproc example
+      num_lines: 10
+      rand: True
+    model: "template_top"
+    model_path: "../../design/template/models.yaml"
+    testbench: "tb_top"
+    # add a python script that runs prior to compile
+    preproc:
+      path: "example_preproc.py"
+
+  - name: "sweep"
+    desc: "sweep example"
+    plusargs:
+      test_cycles : 30
+      a : "10"
+      b : "1"
+      lvm_verbosity : 2
+      # Args for preproc example
+      num_lines: 10
+      rand: True
+    model: "template_top"
+    model_path: "../../design/template/models.yaml"
+    testbench: "tb_top"
+    # sweep
+    sweep:
+      path: "example_sweep.py"
+    # add a python script that runs prior to compile
+    preproc:
+      path: "example_preproc.py"
