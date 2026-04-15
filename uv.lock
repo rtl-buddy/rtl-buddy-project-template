@@ -260,14 +260,18 @@ wheels = [
 
 [[package]]
 name = "rtl-buddy"
-version = "0.1.dev2+gaf4513446"
-source = { git = "https://github.com/rtl-buddy/rtl_buddy.git#af4513446b49a78addcf30fe5a1cf96d2d4eccde" }
+version = "2.1.4"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
     { name = "pyserde", extra = ["yaml"] },
     { name = "rich" },
     { name = "ruamel-yaml" },
     { name = "typer" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b8/75/9ca7fc2a0c74452642ce2ee9cf881bcb11d367d208b264a4d7dd272378bd/rtl_buddy-2.1.4.tar.gz", hash = "sha256:1be92597e6219d475dc910cd89475aac1f14ea8577ea9a85060284e42e993b8d", size = 113366, upload-time = "2026-04-15T08:15:17.885Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/02/226c63fb190716bbe3fc4917082a165adc98a956a396574a7011b608d42d/rtl_buddy-2.1.4-py3-none-any.whl", hash = "sha256:4f4c5320b6cc3b2f975903b3986b605b529ad9bcb99385e63d8513ba22a4b23e", size = 64731, upload-time = "2026-04-15T08:15:16.615Z" },
 ]
 
 [[package]]
@@ -284,7 +288,7 @@ dependencies = [
 requires-dist = [
     { name = "cocotb", specifier = "==2.0.1" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "rtl-buddy", git = "https://github.com/rtl-buddy/rtl_buddy.git" },
+    { name = "rtl-buddy" },
 ]
 
 [[package]]
