@@ -1,0 +1,56 @@
+name: Verilator Regression
+
+# This workflow runs the rtl_buddy regression suite inside the official
+# Verilator Docker container. It installs project dependencies (including
+# rtl_buddy) from the committed uv.lock, then runs the regression defined
+# in design/regression.yaml.
+#
+# Trigger on every push. Common alternatives:
+#   on:
+#     push:
+#       branches: [main]
+#     pull_request:
+#       branches: [main]
+on: [push]
+
+jobs:
+  verilator-test:
+    runs-on: ubuntu-latest
+    container:
+      # The official Verilator image provides a ready-to-use Verilator
+      # installation on Ubuntu. Pin to a specific release tag so CI is
+      # reproducible. Browse available tags at:
+      # https://hub.docker.com/r/verilator/verilator/tags
+      image: verilator/verilator:v5.042
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install uv into the container. The package cache is keyed on
+      # uv.lock so repeated runs with an unchanged lockfile skip downloads.
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      # Install the project's Python dependencies from the committed lockfile.
+      # This includes rtl_buddy and any other packages declared in pyproject.toml.
+      - name: Install dependencies
+        run: uv sync --locked --python 3.11
+
+      - name: Run regression
+        # Runs the full regression defined in design/regression.yaml.
+        #
+        # Useful options to add to the command below:
+        #   -c <path>           path to regression config
+        #                       (default: root_config.yaml reg-cfg-path)
+        #   -l <N>              stop after regression level N
+        #                       (default: run all levels)
+        #   -s <N>              start from level N, skipping earlier levels
+        #   -M reg|debug|cov    builder mode override (default: reg)
+        #
+        # Coverage options (Verilator only, requires cov builder mode):
+        #   --coverage-merge        merge coverage data across all tests
+        #   --coverage-html         generate merged LCOV HTML report
+        #   --coverage-coverview    generate Coverview zip from merged coverage
+        run: uv run rtl-buddy --machine -B verilator regression -c design/regression.yaml
