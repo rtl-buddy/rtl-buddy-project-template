@@ -1,0 +1,13 @@
+name: VCS Regression (Disabled)
+
+on:
+  workflow_call:
+
+jobs:
+  vcs-test:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: VCS CI is intentionally disabled
+        run: |
+          echo "VCS CI is disabled pending runner and license setup."
