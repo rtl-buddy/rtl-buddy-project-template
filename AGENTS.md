@@ -40,7 +40,7 @@ uv.lock                        # committed lockfile for reproducible project set
 .python-version                # pinned Python version for uv
 ```
 
-Skill files can be installed into `.agents/skills/rtl_buddy/` and `.claude/skills/rtl_buddy/` with `uv run rb install-skill`; both are gitignored (generated from the installed package).
+The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.
 
 ## Fresh Clone Setup
 
@@ -58,11 +58,13 @@ uv sync --locked --python 3.11
 
 This installs the locked project environment. Run it once after cloning and again whenever `pyproject.toml` or `uv.lock` changes.
 
-If you need the local agent skill files, install them explicitly:
+Install the `rtl_buddy` agent skill once per machine so AI-assisted workflows can use it:
 
 ```bash
-uv run rb install-skill
+uv run rb skill install
 ```
+
+Re-run after upgrading `rtl_buddy`. Use `--project` to install into this repo instead of your user home; `uv run rb skill --help` shows all options.
 
 Verible binaries are bundled under `tools/verible/` — macOS under `macos/active/bin/`, Linux x86_64 under `x86_64/active/bin/`. No separate Verible install is needed.
 
@@ -75,15 +77,11 @@ Verible binaries are bundled under `tools/verible/` — macOS under `macos/activ
 
 Normal project work should stay on the pinned dependency in `pyproject.toml` / `uv.lock`.
 
-If you need to validate an unreleased `rtl_buddy` change against this project:
+For validating unreleased `rtl_buddy` changes against this project, a standing branch exists:
 
-1. Check out the source repo separately, usually as `../rtl_buddy/`.
-2. Temporarily change `pyproject.toml` to point `rtl_buddy` at that local path in editable mode.
-3. Run `uv lock` and `uv sync --python 3.11`.
-4. Validate the project.
-5. Revert the local override before committing this repo.
+- **`dev/local-rtl-buddy`** — identical to `main` except `[tool.uv.sources]` in `pyproject.toml` points `rtl_buddy` at `../../../rtl_buddy` in editable mode. Check it out in a worktree (e.g. `.worktrees/dev-local/`) and test against whichever branch is checked out in the sibling `rtl_buddy/` repo. Not meant to be merged.
 
-Keep that override workflow separate from normal project setup so day-to-day installs stay fast and reproducible.
+This branch is the standard place to validate rtl_buddy feature branches end-to-end before publishing a release. Keep `main` on the pinned PyPI dependency so day-to-day clones stay reproducible.
 
 ## Validation Commands
 
@@ -106,5 +104,5 @@ uv run rb --machine test basic
 
 - Add or adjust examples in `design/` if the feature needs visible coverage.
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
-- Re-run `uv run rb install-skill --force` if you rely on the local skill files and need them refreshed after updating the pin.
+- Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Commit only the dependency pin (`pyproject.toml` / `uv.lock`) — skill files are gitignored.
