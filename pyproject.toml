@@ -10,3 +10,11 @@ dependencies = [
 
 [tool.uv]
 package = false
+
+# Dev-only override: point rtl_buddy at the local source checkout instead of
+# PyPI. This branch (dev/local-rtl-buddy) is meant to be kept local and NOT
+# merged to main. The path is relative to this pyproject.toml
+# (rtl-buddy-project-template/.worktrees/dev-local/). Whichever branch is
+# checked out in ../../../rtl_buddy is what gets tested.
+[tool.uv.sources]
+rtl_buddy = { path = "../../../rtl_buddy", editable = true }
