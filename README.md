@@ -49,11 +49,13 @@ uv run rb regression
 
 If you are starting fresh with the open-source path, use Verilator first. It is the easiest way to validate that the project layout, testbench wiring, and `rtl_buddy` setup are all working.
 
-If you need the agent skill files for AI-assisted workflows, install them explicitly:
+`rtl_buddy` ships an agent skill for Claude Code and Codex. Install it once per machine so AI-assisted workflows can use it:
 
 ```bash
-uv run rb install-skill
+uv run rb skill install
 ```
+
+This writes `SKILL.md` to `~/.claude/skills/rtl_buddy/` and `~/.codex/skills/rtl_buddy/`. Re-run after updating `rtl_buddy` to refresh the content. See `uv run rb skill --help` for project-scoped install and other options.
 
 ## Repository Layout
 
