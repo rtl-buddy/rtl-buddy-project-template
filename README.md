@@ -30,6 +30,7 @@ Install the external prerequisites first:
   - VCS if your environment uses Synopsys flows
 - `lcov` at the system level for LCOV/HTML coverage export
 - Antmicro `coverview` at the system level for Coverview package generation
+- Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, only needed for `rb verible ...` commands)
 
 Then sync the project environment after cloning:
 
@@ -39,7 +40,7 @@ uv sync --locked --python 3.11
 
 This installs the pinned `rtl_buddy` dependency and the Python packages used by the template.
 
-The template bundles Verible binaries, so no separate Verible installation is required for the included Verible-based commands.
+Verible must be installed separately (see prerequisites above) before using `rb verible ...` commands.
 
 Preferred command style:
 
@@ -96,7 +97,7 @@ Generate a filelist from the sandbox model definition:
 uv run rb filelist test_module -c design/sandbox/models.yaml
 ```
 
-If you want to exercise the bundled Verible setup:
+If you have Verible installed and want to exercise the Verible integration:
 
 ```bash
 uv run rb verible syntax design/sandbox/test_module.sv

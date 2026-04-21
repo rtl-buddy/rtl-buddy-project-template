@@ -34,7 +34,6 @@ root_config.yaml
 design/regression.yaml
 design/sandbox/
 design/template/
-tools/verible/                 # bundled Verible binaries (macOS and x86_64)
 pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
 uv.lock                        # committed lockfile for reproducible project setup
 .python-version                # pinned Python version for uv
@@ -49,6 +48,7 @@ The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and material
 - **uv** — install from Astral and make sure it is on `PATH`.
 - **Python 3.11** — standard interpreter for this repo.
 - **Verilator** — e.g. `brew install verilator` on macOS, or build from source.
+- **Verible** — e.g. `brew tap chipsalliance/verible && brew install verible` on macOS, or see the [Verible releases](https://github.com/chipsalliance/verible/releases) for other platforms.
 
 ### Setup steps
 
@@ -65,13 +65,6 @@ uv run rb skill install
 ```
 
 Re-run after upgrading `rtl_buddy`. Use `--project` to install into this repo instead of your user home; `uv run rb skill --help` shows all options.
-
-Verible binaries are bundled under `tools/verible/` — macOS under `macos/active/bin/`, Linux x86_64 under `x86_64/active/bin/`. No separate Verible install is needed.
-
-```bash
-# macOS only: strip quarantine xattr from bundled Verible binaries
-(cd tools/verible/macos && xattr -rd com.apple.quarantine active)
-```
 
 ## rtl_buddy Development Overrides
 
