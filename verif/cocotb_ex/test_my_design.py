@@ -1,50 +1,26 @@
-# This file is public domain, it can be freely copied without restrictions.
-# SPDX-License-Identifier: CC0-1.0
-
-# test_my_design.py (simple)
-
 import cocotb
-from cocotb.triggers import Timer
+from cocotb.clock import Clock
+from cocotb.triggers import RisingEdge
 
 
 @cocotb.test()
-async def my_first_test(dut):
-    """Try accessing the design."""
+async def accumulates_valid_data(dut):
+    cocotb.start_soon(Clock(dut.clk, 2, unit="ns").start())
 
-    for _ in range(10):
-        dut.clk.value = 0
-        await Timer(1, unit="ns")
-        dut.clk.value = 1
-        await Timer(1, unit="ns")
+    dut.rst_n.value = 0
+    dut.valid_i.value = 0
+    dut.data_i.value = 0
+    await RisingEdge(dut.clk)
+    await RisingEdge(dut.clk)
 
-    cocotb.log.info("my_signal_1 is %s", dut.my_signal_1.value)
-    assert dut.my_signal_2.value == 0
+    dut.rst_n.value = 1
+    for value in [1, 3, 5]:
+        dut.valid_i.value = 1
+        dut.data_i.value = value
+        await RisingEdge(dut.clk)
 
+    dut.valid_i.value = 0
+    dut.data_i.value = 9
+    await RisingEdge(dut.clk)
 
-# test_my_design.py (extended)
-
-import cocotb
-from cocotb.triggers import FallingEdge, Timer
-
-
-async def generate_clock(dut):
-    """Generate clock pulses."""
-
-    for _ in range(10):
-        dut.clk.value = 0
-        await Timer(1, unit="ns")
-        dut.clk.value = 1
-        await Timer(1, unit="ns")
-
-
-@cocotb.test()
-async def my_second_test(dut):
-    """Try accessing the design."""
-
-    cocotb.start_soon(generate_clock(dut))  # run the clock "in the background"
-
-    await Timer(5, unit="ns")  # wait a bit
-    await FallingEdge(dut.clk)  # wait for falling edge/"negedge"
-
-    cocotb.log.info("my_signal_1 is %s", dut.my_signal_1.value)
-    assert dut.my_signal_2.value == 0
+    assert int(dut.count_o.value) == 9

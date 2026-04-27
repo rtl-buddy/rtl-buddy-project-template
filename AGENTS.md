@@ -32,8 +32,10 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 ```text
 root_config.yaml
 design/regression.yaml
+design/cocotb_ex/               # cocotb demo RTL
 design/sandbox/
 design/template/
+verif/cocotb_ex/                # cocotb demo suite
 tools/verible/                 # bundled Verible binaries (macOS and x86_64)
 pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
 uv.lock                        # committed lockfile for reproducible project setup
@@ -95,6 +97,9 @@ uv run rb --machine verible syntax design/sandbox/test_module.sv
 
 # from suite dir
 cd verif/sandbox
+uv run rb --machine test basic
+
+cd ../cocotb_ex
 uv run rb --machine test basic
 ```
 

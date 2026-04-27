@@ -13,7 +13,7 @@ venv
 **test.err
 **test.randseed
 **HierInstanceSeed.txt**
-**/logs/
+**/artefacts/
 **run.f
 **.fst
 **.DS_Store
