@@ -9,6 +9,7 @@ This repository is a clean starting point for a new RTL project: it includes a r
 - A pinned `rtl_buddy` dependency managed with `uv`
 - A working example design under [`design/sandbox/`](design/sandbox/)
 - A matching verification suite under [`verif/sandbox/`](verif/sandbox/)
+- A first-class cocotb/Verilator example under [`verif/cocotb_ex/`](verif/cocotb_ex/)
 - Starter blocks and configs that demonstrate `rtl_buddy` features under [`design/template/`](design/template/) and [`verif/template/`](verif/template/)
 - A minimal Verilator coverage example, including merged HTML coverage export
 
@@ -28,6 +29,7 @@ Install the external prerequisites first:
 - A simulator on `PATH`:
   - Verilator for the primary open-source flow
   - VCS if your environment uses Synopsys flows
+- `cocotb` is installed by the project environment for the included Python-driven example
 - `lcov` at the system level for LCOV/HTML coverage export
 - Antmicro `coverview` at the system level for Coverview package generation
 
@@ -64,9 +66,11 @@ This writes `SKILL.md` to `~/.claude/skills/rtl_buddy/` and `~/.codex/skills/rtl
 ├── root_config.yaml        # project-wide builder, platform, Verible, and regression config
 ├── design/
 │   ├── regression.yaml     # top-level regression list
+│   ├── cocotb_ex/          # cocotb demo RTL
 │   ├── sandbox/            # runnable example block
 │   └── template/           # starter design files for a new block
 ├── verif/
+│   ├── cocotb_ex/          # cocotb demo suite
 │   ├── sandbox/            # runnable example test suite
 │   └── template/           # starter verification files for a new block
 ├── common/                 # shared RTL helpers used by the examples
@@ -88,6 +92,13 @@ Run the example regression from the repo root:
 ```bash
 cd ../..
 uv run rb regression
+```
+
+Run the cocotb example from its suite directory:
+
+```bash
+cd verif/cocotb_ex
+uv run rb test basic
 ```
 
 Generate a filelist from the sandbox model definition:
