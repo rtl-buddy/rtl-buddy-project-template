@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if ! command -v verible-verilog-lint >/dev/null 2>&1; then
+  echo "Missing Verible: install verible-verilog-lint and make sure it is on PATH." >&2
+  exit 127
+fi
+exec verible-verilog-lint "$@"

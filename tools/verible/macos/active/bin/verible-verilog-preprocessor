@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if ! command -v verible-verilog-preprocessor >/dev/null 2>&1; then
+  echo "Missing Verible: install verible-verilog-preprocessor and make sure it is on PATH." >&2
+  exit 127
+fi
+exec verible-verilog-preprocessor "$@"

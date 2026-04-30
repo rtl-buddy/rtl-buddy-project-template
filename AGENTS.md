@@ -36,10 +36,8 @@ design/cocotb_ex/               # cocotb demo RTL
 design/sandbox/
 design/template/
 verif/cocotb_ex/                # cocotb demo suite
-tools/verible/                 # bundled Verible binaries (macOS and x86_64)
 pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
 uv.lock                        # committed lockfile for reproducible project setup
-.python-version                # pinned Python version for uv
 ```
 
 The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.
@@ -68,11 +66,12 @@ uv run rb skill install
 
 Re-run after upgrading `rtl_buddy`. Use `--project` to install into this repo instead of your user home; `uv run rb skill --help` shows all options.
 
-Verible binaries are bundled under `tools/verible/` — macOS under `macos/active/bin/`, Linux x86_64 under `x86_64/active/bin/`. No separate Verible install is needed.
+This template includes repo-local Verible wrapper scripts under `tools/verible/`. Install Verible separately and make sure `verible-verilog-syntax`, `verible-verilog-lint`, and related binaries are on `PATH`; the wrappers will forward to those system binaries and fail with a clear message if they are missing.
 
-```bash
-# macOS only: strip quarantine xattr from bundled Verible binaries
-(cd tools/verible/macos && xattr -rd com.apple.quarantine active)
+```text
+tools/verible/
+  macos/active/bin/          # wrapper scripts that forward to system Verible binaries
+  x86_64/active/bin/         # wrapper scripts that forward to system Verible binaries
 ```
 
 ## rtl_buddy Development Overrides

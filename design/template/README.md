@@ -2,6 +2,8 @@
 
 Use these files as a template for creating a new design unit.
 
+For a real block, copy these files into a new design and verification directory, then rename the placeholder filenames, module names, and test names before wiring the block into your regression config.
+
 ## design
 
 [design/template](.)
@@ -17,6 +19,13 @@ Use these files as a template for creating a new design unit.
 * [`tb_top.sv`](../../verif/template/tb_top.sv) - top-level testbench
 * [`example_preproc.py`](../../verif/template/example_preproc.py) - example preproc hook
 * [`example_sweep.py`](../../verif/template/example_sweep.py) - example sweep hook
+
+Recommended first edits after copying:
+
+* rename `template_top.sv`, `template_top.f`, and the `template_top` model entry
+* rename `tb_top.sv` and update the `testbenches` section in `tests.yaml`
+* replace the example tests `basic`, `preproc`, and `sweep` with names and plusargs that match your block
+* point `design/regression.yaml` at the suites you actually want to run
 
 ## Coverage Demo
 

@@ -4,6 +4,8 @@ Starter RTL project to use `rtl_buddy`.
 
 This repository is a clean starting point for a new RTL project: it includes a runnable example design, example verification content, all with `rtl_buddy` infrastructure. Use this template to try out `rtl_buddy`, or as the boilerplate for a new project.
 
+Create new projects from the GitHub template rather than forking this repo. After creating your project, plan to rename the placeholder block names and rewrite the template-focused docs before inviting other contributors in.
+
 ## What This Template Includes
 
 - A pinned `rtl_buddy` dependency managed with `uv`
@@ -29,6 +31,7 @@ Install the external prerequisites first:
 - A simulator on `PATH`:
   - Verilator for the primary open-source flow
   - VCS if your environment uses Synopsys flows
+- Optional Verible binaries on `PATH` if you want to use the included `rb verible ...` examples
 - `cocotb` is installed by the project environment for the included Python-driven example
 - `lcov` at the system level for LCOV/HTML coverage export
 - Antmicro `coverview` at the system level for Coverview package generation
@@ -41,7 +44,7 @@ uv sync --locked --python 3.11
 
 This installs the pinned `rtl_buddy` dependency and the Python packages used by the template.
 
-The template bundles Verible binaries, so no separate Verible installation is required for the included Verible-based commands.
+The repository includes repo-local Verible wrapper scripts under `tools/verible/`, but you still need a real Verible installation on your machine. The wrappers forward `rb verible ...` calls to the system binaries on `PATH` and fail with a clear message if Verible is missing.
 
 Preferred command style:
 
@@ -74,7 +77,6 @@ This writes `SKILL.md` to `~/.claude/skills/rtl_buddy/` and `~/.codex/skills/rtl
 │   ├── sandbox/            # runnable example test suite
 │   └── template/           # starter verification files for a new block
 ├── common/                 # shared RTL helpers used by the examples
-├── tools/                  # Bundling tools in your project
 └── pyproject.toml          # project env and pinned rtl_buddy dependency
 ```
 
@@ -107,11 +109,13 @@ Generate a filelist from the sandbox model definition:
 uv run rb filelist test_module -c design/sandbox/models.yaml
 ```
 
-If you want to exercise the bundled Verible setup:
+If you want to exercise the included Verible command path:
 
 ```bash
 uv run rb verible syntax design/sandbox/test_module.sv
 ```
+
+This command uses the repo-local wrapper scripts in `tools/verible/`, which in turn require a working Verible installation on `PATH`.
 
 ## Coverage Example
 
@@ -131,6 +135,7 @@ This uses the `cov` builder mode from [`root_config.yaml`](root_config.yaml) wit
 Typical next steps:
 
 - Add blocks
+- Rename placeholder modules and suite content from `template_top`, `tb_top`, and the example test names to project-specific names
 - Use [`design/template/`](design/template/) and [`verif/template/`](verif/template/) as references for rtl_buddy usage
 - Update [`root_config.yaml`](root_config.yaml) with your preferred builders, flags, and project defaults
 - Expand [`design/regression.yaml`](design/regression.yaml) to include your real suites
