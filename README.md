@@ -11,6 +11,7 @@ This repository is a clean starting point for a new RTL project: it includes a r
 - A matching verification suite under [`verif/sandbox/`](verif/sandbox/)
 - A first-class cocotb/Verilator example under [`verif/cocotb_ex/`](verif/cocotb_ex/)
 - Starter blocks and configs that demonstrate `rtl_buddy` features under [`design/template/`](design/template/) and [`verif/template/`](verif/template/)
+- A lightweight spec traceability example under [`spec/template/`](spec/template/), wired into the starter design and tests
 - A minimal Verilator coverage example, including merged HTML coverage export
 
 ## Tooling Scope
@@ -69,6 +70,8 @@ This writes `SKILL.md` to `~/.claude/skills/rtl_buddy/` and `~/.codex/skills/rtl
 │   ├── cocotb_ex/          # cocotb demo RTL
 │   ├── sandbox/            # runnable example block
 │   └── template/           # starter design files for a new block
+├── spec/
+│   └── template/           # starter spec traceability example
 ├── verif/
 │   ├── cocotb_ex/          # cocotb demo suite
 │   ├── sandbox/            # runnable example test suite
@@ -126,12 +129,24 @@ This uses the `cov` builder mode from [`root_config.yaml`](root_config.yaml) wit
 
 `lcov` and Antmicro `coverview` are external system-level dependencies for the HTML and Coverview export paths.
 
+## Spec Traceability Example
+
+The starter block also demonstrates the optional `rb spec` workflow described in the main `rtl_buddy` docs.
+
+```bash
+uv run rb spec list
+uv run rb spec check-design
+uv run rb spec check-coverage
+```
+
+This uses [`spec/template/specs.yaml`](spec/template/specs.yaml), the `spec:` pointer in [`design/template/models.yaml`](design/template/models.yaml), and the `covers:` annotations in [`verif/template/tests.yaml`](verif/template/tests.yaml).
+
 ## Building Your Own Project From This Template
 
 Typical next steps:
 
 - Add blocks
-- Use [`design/template/`](design/template/) and [`verif/template/`](verif/template/) as references for rtl_buddy usage
+- Use [`spec/template/`](spec/template/), [`design/template/`](design/template/), and [`verif/template/`](verif/template/) as references for rtl_buddy usage
 - Update [`root_config.yaml`](root_config.yaml) with your preferred builders, flags, and project defaults
 - Expand [`design/regression.yaml`](design/regression.yaml) to include your real suites
 - Rewrite the repo docs so they describe your project instead of the template

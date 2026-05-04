@@ -31,6 +31,8 @@ tests:
     model_path: "../../design/template/models.yaml"
     # specify which TB module to use as top (defined here in tests.yaml)
     testbench: "tb_top"
+    covers:
+      - "TPL-COV-01"
 
   - name: "preproc"
     desc: "preproc example"
@@ -44,6 +46,9 @@ tests:
     model: "template_top"
     model_path: "../../design/template/models.yaml"
     testbench: "tb_top"
+    covers:
+      - "TPL-COV-01"
+      - "TPL-COV-02"
     # add a python script that runs prior to compile
     preproc:
       path: "example_preproc.py"
@@ -61,6 +66,9 @@ tests:
     model: "template_top"
     model_path: "../../design/template/models.yaml"
     testbench: "tb_top"
+    covers:
+      - "TPL-COV-01"
+      - "TPL-COV-03"
     # sweep
     sweep:
       path: "example_sweep.py"
