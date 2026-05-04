@@ -1,0 +1,15 @@
+# RTL-Buddy Spec Configuration File
+rtl-buddy-filetype: spec_config
+
+blocks:
+  - name: "template_top"
+    desc: "Starter template block used to demonstrate spec traceability."
+    docs:
+      - "README.md"
+    coverage-items:
+      - id: "TPL-COV-01"
+        desc: "Basic PASS path with a valid input configuration"
+      - id: "TPL-COV-02"
+        desc: "Pre-processing mutates the generated stimulus parameters"
+      - id: "TPL-COV-03"
+        desc: "Sweep expansion produces multiple runnable scenarios"
