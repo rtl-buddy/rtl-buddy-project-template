@@ -35,11 +35,13 @@ design/regression.yaml
 design/cocotb_ex/               # cocotb demo RTL
 design/sandbox/
 design/template/
+spec/template/                  # spec traceability example
 verif/cocotb_ex/                # cocotb demo suite
-tools/verible/                 # bundled Verible binaries (macOS and x86_64)
-pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
-uv.lock                        # committed lockfile for reproducible project setup
-.python-version                # pinned Python version for uv
+verif/template/
+tools/verible/                  # bundled Verible binaries (macOS and x86_64)
+pyproject.toml                  # uv-managed project environment and rtl_buddy dependency pin
+uv.lock                         # committed lockfile for reproducible project setup
+.python-version                 # pinned Python version for uv
 ```
 
 The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.
@@ -94,6 +96,9 @@ Use this repo to validate the project setup and `rtl_buddy` integration.
 uv run rb --machine regression -c design/regression.yaml
 uv run rb --machine filelist test_module -c design/sandbox/models.yaml
 uv run rb --machine verible syntax design/sandbox/test_module.sv
+uv run rb --machine spec list
+uv run rb --machine spec check-design
+uv run rb --machine spec check-coverage
 
 # from suite dir
 cd verif/sandbox
@@ -107,7 +112,7 @@ uv run rb --machine test basic
 
 ## When rtl_buddy Changes
 
-- Add or adjust examples in `design/` if the feature needs visible coverage.
+- Add or adjust examples in `design/`, `verif/`, and `spec/` if the feature needs visible coverage.
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
 - Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Commit only the dependency pin (`pyproject.toml` / `uv.lock`) — skill files are gitignored.
