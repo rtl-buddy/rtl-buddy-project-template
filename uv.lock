@@ -260,7 +260,7 @@ wheels = [
 
 [[package]]
 name = "rtl-buddy"
-version = "3.1.1"
+version = "3.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -269,9 +269,9 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8d/9b/3193699bd7be0768aa24849357158726f37fc485a3ada253f2d69f351210/rtl_buddy-3.1.1.tar.gz", hash = "sha256:ffa15cc2cd30b05057288d5b984a0cdb37d497570f6462961cd595efb962dd3e", size = 133175, upload-time = "2026-04-27T07:28:04.143Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/05/b1/02de5ff77fe175fa7ed433487e7dfa1fd54b09b21f54ae6f3749b55bcba8/rtl_buddy-3.2.3.tar.gz", hash = "sha256:59a2c35eb818da2909a7e6a4f0048fa29c9d5b25fc08b04f17c0806da01c3898", size = 146573, upload-time = "2026-05-05T06:07:42.658Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/39/f590973895ce202410c05ece974d87a5689da1d2385666afcebc766d69fa/rtl_buddy-3.1.1-py3-none-any.whl", hash = "sha256:43940d9e0c79ab01c31dd5c9fa3bca15558da2fe630065baf633b47e02c62d9f", size = 100937, upload-time = "2026-04-27T07:28:02.795Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/4d/650954b6783a024ef0644667a1c30bbd5ebd0a75476fd0532a8568e72e91/rtl_buddy-3.2.3-py3-none-any.whl", hash = "sha256:12296bd03b80e63fbfa1522a14bb06162d5643d8a41c2c33e11a1f862af658d8", size = 110584, upload-time = "2026-05-05T06:07:41.312Z" },
 ]
 
 [[package]]
@@ -288,7 +288,7 @@ dependencies = [
 requires-dist = [
     { name = "cocotb", specifier = "==2.0.1" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "rtl-buddy", specifier = ">=3.1.1" },
+    { name = "rtl-buddy", specifier = ">=3.2.3" },
 ]
 
 [[package]]
