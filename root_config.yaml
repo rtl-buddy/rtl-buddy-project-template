@@ -140,7 +140,7 @@ cfg-rtl-builder:
 # Verible configuration
 cfg-verible:
   - name: "verible-macos"
-    path: "tools/verible/macos/active/bin"
+    path: "/opt/homebrew/bin"
     extra_args: &verible_extra_args
       # extra verible lint args
       # see lint help for --rules, comma-sep lint rules, (-) excl, (+) incl
@@ -153,7 +153,7 @@ cfg-verible:
           -no-trailing-spaces,
           -parameter-name-style
   - name: "verible-x86_64"
-    path: "tools/verible/x86_64/active/bin"
+    path: "/usr/local/bin"
     extra_args:
       <<: *verible_extra_args
 # End verible configuration
