@@ -1,22 +1,26 @@
 # Cocotb Example
 
-Before running, make sure the project environment is available. Prefer `uv run ...` from the repo root, or run commands through `.venv/bin/...` after `uv sync`.
-This example is not integrated with `rtl_buddy` at the moment.
+This suite demonstrates the `rtl_buddy` cocotb integration. The testbench entry
+in `tests.yaml` uses `toplevel:` and `cocotb.module`, so `rb test` compiles the
+RTL with Verilator VPI support, runs the Python cocotb test module, and parses
+`cocotb_results.xml` into the normal `rtl_buddy` pass/fail result.
 
-## Run via `run_verilator.zsh`
+Before running, make sure the project environment is available:
 
-To run verilator directly, run the following cmd in this dir:
+```bash
+uv sync --locked --python 3.11
+```
 
-    source run_verilator.zsh
+## Run via `rtl_buddy`
 
-## Run via Makefile
+From this directory:
 
-To run cocotb regression via Makefile flow, run the following cmd in this dir:
+```bash
+uv run rb test basic
+```
 
-    make
+From the repository root:
 
-## Run via `test_runner`
-
-To run cocotb tests via Python, run the following cmd in this dir:
-
-    python3 test_runner.py
+```bash
+uv run rb regression
+```

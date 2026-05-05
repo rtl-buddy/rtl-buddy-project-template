@@ -4,4 +4,4 @@ rtl-buddy-filetype: reg_config
 # List test configuration files contained in this regression
 test-configs:
   - "../verif/sandbox/tests.yaml"
-
+  - "../verif/cocotb_ex/tests.yaml"
