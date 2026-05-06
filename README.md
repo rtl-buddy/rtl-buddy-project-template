@@ -59,7 +59,13 @@ If you are starting fresh with the open-source path, use Verilator first. It is 
 uv run rb skill install
 ```
 
-This writes `SKILL.md` to `~/.claude/skills/rtl_buddy/` and `~/.codex/skills/rtl_buddy/`. Re-run after updating `rtl_buddy` to refresh the content. See `uv run rb skill --help` for project-scoped install and other options.
+If you want the skill files to live inside this repo instead, install the project-scoped copy:
+
+```bash
+uv run rb skill install --project
+```
+
+That writes `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root. Both directories are gitignored in the template, so they are safe to use in template-derived repos. Re-run after updating `rtl_buddy` to refresh the content. See `uv run rb skill --help` for scope details and other options.
 
 ## Repository Layout
 
