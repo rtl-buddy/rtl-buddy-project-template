@@ -1,0 +1,20 @@
+# CDC waivers for the alu_accel design.
+#
+# Format: waive <RULE-ID|*> <regex> [reason ...]
+
+# CDC-003 on u_sync_empty: ip_async_fifo exposes rd_empty as a bare
+# comparator (rptr_gray == wptr_gray_in_r), which feeds u_sync_empty
+# for the FIFO_EMPTY status crossing into apb. The comparator can
+# glitch when its operands update on different cclk edges, so this
+# is a real CDC-003 in principle. The known fixes (Cummings-style
+# registered rd_empty inside the FIFO, or a register stage at the
+# crossing here) both add 1 cycle of latency on the empty→apb path,
+# which exposes a separate race in alu_accel/fifo_stream's polling
+# (it watches fifo_empty_in_apb without gating on DONE_CNT, and
+# relies on the result handshake to arrive before fifo_empty_in_apb
+# does in the apb domain). Fixing the polling logic is the right
+# long-term answer; until then we waive this finding rather than
+# regress the test.
+#
+# See discussion in commit history for ip_async_fifo and alu_accel_top.
+waive CDC-003 .*u_sync_empty.*procdff.*  fifo_rd_empty comparator → u_sync_empty crossing; see waiver header

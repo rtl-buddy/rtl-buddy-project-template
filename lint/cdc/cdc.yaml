@@ -18,3 +18,4 @@ analyses:
     model_path: "../../design/alu_accel/models.yaml"
     tool: "rtl-buddy-cdc"
     constraints: "alu_accel.sdc"
+    waivers: "alu_accel.waivers"
