@@ -1,0 +1,16 @@
+rtl-buddy-filetype: spec_config
+
+blocks:
+  - name: "apb"
+    desc: "AMBA APB4 SystemVerilog interface — manager/subordinate/monitor modports"
+    docs:
+      - "README.md"
+    coverage-items:
+      - id: "APB-IF-WRITE"
+        desc: "manager-side write transaction completes (psel→penable→pready)"
+      - id: "APB-IF-READ"
+        desc: "manager-side read transaction completes"
+      - id: "APB-IF-STALL"
+        desc: "subordinate stalls a transfer by holding pready low"
+      - id: "APB-IF-PSLVERR"
+        desc: "subordinate reports an access error via pslverr"

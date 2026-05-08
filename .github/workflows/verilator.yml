@@ -3,7 +3,7 @@ name: Verilator Regression
 # This workflow runs the rtl_buddy regression suite inside the official
 # Verilator Docker container. It installs project dependencies (including
 # rtl_buddy) from the committed uv.lock, then runs the regression defined
-# in design/regression.yaml.
+# in regression.yaml.
 #
 # Trigger on every push. Common alternatives:
 #   on:
@@ -39,7 +39,7 @@ jobs:
         run: uv sync --locked --python 3.11
 
       - name: Run regression
-        # Runs the full regression defined in design/regression.yaml.
+        # Runs the full regression defined in regression.yaml.
         #
         # Useful options to add to the command below:
         #   -c <path>           path to regression config
@@ -53,4 +53,4 @@ jobs:
         #   --coverage-merge        merge coverage data across all tests
         #   --coverage-html         generate merged LCOV HTML report
         #   --coverage-coverview    generate Coverview zip from merged coverage
-        run: uv run rtl-buddy --machine -B verilator regression -c design/regression.yaml
+        run: uv run rtl-buddy --machine -B verilator regression -c regression.yaml

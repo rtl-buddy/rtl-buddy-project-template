@@ -2,9 +2,7 @@
 rtl-buddy-filetype: model_config
 
 models:
-  - name      : "test_module"
-    filelist  : [ "-F test_modules.f" ]
-
-  - name      : "test_module_2"
-    filelist  : [ "-F test_modules.f" ]
-
+  - name: "alu"
+    desc: "Tiny 8-bit ALU — sandbox demonstrator DUT"
+    filelist: ["-F test_modules.f"]
+    spec: "../../spec/sandbox/specs.yaml"

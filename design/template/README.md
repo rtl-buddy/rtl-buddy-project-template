@@ -25,7 +25,7 @@ The starter block is also the minimal coverage example for the repo.
 From [`verif/template`](../../verif/template), run:
 
 ```bash
-uv run rb --builder-mode cov test basic -c tests.yaml --coverage-merge --coverage-html
+uv run rb -M cov test basic -c tests.yaml --coverage-merge --coverage-html
 ```
 
 This uses the `cov` builder mode in [`root_config.yaml`](../../root_config.yaml) and writes these merged artifacts in `verif/template/`:

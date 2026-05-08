@@ -1,0 +1,24 @@
+# Surfer command file used by `rb wave` and by build_report.py for
+# headless waveform capture. Loaded automatically when its name matches
+# the test (`<test>.surfer`) or as a default tb layout.
+
+scope_select tb_top
+divider_add Stimulus
+variable_add tb_top.clk
+variable_add tb_top.rst
+variable_add tb_top.op
+variable_add tb_top.a
+variable_add tb_top.b
+
+divider_add DUT_Output
+variable_add tb_top.y
+variable_add tb_top.zf
+variable_add tb_top.cf
+variable_add tb_top.nf
+variable_add tb_top.vf
+
+divider_add Scoreboard
+variable_add tb_top.cycle_idx
+variable_add tb_top.mismatches
+
+zoom_fit

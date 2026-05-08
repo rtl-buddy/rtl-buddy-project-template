@@ -1,0 +1,16 @@
+rtl-buddy-filetype: spec_config
+
+blocks:
+  - name: "ip_cdc_handshake"
+    desc: "4-phase req/ack vector CDC"
+    docs:
+      - "README.md"
+    coverage-items:
+      - id: "HSCDC-XFER"
+        desc: "at least one transfer launched and observed at dst_valid"
+      - id: "HSCDC-DATA-MATCH"
+        desc: "dst_data sample equals the src_data captured on src_valid&&src_ready"
+      - id: "HSCDC-BACKPRESSURE"
+        desc: "src_ready drops while a transfer is in flight"
+      - id: "HSCDC-MULTI-XFER"
+        desc: "at least 4 successive transfers complete"

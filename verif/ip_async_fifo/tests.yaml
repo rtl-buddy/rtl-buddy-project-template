@@ -1,0 +1,22 @@
+rtl-buddy-filetype: test_config
+
+testbenches:
+  - name: "tb_ip_async_fifo"
+    filelist:
+      - "+incdir+../../common"
+      - "tb_top.sv"
+
+tests:
+  - name: "smoke"
+    desc: "fill+drain across asymmetric clocks; ordering scoreboard; full/empty bins"
+    reglvl: 0
+    plusargs: { lvm_verbosity: 2 }
+    model: "ip_async_fifo"
+    model_path: "../../design/common/models.yaml"
+    testbench: "tb_ip_async_fifo"
+    covers:
+      - "AFIFO-PUSH"
+      - "AFIFO-POP"
+      - "AFIFO-FULL"
+      - "AFIFO-EMPTY"
+      - "AFIFO-ORDER"

@@ -31,12 +31,10 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 
 ```text
 root_config.yaml
-design/regression.yaml
-design/cocotb_ex/               # cocotb demo RTL
+regression.yaml
 design/sandbox/
 design/template/
 spec/template/                  # spec traceability example
-verif/cocotb_ex/                # cocotb demo suite
 verif/template/
 pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
 uv.lock                        # committed lockfile for reproducible project setup
@@ -86,9 +84,9 @@ Use this repo to validate the project setup and `rtl_buddy` integration.
 
 ```bash
 # from repo root
-uv run rb --machine regression -c design/regression.yaml
-uv run rb --machine filelist test_module -c design/sandbox/models.yaml
-uv run rb --machine verible syntax design/sandbox/test_module.sv
+uv run rb --machine regression -c regression.yaml
+uv run rb --machine filelist alu -c design/sandbox/models.yaml
+uv run rb --machine verible syntax design/sandbox/alu.sv
 uv run rb --machine spec list
 uv run rb --machine spec check-design
 uv run rb --machine spec check-coverage
@@ -97,8 +95,8 @@ uv run rb --machine spec check-coverage
 cd verif/sandbox
 uv run rb --machine test basic
 
-cd ../cocotb_ex
-uv run rb --machine test basic
+cd ../sandbox_cocotb
+uv run rb --machine test cocotb_random
 ```
 
 `test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly.
