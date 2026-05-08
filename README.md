@@ -29,6 +29,7 @@ the framework. **One DUT, one spec, two cosim flows:**
 | Golden-model cosim (cocotb side)       | [`verif/sandbox_cocotb/`](verif/sandbox_cocotb/) drives the **same DUT** against the **same Python golden** live |
 | Surfer integration (`rb wave`)         | [`verif/sandbox/tb_top.surfer`](verif/sandbox/tb_top.surfer) — auto-loaded by `rb wave <test>` |
 | DV report w/ waveform proof            | [`verif/sandbox/build_report.py`](verif/sandbox/build_report.py) — emits `report/<test>.md` with headless surfer captures |
+| Synthesis (Yosys, tech-mapped)         | [`synth/sandbox/`](synth/sandbox/) — generic + Nangate45 mapped runs, SDC-driven timing |
 
 ```bash
 uv run rb regression -c regression.yaml                              # run all suites
@@ -60,6 +61,7 @@ Install the external prerequisites first:
 - `lcov` at the system level for LCOV/HTML coverage export
 - Antmicro `coverview` at the system level for Coverview package generation
 - Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, only needed for `rb verible ...` commands)
+- Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) and put it on `PATH` (optional, only needed for `rb synth ...` and the `synth/sandbox/` example)
 
 Then sync the project environment after cloning:
 
@@ -97,8 +99,9 @@ That writes `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under th
 
 ```text
 .
-├── root_config.yaml        # project-wide builder, platform, Verible, and regression config
+├── root_config.yaml        # project-wide builder, platform, Verible, synth, and regression config
 ├── regression.yaml         # top-level regression list
+├── synth_regression.yaml   # top-level synth-regression list
 ├── design/
 │   ├── cocotb_ex/          # cocotb demo RTL
 │   ├── sandbox/            # tiny ALU DUT (sandbox demonstrator)
@@ -111,6 +114,8 @@ That writes `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under th
 │   ├── sandbox/            # SV/LVM cosim + DV report + Surfer layout
 │   ├── sandbox_cocotb/     # cocotb cosim against the shared Python golden
 │   └── template/           # starter verification files for a new block
+├── synth/
+│   └── sandbox/            # Yosys synth (generic + Nangate45 tech-mapped)
 ├── common/                 # shared RTL helpers used by the examples
 ├── tools/                  # Bundling tools in your project
 └── pyproject.toml          # project env and pinned rtl_buddy dependency

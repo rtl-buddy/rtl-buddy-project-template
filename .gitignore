@@ -41,3 +41,4 @@ tags
 **.json
 !.claude/settings.json
 **/sandbox/report/
+pdk/

@@ -187,6 +187,22 @@ cfg-surfer:
     wcp-port: 0
 # End surfer configuration
 
+# Synthesis tool defaults — `tool:` in synth.yaml selects the entry.
+cfg-synth-tools:
+  - name: "yosys"
+    tool: "yosys"
+    opts:
+      synth-args: ""
+      abc-args: ""
+
+# Liberty libraries for technology mapping. Paths are resolved relative
+# to this file. The .lib files are not vendored — fetch with
+# `synth/sandbox/download_pdk.sh` before running tech-mapped synth.
+cfg-synth-libs:
+  - name: "nangate45_typ"
+    path: "pdk/nangate45/lib/NangateOpenCellLibrary_typical.lib"
+# End synth configuration
+
 
 # Regression config
 cfg-rtl-reg:
