@@ -203,6 +203,14 @@ cfg-synth-libs:
     path: "pdk/nangate45/lib/NangateOpenCellLibrary_typical.lib"
 # End synth configuration
 
+# CDC lint tool defaults — `tool:` in cdc.yaml selects the entry.
+cfg-cdc-tools:
+  - name: "rtl-buddy-cdc"
+    tool: "rtl-buddy-cdc"
+    opts:
+      sync-depth: 2
+# End CDC configuration
+
 
 # Regression config
 cfg-rtl-reg:
