@@ -54,7 +54,8 @@ External prerequisites:
 - `lcov` for LCOV/HTML coverage export
 - `coverview` (Antmicro) for the Coverview package path
 - Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, for `rb verible …`)
-- Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`)
+- Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`); macOS notes in [`tools/yosys/SETUP_OSX.md`](tools/yosys/SETUP_OSX.md)
+- OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
 - Surfer — build from the [rtl-buddy fork](https://github.com/rtl-buddy/surfer) onto `PATH` (optional, for `rb wave` and headless waveform capture)
 
 Sync the project environment after cloning:
@@ -104,7 +105,7 @@ uv run rb skill install --project
 │   ├── sandbox/            # Yosys synth of the ALU leaf (generic + Nangate45)
 │   └── alu_accel/          # Yosys synth of the system block (generic)
 ├── common/                 # shared SV verification helpers (LVM macros)
-├── tools/                  # vendored project tooling (placeholder)
+├── tools/                  # toolchain setup notes (yosys, openroad)
 └── pyproject.toml          # uv-managed project env + pinned rtl_buddy
 ```
 
@@ -131,7 +132,7 @@ uv run rb -M cov regression -c regression.yaml \
 # Waveform viewer     — open Surfer with the suite's signal layout
 (cd verif/sandbox && uv run rb wave basic)
 
-# DV report           — replay through Python golden + capture surfer PNGs
+# DV report           — visualize PASS/FAIL + objective + waveform PNG per test
 (cd verif/sandbox && uv run python build_report.py)
 
 # System-level demo   — multi-clock APB accelerator
@@ -166,7 +167,8 @@ direction shows up as a missing item rather than going unnoticed.
 - **Executable golden model** (where applicable):
   [`spec/sandbox/sandbox_model.py`](spec/sandbox/sandbox_model.py) is
   the Python form of the alu spec, consumed live by the cocotb suite
-  and via post-run replay by `verif/sandbox/build_report.py`.
+  and offline by `verif/sandbox/preproc.py` to generate the SV
+  testbench's stimulus + expected results.
 - **Design link**: each `design/<block>/models.yaml` carries
   `spec: "../../spec/<block>/specs.yaml"` so `rb spec check-design`
   verifies every block has a model.
@@ -310,19 +312,25 @@ The sandbox proves a single Python golden
 against the same DUT from two independent verif suites. Drift in
 either direction surfaces immediately.
 
-### SV/LVM side (`verif/sandbox/`)
+### SV/LVM side (`verif/sandbox/`) — preproc-driven
 
-- An inline reference function `ref_compute()` in
-  [`tb_top.sv`](verif/sandbox/tb_top.sv) mirrors the spec; every cycle
-  the registered DUT outputs are compared against it and LVM bumps
-  the error count on mismatch.
-- Each transaction is also written to `txn.log`. After the run,
-  [`build_report.py`](verif/sandbox/build_report.py) replays the log
-  through `sandbox_model.py`. Any divergence between SV reference and
-  Python golden appears as a "Divergences" block in the per-test
-  markdown report.
+- [`preproc.py`](verif/sandbox/preproc.py) is wired as the test's
+  `preproc:` plugin. Before compile, it picks a stimulus sequence
+  (basic / ops_sweep / flags / random), expands it through
+  `sandbox_model.AluModel.compute()`, and writes
+  `<artefacts>/<test>/vectors.txt` containing one row per cycle:
+  `op, a, b, y, zf, cf, nf, vf` (the trailing five are the expected
+  registered DUT outputs, computed by the Python golden).
+- The absolute path to `vectors.txt` is injected back into the
+  test's plusargs as `VECTORS=`.
+- [`tb_top.sv`](verif/sandbox/tb_top.sv) reads `vectors.txt`, drives
+  one `(op,a,b)` per clock, and compares the registered DUT output
+  to the expected on the cycle the result lands. Mismatches bump LVM
+  `nerr` → FAIL.
+- There is **no** inline SV reference any more — the Python golden is
+  the single source of truth, consumed offline via preproc.
 
-### cocotb side (`verif/sandbox_cocotb/`)
+### cocotb side (`verif/sandbox_cocotb/`) — live
 
 - Pure cocotb against `toplevel: alu` — no SV testbench wrapper. The
   shared helpers in
@@ -336,13 +344,13 @@ either direction surfaces immediately.
 ### Try it
 
 ```bash
-(cd verif/sandbox        && uv run rb test random)           # SV cosim
-(cd verif/sandbox_cocotb && uv run rb test cocotb_random)    # cocotb cosim
+(cd verif/sandbox        && uv run rb test random)           # SV (preproc + sim)
+(cd verif/sandbox_cocotb && uv run rb test cocotb_random)    # cocotb (live)
 ```
 
-Both pass with **zero** mismatches. Break either side (flip a SV
-opcode in `ref_compute`, or change a Python op in `sandbox_model.py`)
-and the corresponding flow fails loudly.
+Both pass with **zero** mismatches. Break either side (mutate
+`AluModel.compute` in `sandbox_model.py`, or break the alu RTL) and
+the corresponding flow fails loudly.
 
 ---
 
@@ -375,32 +383,34 @@ annotation at the cursor timestamp.
 
 ---
 
-## DV Report with Waveform Proof
+## DV Report — Test Outcomes Visualized
 
 [`verif/sandbox/build_report.py`](verif/sandbox/build_report.py) is a
-post-run script (custom rtl_buddy postproc plugins are not yet
-supported) that turns each test's artefacts into a markdown DV
-report.
+post-run *visualization* step. It does not re-check correctness —
+the simulator already did, against the preproc-generated expected
+results. The report turns each test's artefacts into a markdown
+summary tying test outcome to declared objective with a waveform
+snapshot for evidence.
 
 ### What it produces
 
 For each test in the SV sandbox suite:
-- **`report/<test>.md`** — objective, declared `covers:` IDs, replay
-  result against the Python golden (transaction count + 0 or N
-  divergences), embedded waveform PNG, FST path.
+- **`report/<test>.md`** — declared objective (from `tests.yaml`
+  `desc:`), declared `covers:` IDs, PASS/FAIL pulled from
+  `<artefacts>/<test>/test.log`, embedded waveform PNG, FST path,
+  `test.log` tail.
 - **`report/<test>.png`** — Surfer headless capture using the shared
   `tb_top.surfer` layout with `export_wave` appended.
 - **`report/index.md`** — roll-up table linking every test report.
 
 ### How it is wired
 
-- Replays `<suite>/artefacts/<test>/txn.log` through
-  `sandbox_model.AluModel.compute()` (same module the cocotb suite
-  uses live).
-- Appends `export_wave report/<test>.png 1600 600` and `exit` to the
-  surfer command file, runs `surfer --headless -c <cmd> dump.fst`.
+- Reads PASS/FAIL from each test's `test.log` (`PASS (nwrn=…)` /
+  `FAIL (nerr=…)`).
+- Appends `export_wave report/<test>.png 1600 600` to the surfer
+  command file and runs `surfer --headless -c <cmd> dump.fst`.
 - Falls back gracefully when surfer isn't on `PATH` — the report
-  still lists FST path + divergence summary.
+  still lists FST path + status + log tail.
 
 ### Try it
 

@@ -1,97 +1,56 @@
 """Sandbox DV report builder.
 
-Walks `artefacts/<test>/` produced by an `rb regression`/`rb test` run,
-replays each test's transaction log through the Python golden model
-(`spec/sandbox/sandbox_model.py`), captures a Surfer screenshot of the
-test waveform in headless mode, and emits a per-test markdown report
-plus a roll-up `report/index.md`.
+Walks `artefacts/<test>/` produced by an `rb regression` / `rb test`
+run and emits a per-test markdown report plus a roll-up
+`report/index.md`. Each report visualizes the test outcome against
+its declared objective and embeds a Surfer waveform PNG captured in
+headless mode.
+
+This script does **not** verify correctness — checking is handled
+inside the simulator: `verif/sandbox/preproc.py` expands stimulus
+through `spec/sandbox/sandbox_model.py` (the Python golden) and the
+SV testbench compares per-cycle. The PASS/FAIL line in
+`<artefacts>/<test>/test.log` is the authoritative signal.
 
 Run from the suite directory after a regression:
 
     cd verif/sandbox
     uv run rb -M debug regression -c ../../regression.yaml
     uv run python build_report.py
-
-Custom rtl_buddy postproc plugins are not yet supported (see
-`rb docs show concepts/plugins`), so this is invoked manually.
 """
 
 from __future__ import annotations
 
-import csv
+import re
 import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SUITE_DIR = Path(__file__).resolve().parent
 ARTEFACTS = SUITE_DIR / "artefacts"
 REPORT_DIR = SUITE_DIR / "report"
 
-# Make the spec module importable regardless of where this script is run from
-sys.path.insert(0, str(REPO_ROOT / "spec" / "sandbox"))
-from sandbox_model import AluModel, OP_NAMES  # noqa: E402
-
 SURFER_LAYOUT = SUITE_DIR / "tb_top.surfer"
 SURFER_BIN = shutil.which("surfer")
 
+PASS_RE = re.compile(r"^PASS\b")
+FAIL_RE = re.compile(r"^FAIL\b")
+NERR_RE = re.compile(r"\(nerr=\s*(\d+)")
+
 
 @dataclass
-class ReplayResult:
-    test: str
-    txns: int
-    mismatches: list[str]
-    fst_path: Path | None
+class TestOutcome:
+    name: str
+    status: str               # "PASS" | "FAIL" | "UNKNOWN"
+    note: str
+    log_tail: list[str]
+    fst: Path | None
     screenshot: Path | None
-
-    @property
-    def passed(self) -> bool:
-        return not self.mismatches
-
-
-def replay(test_dir: Path, test_name: str) -> ReplayResult:
-    txn_log = _find(test_dir, "txn.log")
-    fst = _find(test_dir, "dump.fst")
-    screenshot = REPORT_DIR / f"{test_name}.png"
-    mismatches: list[str] = []
-    txns = 0
-    if not txn_log:
-        return ReplayResult(test_name, 0, ["txn.log missing"], fst, None)
-    with txn_log.open() as f:
-        reader = csv.reader(line for line in f if not line.startswith("#"))
-        for row in reader:
-            if len(row) != 9:
-                continue
-            cycle, op, a, b, y, zf, cf, nf, vf = (int(x) for x in row)
-            txns += 1
-            ref = AluModel.compute(op, a, b)
-            got = (y, zf, cf, nf, vf)
-            if got != ref.as_tuple():
-                mismatches.append(
-                    f"cycle={cycle} op={OP_NAMES.get(op, op)} a={a:#x} b={b:#x} "
-                    f"dut={got} ref={ref.as_tuple()}"
-                )
-
-    if fst and SURFER_BIN and SURFER_LAYOUT.exists():
-        REPORT_DIR.mkdir(parents=True, exist_ok=True)
-        cmd_file = REPORT_DIR / f"{test_name}.cmds"
-        cmd_file.write_text(
-            SURFER_LAYOUT.read_text()
-            + f"\nexport_wave {screenshot} 1600 600\n"
-        )
-        try:
-            subprocess.run(
-                [SURFER_BIN, "--headless", "-c", str(cmd_file), str(fst)],
-                check=True, capture_output=True, timeout=60,
-            )
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-            mismatches.append(f"surfer headless capture failed: {e}")
-            screenshot = None
-
-    return ReplayResult(test_name, txns, mismatches, fst,
-                        screenshot if screenshot and screenshot.exists() else None)
 
 
 def _find(root: Path, name: str) -> Path | None:
@@ -102,61 +61,95 @@ def _find(root: Path, name: str) -> Path | None:
     return None
 
 
-def render_test(r: ReplayResult, covers: list[str]) -> Path:
+def _read_status(test_dir: Path) -> tuple[str, str, list[str]]:
+    log = _find(test_dir, "test.log")
+    if not log:
+        return ("UNKNOWN", "test.log missing", [])
+    lines = log.read_text(errors="replace").splitlines()
+    tail = lines[-12:]
+    for line in reversed(lines):
+        if PASS_RE.match(line):
+            return ("PASS", line.strip(), tail)
+        if FAIL_RE.match(line):
+            m = NERR_RE.search(line)
+            note = line.strip() if not m else f"FAIL (nerr={m.group(1)})"
+            return ("FAIL", note, tail)
+    return ("UNKNOWN", "no PASS/FAIL line in test.log", tail)
+
+
+def _capture_waveform(test: str, fst: Path) -> Path | None:
+    if not (SURFER_BIN and SURFER_LAYOUT.exists()):
+        return None
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    out = REPORT_DIR / f"{r.test}.md"
-    status = "PASS" if r.passed else "FAIL"
+    png = REPORT_DIR / f"{test}.png"
+    cmd_file = REPORT_DIR / f"{test}.cmds"
+    cmd_file.write_text(SURFER_LAYOUT.read_text() + f"\nexport_wave {png} 1600 600\n")
+    try:
+        subprocess.run(
+            [SURFER_BIN, "--headless", "-c", str(cmd_file), str(fst)],
+            check=True, capture_output=True, timeout=60,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return None
+    return png if png.exists() else None
+
+
+def collect(test_name: str) -> TestOutcome:
+    test_dir = ARTEFACTS / test_name
+    status, note, tail = _read_status(test_dir)
+    fst = _find(test_dir, "dump.fst")
+    png = _capture_waveform(test_name, fst) if fst else None
+    return TestOutcome(test_name, status, note, tail, fst, png)
+
+
+def render_test(o: TestOutcome, desc: str, covers: list[str]) -> Path:
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    out = REPORT_DIR / f"{o.name}.md"
     lines = [
-        f"# {r.test} — {status}",
+        f"# {o.name} — {o.status}",
         "",
-        f"- Transactions replayed against Python golden: **{r.txns}**",
-        f"- Mismatches vs `sandbox_model.py`: **{len(r.mismatches)}**",
-        f"- Spec coverage targets: {', '.join(f'`{c}`' for c in covers) if covers else '_none declared_'}",
-        f"- FST waveform: `{r.fst_path}`" if r.fst_path else "- FST waveform: _missing_",
+        f"**Objective:** {desc}",
+        "",
+        f"- Status: **{o.status}** — {o.note}",
+        f"- Coverage targets: {', '.join(f'`{c}`' for c in covers) if covers else '_none declared_'}",
+        f"- FST waveform: `{o.fst}`" if o.fst else "- FST waveform: _missing_",
         "",
     ]
-    if r.screenshot:
-        rel = r.screenshot.name
-        lines += [f"![{r.test} waveform]({rel})", ""]
+    if o.screenshot:
+        lines += [f"![{o.name} waveform]({o.screenshot.name})", ""]
     elif SURFER_BIN is None:
         lines += ["_Surfer not on PATH — skipped headless capture._", ""]
-    if r.mismatches:
-        lines += ["## Divergences", "", "```"] + r.mismatches[:32] + ["```", ""]
+    elif o.fst is None:
+        lines += ["_No FST waveform captured (test did not run in a trace-enabled mode)._", ""]
+    if o.log_tail:
+        lines += ["## test.log tail", "", "```"] + o.log_tail + ["```", ""]
     out.write_text("\n".join(lines))
     return out
 
 
-def render_index(results: list[tuple[ReplayResult, list[str]]]) -> Path:
+def render_index(rows: list[tuple[TestOutcome, str, list[str]]]) -> Path:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     out = REPORT_DIR / "index.md"
-    rows = ["| Test | Status | Txns | Coverage IDs |", "|---|---|---|---|"]
-    for r, covers in results:
-        rows.append(
-            f"| [{r.test}]({r.test}.md) | "
-            f"{'PASS' if r.passed else 'FAIL'} | "
-            f"{r.txns} | "
+    body = ["| Test | Status | Objective | Coverage IDs |", "|---|---|---|---|"]
+    for o, desc, covers in rows:
+        body.append(
+            f"| [{o.name}]({o.name}.md) | {o.status} | {desc} | "
             f"{', '.join(f'`{c}`' for c in covers) if covers else '—'} |"
         )
-    out.write_text("# Sandbox DV Report\n\n" + "\n".join(rows) + "\n")
+    out.write_text("# Sandbox DV Report\n\n" + "\n".join(body) + "\n")
     return out
 
 
 def main() -> int:
-    import yaml
-    tests_yaml = SUITE_DIR / "tests.yaml"
-    cfg = yaml.safe_load(tests_yaml.read_text())
-    results: list[tuple[ReplayResult, list[str]]] = []
+    cfg = yaml.safe_load((SUITE_DIR / "tests.yaml").read_text())
+    rows: list[tuple[TestOutcome, str, list[str]]] = []
     for t in cfg.get("tests", []):
-        name = t["name"]
-        covers = t.get("covers", []) or []
-        test_dir = ARTEFACTS / name
-        r = replay(test_dir, name)
-        render_test(r, covers)
-        results.append((r, covers))
-        print(f"{name}: {'PASS' if r.passed else 'FAIL'} ({r.txns} txns)")
-    idx = render_index(results)
-    print(f"index: {idx}")
-    return 0 if all(r.passed for r, _ in results) else 1
+        outcome = collect(t["name"])
+        render_test(outcome, t.get("desc", ""), t.get("covers", []) or [])
+        rows.append((outcome, t.get("desc", ""), t.get("covers", []) or []))
+        print(f"{outcome.name}: {outcome.status}")
+    print(f"index: {render_index(rows)}")
+    return 0 if all(o.status == "PASS" for o, *_ in rows) else 1
 
 
 if __name__ == "__main__":

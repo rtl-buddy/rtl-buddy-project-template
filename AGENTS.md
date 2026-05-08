@@ -95,7 +95,8 @@ uv run rb --machine spec check-coverage
 cd verif/sandbox
 uv run rb --machine test basic
 
-uv run rb --machine test basic
+cd ../sandbox_cocotb
+uv run rb --machine test cocotb_random
 ```
 
 `test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly.
