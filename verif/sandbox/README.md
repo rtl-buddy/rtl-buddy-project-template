@@ -1,33 +1,56 @@
-# `verif/sandbox/` — SV/LVM Cosim Suite
+# `verif/sandbox/` — SV/LVM Suite (vector-driven from Python golden)
 
 The SV-side demonstrator suite for the sandbox tiny ALU. Pairs with
-[`verif/sandbox_cocotb/`](../sandbox_cocotb/), which runs the **same DUT**
-against the **same Python golden** ([`spec/sandbox/sandbox_model.py`](../../spec/sandbox/sandbox_model.py))
-from cocotb. Read both READMEs together to see the full
-"one DUT, one spec, two cosim flows" demonstration.
+[`verif/sandbox_cocotb/`](../sandbox_cocotb/), which runs the **same
+DUT** against the **same Python golden**
+([`spec/sandbox/sandbox_model.py`](../../spec/sandbox/sandbox_model.py))
+from cocotb.
+
+## How it works
+
+1. **Preproc** — [`preproc.py`](preproc.py) runs before compile/sim.
+   It picks a stimulus sequence based on the test's `TEST` plusarg
+   and runs each `(op, a, b)` through `AluModel.compute()` to get the
+   expected `(y, zf, cf, nf, vf)`. Both are written into
+   `<artefacts>/<test>/vectors.txt`. The absolute path is injected
+   back into the test's plusargs as `VECTORS=...`.
+2. **Sim** — [`tb_top.sv`](tb_top.sv) loads `vectors.txt`, drives one
+   `(op, a, b)` per clock, then compares the registered DUT output
+   against the expected for that vector. Any mismatch increments LVM
+   `nerr` and the test fails. There is no inline SV reference any
+   more — the Python golden is the single source of truth.
+3. **Coverage** — [`cov_alu.sv`](cov_alu.sv) cover-property labels
+   match the `SAND-FUNC-*` IDs in
+   [`spec/sandbox/specs.yaml`](../../spec/sandbox/specs.yaml).
+4. **Report** — [`build_report.py`](build_report.py) is a *visualization*
+   step only. It does not re-check correctness (the simulator already
+   did). It reads PASS/FAIL from `test.log`, captures a Surfer
+   headless PNG using [`tb_top.surfer`](tb_top.surfer), and emits
+   `report/<test>.md` showing objective + coverage IDs + waveform.
 
 ## What this suite shows
 
 | `rtl_buddy` capability   | Where to look                                                       |
 |--------------------------|---------------------------------------------------------------------|
 | Spec authoring           | [`spec/sandbox/README.md`](../../spec/sandbox/README.md)            |
-| Spec → functional cov    | `cov_alu.sv` — covergroup bins named after `SAND-FUNC-*` IDs        |
+| Spec → functional cov    | `cov_alu.sv` — cover labels match `SAND-FUNC-*` IDs                  |
 | Test planning            | [`testplan.md`](testplan.md) (`covers:` mirrored in `tests.yaml`)   |
 | Coverage collection      | `rb -M cov regression --coverage-merge --coverage-html --coverage-coverview` |
 | Coverview dashboard      | [`../../coverview.md`](../../coverview.md)                          |
-| Golden-model cosim (SV)  | inline `ref_compute()` in `tb_top.sv` + post-run replay through `sandbox_model.py` |
-| Surfer integration       | `tb_top.surfer` layout + `rb wave <test>` opens live viewer         |
-| DV report w/ waveforms   | `build_report.py` — emits `report/<test>.md` with headless surfer captures |
+| Preproc plugin           | `preproc.py` — generates stimulus + expected via Python golden       |
+| Golden-model cosim (SV)  | tb_top reads `vectors.txt`, compares per-cycle                       |
+| Surfer integration       | `tb_top.surfer` layout, autoloaded by `rb wave <test>`              |
+| DV report w/ waveforms   | `build_report.py` — visualization only (PASS/FAIL from sim)         |
 
 ## Running
 
 ```bash
 cd verif/sandbox
 
-# one test, debug mode (FST trace produced)
+# one test, debug mode (FST trace + vectors.txt produced)
 uv run rb test basic
 
-# the whole suite + cocotb peer with coverage
+# whole project + cocotb peer with coverage
 uv run rb -M cov regression \
   --coverage-merge --coverage-html --coverage-coverview \
   -c ../../regression.yaml
@@ -35,10 +58,10 @@ uv run rb -M cov regression \
 # spec → coverage closure check
 uv run rb spec check-coverage
 
-# open Surfer with the tb layout, live signal annotation in your editor
+# open Surfer with the tb layout
 uv run rb wave basic
 
-# generate the DV report (markdown + waveform PNGs)
+# generate the DV report (markdown + waveform PNGs, no re-check)
 uv run python build_report.py
 open report/index.md
 ```
@@ -47,9 +70,10 @@ open report/index.md
 
 | File              | Purpose                                                                |
 |-------------------|------------------------------------------------------------------------|
-| `tb_top.sv`       | LVM testbench: directed sequences (`+TEST=`), inline scoreboard, txn log |
-| `cov_alu.sv`      | Covergroup `cg_alu` + `SAND_FUNC_RESET` cover property                 |
-| `tests.yaml`      | Per-test `covers:` linked to spec IDs                                  |
+| `preproc.py`      | Generates `vectors.txt` from the Python golden, injects `VECTORS=` plusarg |
+| `tb_top.sv`       | Vector-driven LVM testbench; per-cycle compare; txn log               |
+| `cov_alu.sv`      | Covergroup / cover properties (SAND-FUNC-* IDs)                       |
+| `tests.yaml`      | Per-test `covers:` linked to spec IDs; wires `preproc:`               |
 | `testplan.md`     | Human plan + pass criteria                                             |
 | `tb_top.surfer`   | Surfer signal layout (also used as headless capture base)              |
-| `build_report.py` | Replay txn log through Python golden, capture waveforms, emit report  |
+| `build_report.py` | Visualization: PASS/FAIL + waveform PNG + objective per test          |
