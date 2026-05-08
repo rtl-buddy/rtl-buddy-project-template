@@ -1,6 +1,6 @@
 // vim: set ts=2 sw=2 et :
 //
-// Example testbench for this template project.
+// Example RTL for this template project.
 //
 // lvm_core contains Lightweight Verification Methodolgy 
 // core test framework, report handling, error counting, pass/fail
@@ -127,6 +127,18 @@ module tb_top;
 
 
   always #500ps clk = ~clk;
+
+  // SAND-COV-01: Observe Z transition from 0 to 1 back to 0
+  logic [W-1:0] z_d1, z_d2;
+  always @(posedge clk) begin
+    z_d1 <= z;
+    z_d2 <= z_d1;
+  end
+
+  property p_sand_cov_01;
+    @(posedge clk) (z_d2 == '0 && z_d1 == {{(W-1){1'b0}}, 1'b1} && z == '0);
+  endproperty
+  SAND_COV_01: cover property (p_sand_cov_01);
 
 endmodule
 

@@ -35,9 +35,10 @@ cfg-rtl-builder:
           --binary --timescale 1ns/10ps 
           +1800-2023ext+sv
           -sv
-          --compiler clang 
+          --compiler clang
           --x-initial unique
-          --assert 
+          --x-assign 1
+          --assert
           --assert-case
           -Wall
           -Wwarn-lint
@@ -49,11 +50,11 @@ cfg-rtl-builder:
           -Wno-WIDTHTRUNC
           -o simv
           +define+DUMP
-          --trace-fst 
+          --trace-fst
           --trace-params
           --trace-structs
           --trace-max-array 32
-          --trace-max-width 64
+          --trace-max-width 256
         # run-time 
         # rand-reset (2: rand, 1:ones, 0:zeros)
         run-time: &vrl_run_time >-
@@ -65,9 +66,10 @@ cfg-rtl-builder:
           --binary --timescale 1ns/10ps 
           +1800-2023ext+sv
           -sv
-          --compiler clang 
-          --x-initial unique 
-          --assert 
+          --compiler clang
+          --x-initial unique
+          --x-assign 1
+          --assert
           --assert-case
           -Wall
           -Wwarn-lint
@@ -87,9 +89,14 @@ cfg-rtl-builder:
           -sv
           --compiler clang
           --x-initial unique
+          --x-assign 1
           --assert
           --assert-case
-          --coverage
+          --coverage-expr
+          --coverage-expr-max 256
+          --coverage-line
+          --coverage-toggle
+          --coverage-user
           -Wall
           -Wwarn-lint
           -Wno-DECLFILENAME
@@ -162,6 +169,14 @@ cfg-verible:
 cfg-coverage:
   - name: "verilator"
     use-lcov: true
+  - name: "vcs"
+    use-lcov: true
+
+cfg-coverview:
+  - name: "verilator"
+    config:
+      title: "rtl-buddy coverview"
+    generate-tables: "line"
 # End coverage configuration
 
 
@@ -169,7 +184,7 @@ cfg-coverage:
 cfg-rtl-reg:
   {
     # regression config yaml, discover full list of reg from this root
-    reg-cfg-path: "design/regression.yaml" 
+    reg-cfg-path: "regression.yaml"
   }
 
 # TODO cfg-rtl-lint : RTL Code Linter

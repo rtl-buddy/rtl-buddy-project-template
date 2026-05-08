@@ -1,0 +1,11 @@
+# RTL-Buddy Spec Configuration File
+rtl-buddy-filetype: spec_config
+
+blocks:
+  - name: "sandbox"
+    desc: "Sandbox block — example / scratch area for experimenting with rtl-buddy workflows"
+    docs:
+      - "README.md"
+    coverage-items:
+      - id: "SAND-COV-01"
+        desc: "Example coverage item: Observe Z transition from 0 to 1 back to 0"

@@ -2,49 +2,49 @@
 rtl-buddy-filetype: test_config
 
 # List testbenches contained in this verif dir
-testbenches :
+testbenches:
   - name: "tb_top"
-    filelist: 
+    filelist:
       - "+incdir+../../common"
       - "tb_top.sv"
 
 # List tests supported in this verif dir
 tests:
   - name: "basic"
-    desc: "basic testcase"
-    # reglevel: priority for reg. use with --reg-level
+    desc: "SANDBOX-01: Basic plusarg smoke test"
+    # reglvl: priority for regression use with --reg-level
     # 0 (always run), 9999 (lowest priority), 10000 (disabled)
     reglvl: 0
-    # plusargs: vlog runtime arguments
+    # plusargs: runtime simulator arguments
     plusargs:
-      a : "8"
-      b : null
+      a: "10"
+      b:
       # verbosity 0 (most verbose), 2 (error and above)
-      lvm_verbosity : 2
-    # specify which RTL module to run with
-    model: "test_module"
+      lvm_verbosity: 2
+    # Select the DUT top module from models.yaml.
+    model: "test_module_3"
     model_path: "../../design/sandbox/models.yaml"
-    # specify which TB module to use as top
+    # Specify which TB module to use as top.
     testbench: "tb_top"
 
   - name: "extra"
-    desc: "extra testcase"
+    desc: "SANDBOX-02: Define handling and verbose logging"
     reglvl: 1000
     plusargs:
       a: "8"
       b: "10"
       test_cycles: "20"
       # verbosity 0 (most verbose), 2 (error and above)
-      lvm_verbosity : 0
+      lvm_verbosity: 0
     plusdefines:
-      DEFINE_WO_VALUE: null
+      DEFINE_WO_VALUE:
       DEFINE_WITH_VALUE: "1"
-    model: "test_module"
+    model: "test_module_3"
     model_path: "../../design/sandbox/models.yaml"
     testbench: "tb_top"
 
   - name: "extra1"
-    desc: "extra testcase"
+    desc: "SANDBOX-03: Regression-disabled define variant"
     reglvl: 10000
     plusargs:
       a: "8"
@@ -52,7 +52,6 @@ tests:
       test_cycles: "20"
     plusdefines:
       DEFINE_WITH_VALUE: "1"
-    model: "test_module"
+    model: "test_module_3"
     model_path: "../../design/sandbox/models.yaml"
     testbench: "tb_top"
-

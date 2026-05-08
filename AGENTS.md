@@ -31,7 +31,7 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 
 ```text
 root_config.yaml
-design/regression.yaml
+regression.yaml
 design/cocotb_ex/               # cocotb demo RTL
 design/sandbox/
 design/template/
@@ -86,7 +86,7 @@ Use this repo to validate the project setup and `rtl_buddy` integration.
 
 ```bash
 # from repo root
-uv run rb --machine regression -c design/regression.yaml
+uv run rb --machine regression -c regression.yaml
 uv run rb --machine filelist test_module -c design/sandbox/models.yaml
 uv run rb --machine verible syntax design/sandbox/test_module.sv
 uv run rb --machine spec list

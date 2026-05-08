@@ -72,12 +72,13 @@ That writes `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under th
 ```text
 .
 ├── root_config.yaml        # project-wide builder, platform, Verible, and regression config
+├── regression.yaml         # top-level regression list
 ├── design/
-│   ├── regression.yaml     # top-level regression list
 │   ├── cocotb_ex/          # cocotb demo RTL
 │   ├── sandbox/            # runnable example block
 │   └── template/           # starter design files for a new block
 ├── spec/
+│   ├── sandbox/            # spec traceability for the sandbox example
 │   └── template/           # starter spec traceability example
 ├── verif/
 │   ├── cocotb_ex/          # cocotb demo suite
@@ -155,7 +156,7 @@ Typical next steps:
 - Add blocks
 - Use [`spec/template/`](spec/template/), [`design/template/`](design/template/), and [`verif/template/`](verif/template/) as references for rtl_buddy usage
 - Update [`root_config.yaml`](root_config.yaml) with your preferred builders, flags, and project defaults
-- Expand [`design/regression.yaml`](design/regression.yaml) to include your real suites
+- Expand [`regression.yaml`](regression.yaml) to include your real suites
 - Rewrite the repo docs so they describe your project instead of the template
 
 An AI agent can also follow instructions in [`AGENTS.md`](AGENTS.md) to help adapt this template into your real project.
