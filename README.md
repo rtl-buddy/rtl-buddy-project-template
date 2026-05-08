@@ -257,9 +257,13 @@ into a Coverview zip for the browser dashboard.
 ```bash
 uv run rb -M cov regression -c regression.yaml \
     --coverage-merge --coverage-html --coverage-coverview
-open verif/sandbox/coverage_merge.html
+# Outputs land at the directory you run from. From repo root:
+open coverage_merge.html
 # Coverview viewer setup: see coverview.md
 ```
+
+When invoked from a suite directory (e.g. `verif/sandbox/`) the merged
+artefacts land in that suite instead.
 
 ---
 
