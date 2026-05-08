@@ -1,6 +1,0 @@
-# RTL-Buddy RTL Model Configuration File
-rtl-buddy-filetype: model_config
-
-models:
-  - name      : "my_design"
-    filelist  : [ "-F my_design.f" ]

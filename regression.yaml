@@ -11,5 +11,4 @@ test-configs:
   - "verif/ip_async_fifo/tests.yaml"
   - "verif/sandbox/tests.yaml"
   - "verif/sandbox_cocotb/tests.yaml"
-  - "verif/cocotb_ex/tests.yaml"
   - "verif/alu_accel/tests.yaml"

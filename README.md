@@ -28,7 +28,7 @@ IPs are tested in isolation; `alu_accel` proves they compose.
 | `alu` (sandbox)    | Tiny 8-bit ALU leaf compute (Python golden in `spec/`)       | [`design/sandbox/alu.sv`](design/sandbox/alu.sv)                      | [`spec/sandbox/`](spec/sandbox/)                  | [`verif/sandbox/`](verif/sandbox/), [`verif/sandbox_cocotb/`](verif/sandbox_cocotb/) |
 | **`alu_accel`**    | Multi-clock APB-mapped ALU accelerator (composes everything) | [`design/alu_accel/`](design/alu_accel/) (PeakRDL CSR + multi-clock)  | [`spec/alu_accel/`](spec/alu_accel/)              | [`verif/alu_accel/`](verif/alu_accel/)             |
 
-Out-of-box `rb regression -c regression.yaml` passes **13/13** tests
+Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
 across these blocks; `rb synth-regression -c synth_regression.yaml`
 synthesizes the alu leaf (287 gates) and the full system (1265 gates).
 
@@ -88,7 +88,6 @@ uv run rb skill install --project
 │   ├── common/             # CDC primitives + ip_async_fifo
 │   ├── alu_accel/          # system block: PeakRDL CSR, multi-clock top, compute wrapper
 │   ├── sandbox/            # tiny ALU leaf DUT
-│   ├── cocotb_ex/          # standalone cocotb demo RTL
 │   └── template/           # starter design files for a new block
 ├── spec/
 │   ├── apb/                ip_cdc_sync/   ip_cdc_handshake/   ip_async_fifo/
@@ -100,7 +99,6 @@ uv run rb skill install --project
 │   ├── alu_accel/          # system-level multi-clock APB suite
 │   ├── sandbox/            # SV/LVM cosim suite + DV report + Surfer layout
 │   ├── sandbox_cocotb/     # cocotb cosim against the shared Python golden
-│   ├── cocotb_ex/          # standalone cocotb demo suite
 │   └── template/           # starter verification files for a new block
 ├── synth/
 │   ├── sandbox/            # Yosys synth of the ALU leaf (generic + Nangate45)
@@ -123,7 +121,7 @@ uv run rb spec check-coverage
 # Single test         — one named test in a suite
 (cd verif/sandbox && uv run rb test basic)
 
-# Sim regression      — every test listed in regression.yaml (13/13)
+# Sim regression      — every test listed in regression.yaml (12/12)
 uv run rb regression -c regression.yaml
 
 # Coverage regression — same, with merged LCOV HTML and Coverview zip
@@ -248,8 +246,8 @@ output for CI.
 ### How it is wired
 
 - **Top-level config**: [`regression.yaml`](regression.yaml) lists
-  each suite's `tests.yaml` (8 suites today: 4 leaf-IP + sandbox +
-  sandbox_cocotb + cocotb_ex + alu_accel).
+  each suite's `tests.yaml` (7 suites today: 4 leaf-IP + sandbox +
+  sandbox_cocotb + alu_accel).
 - **Reglvl gating**: each test in `tests.yaml` has a `reglvl`
   (0 = always run, larger = deferred tiers, 10000 = disabled).
   `--reg-level N` (alias `-l`) caps the run.
@@ -262,7 +260,7 @@ output for CI.
 ### Try it
 
 ```bash
-uv run rb regression -c regression.yaml             # everything (13/13)
+uv run rb regression -c regression.yaml             # everything (12/12)
 uv run rb regression -c regression.yaml -l 0        # only reglvl 0 entries
 uv run rb --machine regression -c regression.yaml   # CI-style JSON output
 ```
