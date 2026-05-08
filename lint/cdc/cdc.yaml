@@ -11,3 +11,10 @@ analyses:
     model_path: "../../design/common/models.yaml"
     tool: "rtl-buddy-cdc"
     constraints: "ip_cdc_handshake.sdc"
+
+  - name: "alu_accel_lint"
+    desc: "CDC lint of the multi-clock ALU accelerator (apb_clk ↔ cclk)"
+    model: "alu_accel_top"
+    model_path: "../../design/alu_accel/models.yaml"
+    tool: "rtl-buddy-cdc"
+    constraints: "alu_accel.sdc"
