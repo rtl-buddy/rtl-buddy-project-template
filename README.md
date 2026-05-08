@@ -54,7 +54,8 @@ External prerequisites:
 - `lcov` for LCOV/HTML coverage export
 - `coverview` (Antmicro) for the Coverview package path
 - Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, for `rb verible …`)
-- Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`)
+- Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`); macOS notes in [`tools/yosys/SETUP_OSX.md`](tools/yosys/SETUP_OSX.md)
+- OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
 - Surfer — build from the [rtl-buddy fork](https://github.com/rtl-buddy/surfer) onto `PATH` (optional, for `rb wave` and headless waveform capture)
 
 Sync the project environment after cloning:
@@ -104,7 +105,7 @@ uv run rb skill install --project
 │   ├── sandbox/            # Yosys synth of the ALU leaf (generic + Nangate45)
 │   └── alu_accel/          # Yosys synth of the system block (generic)
 ├── common/                 # shared SV verification helpers (LVM macros)
-├── tools/                  # vendored project tooling (placeholder)
+├── tools/                  # toolchain setup notes (yosys, openroad)
 └── pyproject.toml          # uv-managed project env + pinned rtl_buddy
 ```
 
