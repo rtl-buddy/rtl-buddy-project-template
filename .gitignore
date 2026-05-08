@@ -28,7 +28,9 @@ venv
 **DVEfiles
 coverage_*.dat
 coverage_*.info
+coverage_merge.html
 coverage_merge.html/
+**/cov_dir/
 *.coverage.info
 *.coverage_html/
 coverview_*.zip

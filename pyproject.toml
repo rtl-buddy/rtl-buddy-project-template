@@ -3,10 +3,14 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy>=3.2.3",
+  "rtl_buddy>=3.4.1",
   "cocotb==2.0.1",
   "pytest==8.4.2",
+  "info-process",
 ]
 
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
