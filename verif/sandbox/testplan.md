@@ -1,49 +1,48 @@
-# sandbox Testplan
+# Sandbox SV/LVM Testplan
 
-See [tb_top.sv](./tb_top.sv) and [../../design/sandbox/test_module.sv](../../design/sandbox/test_module.sv).
+Authoritative test plan for the SV/LVM cosim flow. Each test maps to:
+- a stimulus pattern in `tb_top.sv`
+- one or more `SAND-FUNC-*` IDs from [`spec/sandbox/specs.yaml`](../../spec/sandbox/specs.yaml)
+- pass criteria proven by the SV scoreboard *and* by post-run replay through
+  the Python golden ([`spec/sandbox/sandbox_model.py`](../../spec/sandbox/sandbox_model.py))
 
----
+## Tests
 
-## SANDBOX-01: Basic plusarg smoke test
+| Test         | Stimulus                                | Coverage targets                                                              |
+|--------------|-----------------------------------------|-------------------------------------------------------------------------------|
+| `basic`      | each opcode once with non-zero operands | `SAND-FUNC-RESET`, `SAND-FUNC-OP-*`                                           |
+| `ops_sweep`  | progressive operands per opcode         | `SAND-FUNC-OP-*`, `SAND-FUNC-OPERAND-RANGE`                                   |
+| `flags`      | directed corners                        | `SAND-FUNC-FLAG-Z`, `-N`, `-C-ADD`, `-C-SUB`, `-V-ADD`, `-V-SUB`              |
+| `random`     | 256-cycle constrained-random            | `SAND-FUNC-OPERAND-RANGE`, `SAND-FUNC-FLAG-Z`, `SAND-FUNC-FLAG-N`             |
 
-Verify that the sandbox testbench accepts plusargs, drives the `test_module_3`
-DUT, and completes a passing run with the default end-of-test hook checks.
+## Pass criteria
 
-### Checks
+A test PASSES when **all** of the following hold:
 
-- Set `a=10` through plusargs and confirm the end hook does not inject an error
-  from the `a < 8` condition.
-- Leave `b` unset so the testbench uses its default initialization and counter
-  increment behavior.
-- Run with the default `test_cycles` value from `tb_top.sv`.
-- Keep `lvm_verbosity=2` for low-noise logging.
+1. **SV scoreboard**: 0 mismatches between the registered DUT outputs and
+   the inline SV reference function `ref_compute()` in `tb_top.sv`.
+2. **LVM**: `nerr == 0` at end-of-test.
+3. **Python golden equivalence**: `build_report.py` replays `txn.log`
+   through `sandbox_model.py` and reports 0 divergences. This catches
+   any silent drift between the SV reference and the spec.
+4. **Coverage objectives** for the test's listed `covers:` IDs are hit at
+   least once in the merged covergroup database.
 
----
+## Reproducing locally
 
-## SANDBOX-02: Define handling and verbose logging
+```bash
+cd verif/sandbox
+uv run rb test basic                       # one test, debug mode
+uv run rb -M cov regression \
+   --coverage-merge --coverage-html --coverage-coverview \
+   -c ../../regression.yaml                # full suite + coverage
+uv run rb wave basic                       # open Surfer with tb_top.surfer layout
+uv run python build_report.py              # generate report/<test>.md + waveform PNGs
+```
 
-Verify that the sandbox testbench accepts explicit plusargs and preprocessor
-defines while still producing a passing run.
+## Cross-suite reference
 
-### Checks
-
-- Set `a=8`, `b=10`, and `test_cycles=20`.
-- Enable `DEFINE_WO_VALUE` and `DEFINE_WITH_VALUE=1` and confirm the testbench
-  compile-time paths are exercised.
-- Run with `lvm_verbosity=0` to exercise the more verbose logging setting.
-- Confirm the end hook still passes because `a` is not below the error
-  threshold.
-
----
-
-## SANDBOX-03: Regression-disabled define variant
-
-Verify an alternate define configuration is available for ad hoc execution but
-disabled from normal regression.
-
-### Checks
-
-- Set `a=8`, `b=10`, and `test_cycles=20`.
-- Enable `DEFINE_WITH_VALUE=1` without `DEFINE_WO_VALUE`.
-- Keep the test disabled from regression with `reglvl: 10000`.
-- Confirm the configuration still passes when run directly.
+For the same DUT driven from cocotb against the same Python golden, see
+[`verif/sandbox_cocotb/`](../sandbox_cocotb/). The cocotb suite is a
+peer demonstrator, not a reimplementation: both consume `sandbox_model.py`
+to make any spec drift visible from either direction.

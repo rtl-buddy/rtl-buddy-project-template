@@ -1,57 +1,83 @@
 # RTL-Buddy Test Configuration File
 rtl-buddy-filetype: test_config
 
-# List testbenches contained in this verif dir
+# Single tb_top.sv driven by directed/random sequences selected via +TEST=
 testbenches:
   - name: "tb_top"
     filelist:
       - "+incdir+../../common"
+      - "../../verif/sandbox/cov_alu.sv"
       - "tb_top.sv"
 
-# List tests supported in this verif dir
 tests:
   - name: "basic"
-    desc: "SANDBOX-01: Basic plusarg smoke test"
-    # reglvl: priority for regression use with --reg-level
-    # 0 (always run), 9999 (lowest priority), 10000 (disabled)
+    desc: "smoke — exercise each opcode once with non-zero operands"
     reglvl: 0
-    # plusargs: runtime simulator arguments
     plusargs:
-      a: "10"
-      b:
-      # verbosity 0 (most verbose), 2 (error and above)
+      TEST: basic
       lvm_verbosity: 2
-    # Select the DUT top module from models.yaml.
-    model: "test_module_3"
+    model: "alu"
     model_path: "../../design/sandbox/models.yaml"
-    # Specify which TB module to use as top.
     testbench: "tb_top"
+    covers:
+      - "SAND-FUNC-RESET"
+      - "SAND-FUNC-OP-ADD"
+      - "SAND-FUNC-OP-SUB"
+      - "SAND-FUNC-OP-AND"
+      - "SAND-FUNC-OP-OR"
+      - "SAND-FUNC-OP-XOR"
+      - "SAND-FUNC-OP-SHL"
+      - "SAND-FUNC-OP-SHR"
+      - "SAND-FUNC-OP-NOP"
 
-  - name: "extra"
-    desc: "SANDBOX-02: Define handling and verbose logging"
-    reglvl: 1000
+  - name: "ops_sweep"
+    desc: "every opcode with progressing operands; targets opcode and operand-range bins"
+    reglvl: 0
     plusargs:
-      a: "8"
-      b: "10"
-      test_cycles: "20"
-      # verbosity 0 (most verbose), 2 (error and above)
-      lvm_verbosity: 0
-    plusdefines:
-      DEFINE_WO_VALUE:
-      DEFINE_WITH_VALUE: "1"
-    model: "test_module_3"
+      TEST: ops_sweep
+      lvm_verbosity: 2
+    model: "alu"
     model_path: "../../design/sandbox/models.yaml"
     testbench: "tb_top"
+    covers:
+      - "SAND-FUNC-OP-ADD"
+      - "SAND-FUNC-OP-SUB"
+      - "SAND-FUNC-OP-AND"
+      - "SAND-FUNC-OP-OR"
+      - "SAND-FUNC-OP-XOR"
+      - "SAND-FUNC-OP-SHL"
+      - "SAND-FUNC-OP-SHR"
+      - "SAND-FUNC-OP-NOP"
+      - "SAND-FUNC-OPERAND-RANGE"
 
-  - name: "extra1"
-    desc: "SANDBOX-03: Regression-disabled define variant"
-    reglvl: 10000
+  - name: "flags"
+    desc: "directed corners that exercise every flag (Z, N, C-ADD, C-SUB, V-ADD, V-SUB)"
+    reglvl: 0
     plusargs:
-      a: "8"
-      b: "10"
-      test_cycles: "20"
-    plusdefines:
-      DEFINE_WITH_VALUE: "1"
-    model: "test_module_3"
+      TEST: flags
+      lvm_verbosity: 2
+    model: "alu"
     model_path: "../../design/sandbox/models.yaml"
     testbench: "tb_top"
+    covers:
+      - "SAND-FUNC-FLAG-Z"
+      - "SAND-FUNC-FLAG-N"
+      - "SAND-FUNC-FLAG-C-ADD"
+      - "SAND-FUNC-FLAG-C-SUB"
+      - "SAND-FUNC-FLAG-V-ADD"
+      - "SAND-FUNC-FLAG-V-SUB"
+
+  - name: "random"
+    desc: "256-cycle constrained-random — operand-range coverage closure"
+    reglvl: 0
+    plusargs:
+      TEST: random
+      CYCLES: "256"
+      lvm_verbosity: 2
+    model: "alu"
+    model_path: "../../design/sandbox/models.yaml"
+    testbench: "tb_top"
+    covers:
+      - "SAND-FUNC-OPERAND-RANGE"
+      - "SAND-FUNC-FLAG-Z"
+      - "SAND-FUNC-FLAG-N"

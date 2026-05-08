@@ -2,14 +2,6 @@
 rtl-buddy-filetype: model_config
 
 models:
-  - name: "test_module"
-    desc: "Simple adder top"
-    filelist: ["-F test_modules.f"]
-
-  - name: "test_module_2"
-    desc: "Interface-based wrapper leaf"
-    filelist: ["-F test_modules.f"]
-
-  - name: "test_module_3"
-    desc: "Active sandbox DUT top"
+  - name: "alu"
+    desc: "Tiny 8-bit ALU — sandbox demonstrator DUT"
     filelist: ["-F test_modules.f"]

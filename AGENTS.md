@@ -87,8 +87,8 @@ Use this repo to validate the project setup and `rtl_buddy` integration.
 ```bash
 # from repo root
 uv run rb --machine regression -c regression.yaml
-uv run rb --machine filelist test_module -c design/sandbox/models.yaml
-uv run rb --machine verible syntax design/sandbox/test_module.sv
+uv run rb --machine filelist alu -c design/sandbox/models.yaml
+uv run rb --machine verible syntax design/sandbox/alu.sv
 uv run rb --machine spec list
 uv run rb --machine spec check-design
 uv run rb --machine spec check-coverage

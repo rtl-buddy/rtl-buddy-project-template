@@ -40,3 +40,4 @@ tags
 **.nfs*
 **.json
 !.claude/settings.json
+**/sandbox/report/

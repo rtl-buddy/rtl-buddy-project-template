@@ -7,12 +7,38 @@ This repository is a clean starting point for a new RTL project: it includes a r
 ## What This Template Includes
 
 - A pinned `rtl_buddy` dependency managed with `uv`
-- A working example design under [`design/sandbox/`](design/sandbox/)
-- A matching verification suite under [`verif/sandbox/`](verif/sandbox/)
+- **Sandbox demonstrator** — a tiny ALU with end-to-end coverage of `rtl_buddy`'s headline features (see "Sandbox Demonstrator" below)
 - A first-class cocotb/Verilator example under [`verif/cocotb_ex/`](verif/cocotb_ex/)
-- Starter blocks and configs that demonstrate `rtl_buddy` features under [`design/template/`](design/template/) and [`verif/template/`](verif/template/)
-- A lightweight spec traceability example under [`spec/template/`](spec/template/), wired into the starter design and tests
-- A minimal Verilator coverage example, including merged HTML coverage export
+- Starter blocks and configs under [`design/template/`](design/template/) / [`verif/template/`](verif/template/) / [`spec/template/`](spec/template/)
+- Verilator coverage with merged LCOV HTML and Coverview package export
+- Surfer integration via `rb wave` and headless waveform capture in DV reports
+
+## Sandbox Demonstrator
+
+The sandbox is a tiny 8-bit ALU intentionally chosen as the smallest DUT
+that can show every major `rtl_buddy` capability without overshadowing
+the framework. **One DUT, one spec, two cosim flows:**
+
+| Capability                             | Where                                                         |
+|----------------------------------------|---------------------------------------------------------------|
+| Spec authoring (prose + IDs)           | [`spec/sandbox/README.md`](spec/sandbox/README.md), [`specs.yaml`](spec/sandbox/specs.yaml) |
+| Spec → functional coverage             | [`verif/sandbox/cov_alu.sv`](verif/sandbox/cov_alu.sv) (cover labels match `SAND-FUNC-*` IDs) |
+| Test planning (`covers:` mapping)      | [`verif/sandbox/testplan.md`](verif/sandbox/testplan.md), [`tests.yaml`](verif/sandbox/tests.yaml) |
+| Coverage collection + Coverview        | `rb -M cov regression --coverage-merge --coverage-html --coverage-coverview` |
+| Golden-model cosim (SV side)           | inline reference in [`verif/sandbox/tb_top.sv`](verif/sandbox/tb_top.sv) + post-run replay through [`spec/sandbox/sandbox_model.py`](spec/sandbox/sandbox_model.py) |
+| Golden-model cosim (cocotb side)       | [`verif/sandbox_cocotb/`](verif/sandbox_cocotb/) drives the **same DUT** against the **same Python golden** live |
+| Surfer integration (`rb wave`)         | [`verif/sandbox/tb_top.surfer`](verif/sandbox/tb_top.surfer) — auto-loaded by `rb wave <test>` |
+| DV report w/ waveform proof            | [`verif/sandbox/build_report.py`](verif/sandbox/build_report.py) — emits `report/<test>.md` with headless surfer captures |
+
+```bash
+uv run rb regression -c regression.yaml                              # run all suites
+uv run rb -M cov regression -c regression.yaml \
+    --coverage-merge --coverage-html --coverage-coverview            # + coverage
+uv run rb spec check-coverage                                        # close spec → cov loop
+uv run rb wave basic                                                 # live Surfer
+(cd verif/sandbox && uv run python build_report.py)                  # DV report
+open verif/sandbox/report/index.md
+```
 
 ## Tooling Scope
 
@@ -75,14 +101,15 @@ That writes `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under th
 ├── regression.yaml         # top-level regression list
 ├── design/
 │   ├── cocotb_ex/          # cocotb demo RTL
-│   ├── sandbox/            # runnable example block
+│   ├── sandbox/            # tiny ALU DUT (sandbox demonstrator)
 │   └── template/           # starter design files for a new block
 ├── spec/
-│   ├── sandbox/            # spec traceability for the sandbox example
+│   ├── sandbox/            # ALU spec + Python golden model (shared by both verif suites)
 │   └── template/           # starter spec traceability example
 ├── verif/
 │   ├── cocotb_ex/          # cocotb demo suite
-│   ├── sandbox/            # runnable example test suite
+│   ├── sandbox/            # SV/LVM cosim + DV report + Surfer layout
+│   ├── sandbox_cocotb/     # cocotb cosim against the shared Python golden
 │   └── template/           # starter verification files for a new block
 ├── common/                 # shared RTL helpers used by the examples
 ├── tools/                  # Bundling tools in your project
@@ -115,13 +142,13 @@ uv run rb test basic
 Generate a filelist from the sandbox model definition:
 
 ```bash
-uv run rb filelist test_module -c design/sandbox/models.yaml
+uv run rb filelist alu -c design/sandbox/models.yaml
 ```
 
 If you have Verible installed and want to exercise the Verible integration:
 
 ```bash
-uv run rb verible syntax design/sandbox/test_module.sv
+uv run rb verible syntax design/sandbox/alu.sv
 ```
 
 ## Coverage Example

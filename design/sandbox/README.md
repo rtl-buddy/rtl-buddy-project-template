@@ -1,21 +1,31 @@
-# Run sandbox unit tests
+# `design/sandbox/` — Tiny ALU DUT
 
-To run the `basic` test, execute the following command:
+A small 8-bit ALU used by the sandbox demonstrator suites to exercise
+`rtl_buddy`'s spec / coverage / cosim / waveform / reporting flows.
 
-    cd ../../verif/sandbox
-    ../../venv/bin/python -m rtl_buddy test basic -c tests.yaml
+| Port  | Dir | Width | Notes                                       |
+|-------|-----|-------|---------------------------------------------|
+| `clk` | in  | 1     | rising-edge clock                           |
+| `rst` | in  | 1     | sync, active-high                           |
+| `op`  | in  | 3     | opcode (see below)                          |
+| `a`   | in  | W=8   | operand A                                   |
+| `b`   | in  | W=8   | operand B                                   |
+| `y`   | out | W=8   | result (registered, 1-cycle latency)        |
+| `zf`  | out | 1     | zero flag                                   |
+| `cf`  | out | 1     | carry / borrow                              |
+| `nf`  | out | 1     | negative (msb of result)                    |
+| `vf`  | out | 1     | signed overflow (ADD/SUB only; else 0)      |
 
+## Opcodes
 
-To run all tests:
+`0:ADD  1:SUB  2:AND  3:OR  4:XOR  5:SHL  6:SHR  7:NOP`
 
-    cd ../../verif/sandbox
-    ../../venv/bin/python -m rtl_buddy test -c tests.yaml
+Result and flags appear **one cycle** after the inputs (registered output).
 
+## Cross-references
 
-# Test Definition
-
-The testplan (TP) is described in [../../verif/sandbox/tests.yaml](../../verif/sandbox/tests.yaml). The TP contains a list of tests, each test has an associated testbench and verilog-model. Verilog models are defined in the model definition file `models.yaml` described below.
-
-# Model Definition
-
-The verilog models are described in [models.yaml](models.yaml).
+- Authoritative spec: [`spec/sandbox/`](../../spec/sandbox/)
+- Python golden model (single source of truth shared by both verif suites):
+  [`spec/sandbox/sandbox_model.py`](../../spec/sandbox/sandbox_model.py)
+- SV/LVM verification suite: [`verif/sandbox/`](../../verif/sandbox/)
+- cocotb verification suite: [`verif/sandbox_cocotb/`](../../verif/sandbox_cocotb/)
