@@ -32,7 +32,7 @@ cd verif/sandbox_cocotb
 uv run rb test cocotb_random        # one cocotb test
 uv run rb test cocotb_flags
 
-# whole project regression (this suite + verif/sandbox + verif/cocotb_ex)
+# whole project regression (this suite + leaf-IP suites + sandbox + alu_accel)
 uv run rb regression -c ../../regression.yaml
 ```
 
@@ -42,7 +42,9 @@ directly. Imports of `sandbox_model` are resolved by inserting
 
 ## Files
 
-| File           | Purpose                                                |
-|----------------|--------------------------------------------------------|
-| `tests.yaml`   | rtl_buddy test configs, declares cocotb module         |
-| `test_alu.py`  | `@cocotb.test()` coroutines: `cocotb_random`, `cocotb_flags` |
+| File                   | Purpose                                                                |
+|------------------------|------------------------------------------------------------------------|
+| `tests.yaml`           | rtl_buddy test configs (one cocotb module per rtl_buddy test)          |
+| `_alu_common.py`       | shared helpers: clock/reset, drive + per-cycle scoreboard vs golden    |
+| `test_alu_random.py`   | `cocotb_random` — 256 random ops scoreboarded against `AluModel`       |
+| `test_alu_flags.py`    | `cocotb_flags` — directed flag corners (C/V for ADD/SUB)               |
