@@ -59,18 +59,25 @@ module ip_async_fifo #(
                     {~rptr_gray_in_w[PTR_W-1:PTR_W-2], rptr_gray_in_w[PTR_W-3:0]});
 
   // ── Read side
+  //
+  // Canonical Cummings formulation: the read pointer advance is folded
+  // into a combinational `next` term so the empty flag can be a pure
+  // flop output. Registering `rd_empty` is required because it crosses
+  // into apb_clk for the FIFO_EMPTY status bit — a bare comparator
+  // would expose `u_sync_empty` to comparator glitches.
   logic [PTR_W-1:0] rptr_bin, rptr_gray;
   logic [PTR_W-1:0] rptr_bin_next, rptr_gray_next;
   logic [PTR_W-1:0] wptr_gray_in_r;
+  logic             rd_empty_q;
 
-  assign rptr_bin_next  = rptr_bin + 1'b1;
+  assign rptr_bin_next  = rptr_bin + (rd_en & ~rd_empty_q);
   assign rptr_gray_next = rptr_bin_next ^ (rptr_bin_next >> 1);
 
   always_ff @(posedge rclk or negedge rrst_n) begin
     if (!rrst_n) begin
       rptr_bin  <= '0;
       rptr_gray <= '0;
-    end else if (rd_en && !rd_empty) begin
+    end else begin
       rptr_bin  <= rptr_bin_next;
       rptr_gray <= rptr_gray_next;
     end
@@ -80,7 +87,11 @@ module ip_async_fifo #(
     .clk(rclk), .rst_n(rrst_n), .d(wptr_gray), .q(wptr_gray_in_r)
   );
 
-  assign rd_empty = (rptr_gray == wptr_gray_in_r);
+  always_ff @(posedge rclk or negedge rrst_n) begin
+    if (!rrst_n) rd_empty_q <= 1'b1;
+    else         rd_empty_q <= (rptr_gray_next == wptr_gray_in_r);
+  end
+  assign rd_empty = rd_empty_q;
   assign rd_data  = mem[rptr_bin[ADDR_W-1:0]];
 
 endmodule
