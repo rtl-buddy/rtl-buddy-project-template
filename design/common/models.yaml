@@ -1,0 +1,24 @@
+rtl-buddy-filetype: model_config
+
+# CDC + async-FIFO IP collection — multiple models in one design dir.
+# Each entry uses `-v` (library include) so downstream blocks pull only
+# what they instantiate.
+models:
+  - name: "ip_cdc_sync"
+    desc: "Multi-flop level synchronizer for single-bit CDC"
+    filelist: ["-v ip_cdc_sync.sv"]
+    spec: "../../spec/ip_cdc_sync/specs.yaml"
+
+  - name: "ip_cdc_handshake"
+    desc: "4-phase req/ack vector CDC; payload coherent without gray code"
+    filelist:
+      - "-v ip_cdc_sync.sv"
+      - "-v ip_cdc_handshake.sv"
+    spec: "../../spec/ip_cdc_handshake/specs.yaml"
+
+  - name: "ip_async_fifo"
+    desc: "Gray-code dual-clock async FIFO (DEPTH power-of-2)"
+    filelist:
+      - "-v ip_cdc_sync.sv"
+      - "-v ip_async_fifo.sv"
+    spec: "../../spec/ip_async_fifo/specs.yaml"

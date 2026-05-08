@@ -1,0 +1,22 @@
+rtl-buddy-filetype: test_config
+
+testbenches:
+  - name: "tb_apb"
+    filelist:
+      - "+incdir+../../common"
+      - "tb_top.sv"
+
+tests:
+  - name: "smoke"
+    desc: "APB modport compile + read/write/stall/pslverr smoke"
+    reglvl: 0
+    plusargs:
+      lvm_verbosity: 2
+    model: "apb_intf"
+    model_path: "../../design/apb/models.yaml"
+    testbench: "tb_apb"
+    covers:
+      - "APB-IF-WRITE"
+      - "APB-IF-READ"
+      - "APB-IF-STALL"
+      - "APB-IF-PSLVERR"

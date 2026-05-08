@@ -7,6 +7,8 @@ dependencies = [
   "cocotb==2.0.1",
   "pytest==8.4.2",
   "info-process",
+  "peakrdl",
+  "peakrdl-regblock",
 ]
 
 [tool.uv]
@@ -14,3 +16,5 @@ package = false
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
+peakrdl = { git = "https://github.com/rtl-buddy/PeakRDL.git", subdirectory = "peakrdl" }
+peakrdl-regblock = { git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" }

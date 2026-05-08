@@ -1,11 +1,23 @@
 # RTL-Buddy Project Template
 
 Starter RTL project to use [`rtl_buddy`](https://github.com/rtl-buddy/rtl_buddy).
-A clean starting point for a new project that ships a runnable, end-to-end
-demonstrator covering every headline `rtl_buddy` capability — spec, test,
-regression, coverage, golden-model cosim (SV + cocotb), waveforms, DV
-reports, and synthesis — all driven from a tiny 8-bit ALU sandbox so the
-mechanics stay in focus instead of the DUT.
+
+A clean starting point for a new project that ships a runnable,
+end-to-end demonstrator. The example is built up from small components:
+
+- **Leaf IPs** — APB SV interface, two CDC primitives (`ip_cdc_sync`,
+  `ip_cdc_handshake`), an async FIFO (`ip_async_fifo`), and the tiny
+  ALU. Each has its own spec, testplan, and runnable test.
+- **System block** — `alu_accel`, a multi-clock APB-mapped ALU
+  accelerator with PeakRDL-generated CSRs, two CDC paths, and an
+  async-FIFO streaming-input mode. Demonstrates how the leaf IPs
+  compose.
+
+Together these exercise every headline `rtl_buddy` capability — spec
+traceability, test, regression, coverage, golden-model cosim (SV +
+cocotb), `rb wave` + headless Surfer captures, DV reports, PeakRDL
+register generation, and Yosys synthesis (generic + tech-mapped) — so
+the mechanics stay in focus instead of the DUT.
 
 ## Tooling Scope
 
@@ -57,19 +69,33 @@ uv run rb skill install --project
 ├── regression.yaml         # top-level sim regression list
 ├── synth_regression.yaml   # top-level synth regression list
 ├── design/
-│   ├── sandbox/            # tiny ALU DUT (the demonstrator)
+│   ├── apb/                # APB4 SV interface IP
+│   ├── common/             # CDC primitives (ip_cdc_sync, ip_cdc_handshake) + ip_async_fifo
+│   ├── alu_accel/          # system block: PeakRDL CSR, multi-clock top, compute wrapper
+│   ├── sandbox/            # tiny ALU leaf DUT
 │   ├── cocotb_ex/          # standalone cocotb demo RTL
 │   └── template/           # starter design files for a new block
 ├── spec/
-│   ├── sandbox/            # ALU spec + Python golden model (shared by both verif suites)
+│   ├── apb/                # APB IP spec
+│   ├── ip_cdc_sync/        # CDC sync IP spec
+│   ├── ip_cdc_handshake/   # vector-CDC IP spec
+│   ├── ip_async_fifo/      # async-FIFO IP spec
+│   ├── alu_accel/          # system spec + alu_accel_csr.rdl + alu_accel_model.py
+│   ├── sandbox/            # ALU spec + Python golden model
 │   └── template/           # starter spec-traceability example
 ├── verif/
+│   ├── apb/                # APB modport smoke
+│   ├── ip_cdc_sync/        # standalone CDC sync test
+│   ├── ip_cdc_handshake/   # multi-clock vector-CDC test
+│   ├── ip_async_fifo/      # multi-clock async-FIFO test
+│   ├── alu_accel/          # system-level multi-clock APB suite (csr_smoke + fifo_stream)
 │   ├── sandbox/            # SV/LVM cosim suite + DV report + Surfer layout
 │   ├── sandbox_cocotb/     # cocotb cosim against the shared Python golden
 │   ├── cocotb_ex/          # standalone cocotb demo suite
 │   └── template/           # starter verification files for a new block
 ├── synth/
-│   └── sandbox/            # Yosys synth (generic + Nangate45 tech-mapped)
+│   ├── sandbox/            # Yosys synth of the ALU leaf (generic + Nangate45)
+│   └── alu_accel/          # Yosys synth of the system block (generic)
 ├── common/                 # shared RTL helpers (LVM macros etc.)
 ├── tools/                  # vendored project tooling (placeholder)
 └── pyproject.toml          # uv-managed project env + pinned rtl_buddy
@@ -105,6 +131,13 @@ open verif/sandbox/report/index.md
 
 # Synth               — Yosys synthesis (generic + tech-mapped)
 uv run rb synth-regression -c synth_regression.yaml
+
+# System-level demo  — multi-clock APB accelerator (csr_smoke + fifo_stream)
+(cd verif/alu_accel && uv run rb test csr_smoke)
+(cd verif/alu_accel && uv run rb test fifo_stream)
+
+# Regenerate PeakRDL CSRs (from spec/alu_accel/alu_accel_csr.rdl)
+(cd design/alu_accel && ./gen_alu_accel_csr.sh)
 ```
 
 Each section below walks through *what* the feature does, *how it is
@@ -420,6 +453,89 @@ uv run rb synth-regression -c synth_regression.yaml -l 1000
 
 The tech-mapped run reports gate count, area (µm²), and worst-negative
 slack against the SDC.
+
+---
+
+## PeakRDL Register Generation
+
+The `alu_accel` CSR block is generated from a SystemRDL description
+([`spec/alu_accel/alu_accel_csr.rdl`](spec/alu_accel/alu_accel_csr.rdl))
+using [PeakRDL-regblock](https://peakrdl-regblock.readthedocs.io/). The
+generated SV files are committed; CI runs the regen script and
+`git diff --exit-code` to catch drift.
+
+### How it is wired
+
+- **Source of truth**: `spec/alu_accel/alu_accel_csr.rdl` lives with the
+  spec, not the design. Edit this when register layout changes.
+- **Regen script**: [`design/alu_accel/gen_alu_accel_csr.sh`](design/alu_accel/gen_alu_accel_csr.sh)
+  invokes `peakrdl regblock` with `--cpuif apb4-flat --default-reset rst_n`
+  and patches in Verilator-friendly lint waivers on the generated files.
+- **Output**: `alu_accel_csr.sv` + `alu_accel_csr_pkg.sv` in
+  `design/alu_accel/`. Both are committed.
+- **Pinned deps**: `peakrdl` and `peakrdl-regblock` come from the
+  rtl-buddy fork via `[tool.uv.sources]` in `pyproject.toml`.
+- **Hwif wiring**: [`design/alu_accel/alu_accel_top.sv`](design/alu_accel/alu_accel_top.sv)
+  consumes the generated `hwif_in`/`hwif_out` structs and threads them
+  to the compute domain through `ip_cdc_handshake` / `ip_async_fifo`.
+
+### Try it
+
+```bash
+# Edit spec/alu_accel/alu_accel_csr.rdl, then:
+(cd design/alu_accel && ./gen_alu_accel_csr.sh)
+
+# Regression catches any RTL drift:
+uv run rb regression -c regression.yaml
+```
+
+---
+
+## IP Catalog & System Block
+
+The demonstrator is built up from small, individually-tested IPs. Each
+appears in `design/`, `spec/`, and `verif/` as a peer block. The
+system-level `alu_accel` composes them.
+
+| IP / Block         | Design                                              | Spec                                              | Verif                                             |
+|--------------------|-----------------------------------------------------|---------------------------------------------------|---------------------------------------------------|
+| `apb`              | [`design/apb/`](design/apb/)                       | [`spec/apb/`](spec/apb/)                          | [`verif/apb/`](verif/apb/)                        |
+| `ip_cdc_sync`      | [`design/common/ip_cdc_sync.sv`](design/common/ip_cdc_sync.sv) | [`spec/ip_cdc_sync/`](spec/ip_cdc_sync/) | [`verif/ip_cdc_sync/`](verif/ip_cdc_sync/) |
+| `ip_cdc_handshake` | [`design/common/ip_cdc_handshake.sv`](design/common/ip_cdc_handshake.sv) | [`spec/ip_cdc_handshake/`](spec/ip_cdc_handshake/) | [`verif/ip_cdc_handshake/`](verif/ip_cdc_handshake/) |
+| `ip_async_fifo`    | [`design/common/ip_async_fifo.sv`](design/common/ip_async_fifo.sv) | [`spec/ip_async_fifo/`](spec/ip_async_fifo/) | [`verif/ip_async_fifo/`](verif/ip_async_fifo/) |
+| `alu` (sandbox)    | [`design/sandbox/alu.sv`](design/sandbox/alu.sv)   | [`spec/sandbox/`](spec/sandbox/)                  | [`verif/sandbox/`](verif/sandbox/), [`verif/sandbox_cocotb/`](verif/sandbox_cocotb/) |
+| `alu_accel`        | [`design/alu_accel/`](design/alu_accel/) (system)  | [`spec/alu_accel/`](spec/alu_accel/)              | [`verif/alu_accel/`](verif/alu_accel/)            |
+
+### `alu_accel` — multi-clock system block
+
+Three clock domains:
+
+- `apb_clk` — APB host bus and the PeakRDL-generated CSR block
+- `cclk`    — compute domain (drives the `alu`)
+- both also serve as the write/read clocks of `ip_async_fifo` for the
+  streaming-input mode
+
+Two CDC paths cross between APB and compute:
+
+- **CSR-direct mode** — `ip_cdc_handshake` carries `{op,a,b}` from the
+  APB domain to compute when SW writes `ctrl.GO=1`.
+- **FIFO-stream mode** — `ip_async_fifo` accepts records pushed via
+  `fifo_push` register writes; compute drains at its own rate when
+  `ctrl.SRC=1`.
+
+Results return to APB through a second `ip_cdc_handshake`; status flags
+(`BUSY`, `FIFO_FULL`, `FIFO_EMPTY`) are gathered through `ip_cdc_sync`
+chains so software can poll them from the APB side.
+
+```bash
+(cd verif/alu_accel && uv run rb test csr_smoke)     # CSR-direct
+(cd verif/alu_accel && uv run rb test fifo_stream)   # FIFO mode (drives FULL + DRAIN)
+uv run rb synth alu_accel_synth_generic -c synth/alu_accel/synth.yaml
+```
+
+The system synthesizes to ~1.2k Yosys gates (tech-independent), proving
+the full PeakRDL+CDC+FIFO+ALU stack elaborates and synthesizes
+end-to-end.
 
 ---
 

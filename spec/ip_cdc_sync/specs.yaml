@@ -1,0 +1,16 @@
+rtl-buddy-filetype: spec_config
+
+blocks:
+  - name: "ip_cdc_sync"
+    desc: "Multi-flop level synchronizer (single-bit CDC primitive)"
+    docs:
+      - "README.md"
+    coverage-items:
+      - id: "CDCSYNC-RESET"
+        desc: "q matches RST_VAL while rst_n is low"
+      - id: "CDCSYNC-D-LOW"
+        desc: "d=0 propagates to q after STAGES cycles"
+      - id: "CDCSYNC-D-HIGH"
+        desc: "d=1 propagates to q after STAGES cycles"
+      - id: "CDCSYNC-LATENCY"
+        desc: "synchronizer latency is exactly STAGES destination cycles"

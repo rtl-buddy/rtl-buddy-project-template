@@ -5,3 +5,4 @@ rtl-buddy-filetype: synth_reg_config
 # entry. Tech-mapped runs are gated by reglvl (see synth/sandbox/synth.yaml).
 synth-configs:
   - "synth/sandbox/synth.yaml"
+  - "synth/alu_accel/synth.yaml"

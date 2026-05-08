@@ -1,0 +1,21 @@
+rtl-buddy-filetype: test_config
+
+testbenches:
+  - name: "tb_ip_cdc_handshake"
+    filelist:
+      - "+incdir+../../common"
+      - "tb_top.sv"
+
+tests:
+  - name: "smoke"
+    desc: "6 vector transfers across asymmetric clocks; payload + backpressure scoreboarded"
+    reglvl: 0
+    plusargs: { lvm_verbosity: 2 }
+    model: "ip_cdc_handshake"
+    model_path: "../../design/common/models.yaml"
+    testbench: "tb_ip_cdc_handshake"
+    covers:
+      - "HSCDC-XFER"
+      - "HSCDC-DATA-MATCH"
+      - "HSCDC-BACKPRESSURE"
+      - "HSCDC-MULTI-XFER"
