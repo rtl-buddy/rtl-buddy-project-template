@@ -41,4 +41,5 @@ tags
 **.json
 !.claude/settings.json
 **/sandbox/report/
+**/lint/cdc/reports/
 pdk/
