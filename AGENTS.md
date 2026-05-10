@@ -51,6 +51,8 @@ The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and material
 - **Python 3.11** — standard interpreter for this repo.
 - **Verilator** — e.g. `brew install verilator` on macOS, or build from source.
 - **Verible** — e.g. `brew tap chipsalliance/verible && brew install verible` on macOS, or see the [Verible releases](https://github.com/chipsalliance/verible/releases) for other platforms.
+- **Yosys** — build the rtl-buddy fork when you want to run `rb synth`.
+- **OpenROAD** — build from source when you want to run the OpenROAD-backed `rb synth` example in `synth/sandbox/`.
 
 ### Setup steps
 
@@ -90,6 +92,11 @@ uv run rb --machine verible syntax design/sandbox/alu.sv
 uv run rb --machine spec list
 uv run rb --machine spec check-design
 uv run rb --machine spec check-coverage
+uv run rb --machine synth alu_synth_generic -c synth/sandbox/synth.yaml
+
+# optional tech-mapped synth examples after ./synth/sandbox/download_pdk.sh
+uv run rb --machine synth alu_synth_nangate45 -c synth/sandbox/synth.yaml
+uv run rb --machine synth alu_synth_openroad  -c synth/sandbox/synth.yaml
 
 # from suite dir
 cd verif/sandbox
