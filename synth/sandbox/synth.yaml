@@ -1,10 +1,11 @@
 # RTL-Buddy Synthesis Configuration File
 rtl-buddy-filetype: synth_config
 
-# Two runs against the sandbox tiny ALU:
-#  - alu_synth_generic:    tech-independent Yosys synth (no PDK required)
-#  - alu_synth_nangate45:  tech-mapped to Nangate45 typical corner
-#                          (requires Liberty file; see README)
+# Three runs against the sandbox tiny ALU:
+#  - alu_synth_generic:     tech-independent Yosys synth (no PDK required)
+#  - alu_synth_nangate45:   tech-mapped to Nangate45 typical corner with Yosys
+#  - alu_synth_openroad:    tech-mapped OpenROAD timing analysis using the same library
+#                           assets (requires Liberty + LEF; see README)
 syntheses:
   - name: "alu_synth_generic"
     desc: "Tech-independent Yosys synthesis of the tiny ALU"
@@ -25,4 +26,17 @@ syntheses:
     # Deferred tier — the Liberty file is not vendored. Download with
     # `synth/sandbox/download_pdk.sh` and then invoke directly:
     #   rb synth alu_synth_nangate45 -c synth/sandbox/synth.yaml
+    reglvl: 1000
+
+  - name: "alu_synth_openroad"
+    desc: "Tech-mapped OpenROAD synthesis of the tiny ALU with native SDC timing"
+    model: "alu"
+    model_path: "../../design/sandbox/models.yaml"
+    tool: "openroad"
+    libraries:
+      - "nangate45_typ"
+    constraints: "constraints.sdc"
+    # Deferred tier — OpenROAD also needs LEF data from download_pdk.sh.
+    # Run directly once yosys + openroad are both on PATH:
+    #   rb synth alu_synth_openroad -c synth/sandbox/synth.yaml
     reglvl: 1000
