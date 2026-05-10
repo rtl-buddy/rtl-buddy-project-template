@@ -11,8 +11,8 @@ accelerator with PeakRDL-generated CSRs (`alu_accel`).
 Together they exercise every headline `rtl_buddy` capability — spec
 traceability, test, regression, coverage, golden-model cosim (SV +
 cocotb), `rb wave` + headless Surfer captures, DV reports, PeakRDL
-register generation, and Yosys synthesis — so the mechanics stay in
-focus instead of the DUT.
+register generation, and synthesis with both Yosys and OpenROAD — so
+the mechanics stay in focus instead of the DUT.
 
 ## Demonstrator at a Glance
 
@@ -30,7 +30,8 @@ IPs are tested in isolation; `alu_accel` proves they compose.
 
 Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
 across these blocks; `rb synth-regression -c synth_regression.yaml`
-synthesizes the alu leaf (287 gates) and the full system (1265 gates).
+synthesizes the alu leaf (generic by default, plus Yosys and OpenROAD
+tech-mapped runs at `reglvl: 1000`) and the full system (1265 gates).
 
 ## Tooling Scope
 
@@ -40,6 +41,7 @@ template the supported flows are:
 - **Verilator** for the open-source compile/sim/regression/coverage path
 - **VCS** for teams using Synopsys flows
 - **Yosys** (rtl-buddy fork) for synthesis (generic + tech-mapped)
+- **OpenROAD** for tech-mapped timing analysis with native SDC handling
 - **cocotb** for Python-driven testbenches
 - **Surfer** + WCP for live waveform viewing and headless capture
 - **Coverview** for browser-based coverage dashboards
@@ -55,7 +57,7 @@ External prerequisites:
 - `coverview` (Antmicro) for the Coverview package path
 - Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, for `rb verible …`)
 - Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`); macOS notes in [`tools/yosys/SETUP_OSX.md`](tools/yosys/SETUP_OSX.md)
-- OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
+- OpenROAD — build from source onto `PATH` (optional, for the OpenROAD `rb synth …` backend); macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md)
 - Surfer — build from the [rtl-buddy fork](https://github.com/rtl-buddy/surfer) onto `PATH` (optional, for `rb wave` and headless waveform capture)
 
 Sync the project environment after cloning:
@@ -102,7 +104,7 @@ uv run rb skill install --project
 │   ├── sandbox_cocotb/     # cocotb cosim against the shared Python golden
 │   └── template/           # starter verification files for a new block
 ├── synth/
-│   ├── sandbox/            # Yosys synth of the ALU leaf (generic + Nangate45)
+│   ├── sandbox/            # generic, Yosys-mapped, and OpenROAD ALU synthesis examples
 │   └── alu_accel/          # Yosys synth of the system block (generic)
 ├── common/                 # shared SV verification helpers (LVM macros)
 ├── tools/                  # toolchain setup notes (yosys, openroad)
@@ -144,6 +146,10 @@ uv run rb -M cov regression -c regression.yaml \
 
 # Synth regression    — generic synth runs (tech-mapped is gated by reglvl)
 uv run rb synth-regression -c synth_regression.yaml
+
+# OpenROAD example    — fetch Nangate45 Liberty + LEF, then run native-SDC timing analysis
+./synth/sandbox/download_pdk.sh
+uv run rb synth alu_synth_openroad -c synth/sandbox/synth.yaml
 ```
 
 Each section below walks through *what* the feature does, *how it is
@@ -463,32 +469,35 @@ uv run rb regression -c regression.yaml
 
 ## Synthesis — `rb synth` / `rb synth-regression`
 
-Tool-agnostic Yosys synthesis with optional technology mapping
-against a Liberty file. Same shape as the sim flow: `synth.yaml` per
-block, an optional `synth_regression.yaml` discoverable list, and
-tool defaults in `root_config.yaml`.
+Tool-agnostic synthesis with both Yosys-only and OpenROAD-backed flows.
+Same shape as the sim flow: `synth.yaml` per block, an optional
+`synth_regression.yaml` discoverable list, and tool defaults in
+`root_config.yaml`.
 
 ### How it is wired
 
 - **Synthesis config**:
-  [`synth/sandbox/synth.yaml`](synth/sandbox/synth.yaml) defines two
+  [`synth/sandbox/synth.yaml`](synth/sandbox/synth.yaml) defines three
   runs:
   - `alu_synth_generic` — tech-independent, `reglvl: 0` (default).
-  - `alu_synth_nangate45` — tech-mapped to Nangate45 typical corner,
-    `reglvl: 1000` (deferred until the PDK is fetched).
+  - `alu_synth_nangate45` — tech-mapped with Yosys + Nangate45,
+    `reglvl: 1000` (deferred until the PDK assets are fetched).
+  - `alu_synth_openroad` — tech-mapped with OpenROAD timing analysis
+    using the same Nangate45 assets, also `reglvl: 1000`.
   [`synth/alu_accel/synth.yaml`](synth/alu_accel/synth.yaml) adds the
   whole-system run `alu_accel_synth_generic`.
 - **Constraints**:
   [`synth/sandbox/constraints.sdc`](synth/sandbox/constraints.sdc)
   carries a 100 MHz `create_clock`. Yosys extracts the period and
-  passes it to ABC for timing-driven mapping; the critical path
-  becomes WNS in the results table.
-- **Tool defaults**: `cfg-synth-tools` (yosys) and `cfg-synth-libs`
-  (`nangate45_typ`) in [`root_config.yaml`](root_config.yaml).
+  passes it to ABC for timing-driven mapping; OpenROAD reads the full
+  SDC natively and reports WNS/TNS.
+- **Tool defaults**: `cfg-synth-tools` (`yosys`, `openroad`) and
+  `cfg-synth-libs` (`nangate45_typ`) in
+  [`root_config.yaml`](root_config.yaml).
 - **PDK download**:
   [`synth/sandbox/download_pdk.sh`](synth/sandbox/download_pdk.sh)
-  fetches the Nangate45 Liberty from OpenROAD-flow-scripts (~6 MB).
-  `pdk/` is gitignored.
+  fetches the Nangate45 Liberty + LEF files from
+  OpenROAD-flow-scripts. `pdk/` is gitignored.
 - **Flat-port wrapper for the system**:
   [`design/alu_accel/alu_accel_synth_top.sv`](design/alu_accel/alu_accel_synth_top.sv)
   flattens the APB SV interface so Yosys can elaborate the top.
@@ -503,17 +512,19 @@ tool defaults in `root_config.yaml`.
 uv run rb synth alu_synth_generic       -c synth/sandbox/synth.yaml
 uv run rb synth alu_accel_synth_generic -c synth/alu_accel/synth.yaml
 
-# tech-mapped — Nangate45 Liberty for the alu leaf
+# tech-mapped — Nangate45 assets for the alu leaf
 ./synth/sandbox/download_pdk.sh
 uv run rb synth alu_synth_nangate45 -c synth/sandbox/synth.yaml
+uv run rb synth alu_synth_openroad  -c synth/sandbox/synth.yaml
 
-# discoverable regression — generic by default; bump -l to include nangate45
+# discoverable regression — generic by default; bump -l to include tech-mapped runs
 uv run rb synth-regression -c synth_regression.yaml
 uv run rb synth-regression -c synth_regression.yaml -l 1000
 ```
 
-The tech-mapped run reports gate count, area (µm²), and worst-negative
-slack against the SDC.
+The tech-mapped runs report gate count, area (µm²), and timing against
+`constraints.sdc`. The OpenROAD example is the one that demonstrates
+native multi-clock-capable SDC handling and TNS reporting.
 
 ---
 
