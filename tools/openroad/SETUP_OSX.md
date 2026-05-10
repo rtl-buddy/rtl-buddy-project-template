@@ -85,6 +85,19 @@ openroad -version
 # Expected output: 26Q2-... (date-based version string)
 ```
 
+## Use It In This Template
+
+Once `openroad` is on `PATH` and `./synth/sandbox/download_pdk.sh` has
+fetched the Nangate45 Liberty + LEF files, the sandbox OpenROAD example
+is runnable directly:
+
+```bash
+uv run rb synth alu_synth_openroad -c synth/sandbox/synth.yaml
+```
+
+The same assets are also used by the Yosys tech-mapped example
+(`alu_synth_nangate45`).
+
 ## Notes
 
 - Build takes ~15–20 min on an M-series Mac with `-j$(sysctl -n hw.logicalcpu)`.
@@ -94,7 +107,3 @@ openroad -version
 - OR-Tools, SCIP, and HiGHS are pulled from Homebrew; the bundled ABC
   and OpenSTA are built from source (`USE_SYSTEM_ABC=OFF`,
   `USE_SYSTEM_OPENSTA=OFF`).
-- OpenROAD is not currently invoked by the template's `rb synth` flow
-  (Yosys handles synthesis end-to-end). These notes are kept here for
-  downstream projects that want to run place-and-route on the
-  synthesized netlist.
