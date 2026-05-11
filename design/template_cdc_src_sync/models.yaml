@@ -1,0 +1,11 @@
+# RTL-Buddy RTL Model Configuration File
+rtl-buddy-filetype: model_config
+
+models:
+  - name: "template_cdc_src_sync_top"
+    desc: >-
+      Source-synchronous clock-forwarding chain (A → B0/B1 → C0/C1).
+      Reference for SoC-scope CDC with internal-pin
+      ``create_generated_clock`` declarations.
+    filelist: ["-F template_cdc_src_sync_top.f"]
+    spec: "../../spec/template_cdc_src_sync/specs.yaml"

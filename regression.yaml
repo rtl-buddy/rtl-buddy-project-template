@@ -12,3 +12,4 @@ test-configs:
   - "verif/sandbox/tests.yaml"
   - "verif/sandbox_cocotb/tests.yaml"
   - "verif/alu_accel/tests.yaml"
+  - "verif/template_cdc_src_sync/tests.yaml"

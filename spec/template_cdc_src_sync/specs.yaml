@@ -1,0 +1,20 @@
+# RTL-Buddy Spec Configuration File
+rtl-buddy-filetype: spec_config
+
+blocks:
+  - name: "template_cdc_src_sync"
+    desc: >-
+      Source-synchronous clock-forwarding chain (A → B0/B1 → C0/C1).
+      Demonstrates SoC-scope CDC where each block forwards its clock
+      alongside data through internal nets, with the system SDC
+      declaring each forwarded clock via ``create_generated_clock``
+      at the internal pin where it originates.
+    docs:
+      - "README.md"
+    coverage-items:
+      - id: "CDC-SRC-SYNC-01"
+        desc: "Data toggled on ck_a propagates through the A → B → C chain"
+      - id: "CDC-SRC-SYNC-02"
+        desc: "Reset asserts all data flops to a known state"
+      - id: "CDC-SRC-SYNC-03"
+        desc: "Forwarded clocks are derived from ck_a (verified via lint)"

@@ -6,3 +6,4 @@ rtl-buddy-filetype: synth_reg_config
 synth-configs:
   - "synth/sandbox/synth.yaml"
   - "synth/alu_accel/synth.yaml"
+  - "synth/template_cdc_src_sync/synth.yaml"
