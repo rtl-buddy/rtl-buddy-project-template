@@ -2,8 +2,8 @@
 rtl-buddy-filetype: synth_reg_config
 
 # Discoverable list of synth.yaml files. `rb synth-regression` walks each
-# entry. Tech-mapped runs are gated by reglvl (see synth/demo_sandbox/synth.yaml).
+# entry. Tech-mapped runs are gated by reglvl (see synth/demo_tiny_alu/synth.yaml).
 synth-configs:
-  - "synth/demo_sandbox/synth.yaml"
-  - "synth/demo_alu_accel/synth.yaml"
+  - "synth/demo_tiny_alu/synth.yaml"
+  - "synth/demo_tiny_alu_subsys/synth.yaml"
   - "synth/demo_cdc_src_sync/synth.yaml"

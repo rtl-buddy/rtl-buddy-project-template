@@ -12,13 +12,13 @@ analyses:
     tool: "rtl-buddy-cdc"
     constraints: "ip_cdc_handshake.sdc"
 
-  - name: "demo_alu_accel_lint"
+  - name: "demo_tiny_alu_subsys_lint"
     desc: "CDC lint of the multi-clock ALU accelerator (apb_clk ↔ cclk)"
-    model: "demo_alu_accel_top"
-    model_path: "../../design/demo_alu_accel/models.yaml"
+    model: "demo_tiny_alu_subsys_top"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
     tool: "rtl-buddy-cdc"
-    constraints: "demo_alu_accel.sdc"
-    waivers: "demo_alu_accel.waivers"
+    constraints: "demo_tiny_alu_subsys.sdc"
+    waivers: "demo_tiny_alu_subsys.waivers"
 
   - name: "demo_cdc_src_sync_lint"
     desc: >-

@@ -1,0 +1,28 @@
+# RTL-Buddy Synthesis Configuration File
+rtl-buddy-filetype: synth_config
+
+# Two runs against the sandbox tiny ALU:
+#  - demo_tiny_alu_synth_generic:    tech-independent Yosys synth (no PDK required)
+#  - demo_tiny_alu_synth_nangate45:  tech-mapped to Nangate45 typical corner
+#                          (requires Liberty file; see README)
+syntheses:
+  - name: "demo_tiny_alu_synth_generic"
+    desc: "Tech-independent Yosys synthesis of the tiny ALU"
+    model: "demo_tiny_alu"
+    model_path: "../../design/demo_tiny_alu/models.yaml"
+    tool: "yosys"
+    constraints: "constraints.sdc"
+    reglvl: 0
+
+  - name: "demo_tiny_alu_synth_nangate45"
+    desc: "Tech-mapped Yosys synthesis to Nangate45 typical corner"
+    model: "demo_tiny_alu"
+    model_path: "../../design/demo_tiny_alu/models.yaml"
+    tool: "yosys"
+    libraries:
+      - "nangate45_typ"
+    constraints: "constraints.sdc"
+    # Deferred tier — the Liberty file is not vendored. Download with
+    # `synth/demo_tiny_alu/download_pdk.sh` and then invoke directly:
+    #   rb synth demo_tiny_alu_synth_nangate45 -c synth/demo_tiny_alu/synth.yaml
+    reglvl: 1000

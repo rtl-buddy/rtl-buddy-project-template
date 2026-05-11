@@ -5,7 +5,7 @@ Confirms the modport contract works and exercises the four headline
 coverage IDs (`APB-IF-WRITE/READ/STALL/PSLVERR`).
 
 The interface gets full protocol coverage through use in
-[`verif/demo_alu_accel/`](../demo_alu_accel/). This suite stands alone so the APB
+[`verif/demo_tiny_alu_subsys/`](../demo_tiny_alu_subsys/). This suite stands alone so the APB
 IP is self-described (spec + testplan + tests).
 
 ```bash

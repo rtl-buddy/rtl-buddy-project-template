@@ -2,7 +2,7 @@
 
 Compile + smoke for the APB SystemVerilog interface
 ([`design/apb/apb_intf.sv`](../../design/apb/apb_intf.sv)). Real APB
-protocol coverage closes through [`verif/demo_alu_accel/`](../demo_alu_accel/);
+protocol coverage closes through [`verif/demo_tiny_alu_subsys/`](../demo_tiny_alu_subsys/);
 this suite exists so the IP block stands on its own with a runnable
 test, modport contract, and named coverage.
 

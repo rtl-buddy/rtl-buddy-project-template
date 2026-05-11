@@ -21,11 +21,11 @@ This repo's default flow is to use the `rtl-buddy/coverview` fork directly, then
 Run a coverage regression with `--coverage-coverview` to produce the Coverview zip:
 
 ```bash
-cd verif/demo_sandbox
+cd verif/demo_tiny_alu
 uv run rb -M cov regression --coverage-merge --coverage-html --coverage-coverview -c regression.yaml
 ```
 
-Output: `verif/demo_sandbox/coverview_regression.zip`
+Output: `verif/demo_tiny_alu/coverview_regression.zip`
 
 ## Viewing coverage
 

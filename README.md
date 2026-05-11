@@ -6,7 +6,7 @@ A clean starting point that ships a runnable, end-to-end demonstrator
 **built up from small components**. Each leaf IP (APB interface, two
 CDC primitives, an async FIFO, a tiny ALU) has its own spec, testplan,
 and runnable test. They compose into a multi-clock APB-mapped ALU
-accelerator with PeakRDL-generated CSRs (`demo_alu_accel`).
+accelerator with PeakRDL-generated CSRs (`demo_tiny_alu_subsys`).
 
 Together they exercise every headline `rtl_buddy` capability — spec
 traceability, test, regression, coverage, golden-model cosim (SV +
@@ -47,9 +47,9 @@ naming convention surfaces the category in the directory name:
 
 | Demo                  | What it exercises                                                            | Paths                                                                                                                            |
 |-----------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `demo_sandbox`        | Tiny 8-bit ALU leaf compute with Python golden model + SV/LVM cosim          | [`design/demo_sandbox/`](design/demo_sandbox/), [`spec/demo_sandbox/`](spec/demo_sandbox/), [`verif/demo_sandbox/`](verif/demo_sandbox/) |
-| `demo_sandbox_cocotb` | cocotb peer of `demo_sandbox` driving the same DUT against the same golden  | [`verif/demo_sandbox_cocotb/`](verif/demo_sandbox_cocotb/)                                                                       |
-| `demo_alu_accel`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU   | [`design/demo_alu_accel/`](design/demo_alu_accel/), [`spec/demo_alu_accel/`](spec/demo_alu_accel/), [`verif/demo_alu_accel/`](verif/demo_alu_accel/) |
+| `demo_tiny_alu`        | Tiny 8-bit ALU leaf compute with Python golden model + SV/LVM cosim          | [`design/demo_tiny_alu/`](design/demo_tiny_alu/), [`spec/demo_tiny_alu/`](spec/demo_tiny_alu/), [`verif/demo_tiny_alu/`](verif/demo_tiny_alu/) |
+| `demo_tiny_alu_cocotb` | cocotb peer of `demo_tiny_alu` driving the same DUT against the same golden  | [`verif/demo_tiny_alu_cocotb/`](verif/demo_tiny_alu_cocotb/)                                                                       |
+| `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU   | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 
 Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
@@ -112,25 +112,25 @@ uv run rb skill install --project
 │   ├── apb/                # base IP — APB4 SV interface
 │   ├── common/             # base IP — CDC primitives + ip_async_fifo
 │   ├── template/           # workflow template — starter design files for a new block
-│   ├── demo_sandbox/       # demo — tiny ALU leaf DUT
-│   ├── demo_alu_accel/     # demo — PeakRDL CSR + multi-clock top + compute wrapper
+│   ├── demo_tiny_alu/       # demo — tiny ALU leaf DUT
+│   ├── demo_tiny_alu_subsys/     # demo — PeakRDL CSR + multi-clock top + compute wrapper
 │   └── demo_cdc_src_sync/  # demo — source-synchronous CDC reference (internal-pin clock forwarding)
 ├── spec/
 │   ├── apb/  ip_cdc_sync/  ip_cdc_handshake/  ip_async_fifo/   # base IP specs
 │   ├── template/           # workflow template — spec traceability skeleton
-│   ├── demo_sandbox/       # demo — ALU spec + Python golden model
-│   ├── demo_alu_accel/     # demo — system spec + demo_alu_accel_csr.rdl + demo_alu_accel_model.py
+│   ├── demo_tiny_alu/       # demo — ALU spec + Python golden model
+│   ├── demo_tiny_alu_subsys/     # demo — system spec + demo_tiny_alu_subsys_csr.rdl + demo_tiny_alu_subsys_model.py
 │   └── demo_cdc_src_sync/  # demo — source-synchronous methodology + coverage items
 ├── verif/
 │   ├── apb/  ip_cdc_sync/  ip_cdc_handshake/  ip_async_fifo/   # base IP suites
 │   ├── template/           # workflow template — starter verification files
-│   ├── demo_sandbox/       # demo — SV/LVM cosim suite + DV report + Surfer layout
-│   ├── demo_sandbox_cocotb/# demo — cocotb cosim against the shared Python golden
-│   ├── demo_alu_accel/     # demo — system-level multi-clock APB suite
+│   ├── demo_tiny_alu/       # demo — SV/LVM cosim suite + DV report + Surfer layout
+│   ├── demo_tiny_alu_cocotb/# demo — cocotb cosim against the shared Python golden
+│   ├── demo_tiny_alu_subsys/     # demo — system-level multi-clock APB suite
 │   └── demo_cdc_src_sync/  # demo — propagation test through the A→B→C chain
 ├── synth/
-│   ├── demo_sandbox/       # demo — Yosys synth of the ALU leaf (generic + Nangate45)
-│   ├── demo_alu_accel/     # demo — Yosys synth of the system block (generic)
+│   ├── demo_tiny_alu/       # demo — Yosys synth of the ALU leaf (generic + Nangate45)
+│   ├── demo_tiny_alu_subsys/     # demo — Yosys synth of the system block (generic)
 │   └── demo_cdc_src_sync/  # demo — Yosys synth of the source-sync chain
 ├── lint/
 │   └── cdc/                # CDC lint configs (one entry per demo / base-IP analysis)
@@ -150,7 +150,7 @@ uv run rb spec check-design
 uv run rb spec check-coverage
 
 # Single test         — one named test in a suite
-(cd verif/demo_sandbox && uv run rb test basic)
+(cd verif/demo_tiny_alu && uv run rb test basic)
 
 # Sim regression      — every test listed in regression.yaml (12/12)
 uv run rb regression -c regression.yaml
@@ -160,17 +160,17 @@ uv run rb -M cov regression -c regression.yaml \
     --coverage-merge --coverage-html --coverage-coverview
 
 # Waveform viewer     — open Surfer with the suite's signal layout
-(cd verif/demo_sandbox && uv run rb wave basic)
+(cd verif/demo_tiny_alu && uv run rb wave basic)
 
 # DV report           — visualize PASS/FAIL + objective + waveform PNG per test
-(cd verif/demo_sandbox && uv run python build_report.py)
+(cd verif/demo_tiny_alu && uv run python build_report.py)
 
 # System-level demo   — multi-clock APB accelerator
-(cd verif/demo_alu_accel && uv run rb test csr_smoke)
-(cd verif/demo_alu_accel && uv run rb test fifo_stream)
+(cd verif/demo_tiny_alu_subsys && uv run rb test csr_smoke)
+(cd verif/demo_tiny_alu_subsys && uv run rb test fifo_stream)
 
-# Regenerate PeakRDL CSRs (from spec/demo_alu_accel/demo_alu_accel_csr.rdl)
-(cd design/demo_alu_accel && ./gen_demo_alu_accel_csr.sh)
+# Regenerate PeakRDL CSRs (from spec/demo_tiny_alu_subsys/demo_tiny_alu_subsys_csr.rdl)
+(cd design/demo_tiny_alu_subsys && ./gen_demo_tiny_alu_subsys_csr.sh)
 
 # Synth regression    — generic synth runs (tech-mapped is gated by reglvl)
 uv run rb synth-regression -c synth_regression.yaml
@@ -195,9 +195,9 @@ direction shows up as a missing item rather than going unnoticed.
 - **Prose spec**: `spec/<block>/README.md` is the human-readable
   source of truth — interface, behaviour, edge cases.
 - **Executable golden model** (where applicable):
-  [`spec/demo_sandbox/sandbox_model.py`](spec/demo_sandbox/sandbox_model.py) is
+  [`spec/demo_tiny_alu/tiny_alu_model.py`](spec/demo_tiny_alu/tiny_alu_model.py) is
   the Python form of the alu spec, consumed live by the cocotb suite
-  and offline by `verif/demo_sandbox/preproc.py` to generate the SV
+  and offline by `verif/demo_tiny_alu/preproc.py` to generate the SV
   testbench's stimulus + expected results.
 - **Design link**: each `design/<block>/models.yaml` carries
   `spec: "../../spec/<block>/specs.yaml"` so `rb spec check-design`
@@ -251,16 +251,16 @@ work to a regression.
 (cd verif/ip_cdc_handshake && uv run rb test smoke)
 
 # SV/LVM ALU, single test
-(cd verif/demo_sandbox && uv run rb test basic)
+(cd verif/demo_tiny_alu && uv run rb test basic)
 
 # cocotb peer suite — same DUT, Python-driven, scoreboarded against shared golden
-(cd verif/demo_sandbox_cocotb && uv run rb test cocotb_random)
+(cd verif/demo_tiny_alu_cocotb && uv run rb test cocotb_random)
 
 # system-level (multi-clock APB)
-(cd verif/demo_alu_accel && uv run rb test csr_smoke)
+(cd verif/demo_tiny_alu_subsys && uv run rb test csr_smoke)
 
 # regression-mode run for speed
-(cd verif/demo_sandbox && uv run rb -M reg test random)
+(cd verif/demo_tiny_alu && uv run rb -M reg test random)
 ```
 
 Per-test artefacts land at `<suite>/artefacts/<test>/` (gitignored).
@@ -279,7 +279,7 @@ output for CI.
 
 - **Top-level config**: [`regression.yaml`](regression.yaml) lists
   each suite's `tests.yaml` (7 suites today: 4 leaf-IP + sandbox +
-  demo_sandbox_cocotb + demo_alu_accel).
+  demo_tiny_alu_cocotb + demo_tiny_alu_subsys).
 - **Reglvl gating**: each test in `tests.yaml` has a `reglvl`
   (0 = always run, larger = deferred tiers, 10000 = disabled).
   `--reg-level N` (alias `-l`) caps the run.
@@ -338,48 +338,48 @@ that suite instead. Coverview viewer setup: see
 ## Golden-Model Cosim — One Spec, Two Flows
 
 The sandbox proves a single Python golden
-([`spec/demo_sandbox/sandbox_model.py`](spec/demo_sandbox/sandbox_model.py))
+([`spec/demo_tiny_alu/tiny_alu_model.py`](spec/demo_tiny_alu/tiny_alu_model.py))
 against the same DUT from two independent verif suites. Drift in
 either direction surfaces immediately.
 
-### SV/LVM side (`verif/demo_sandbox/`) — preproc-driven
+### SV/LVM side (`verif/demo_tiny_alu/`) — preproc-driven
 
-- [`preproc.py`](verif/demo_sandbox/preproc.py) is wired as the test's
+- [`preproc.py`](verif/demo_tiny_alu/preproc.py) is wired as the test's
   `preproc:` plugin. Before compile, it picks a stimulus sequence
   (basic / ops_sweep / flags / random), expands it through
-  `sandbox_model.AluModel.compute()`, and writes
+  `tiny_alu_model.AluModel.compute()`, and writes
   `<artefacts>/<test>/vectors.txt` containing one row per cycle:
   `op, a, b, y, zf, cf, nf, vf` (the trailing five are the expected
   registered DUT outputs, computed by the Python golden).
 - The absolute path to `vectors.txt` is injected back into the
   test's plusargs as `VECTORS=`.
-- [`tb_top.sv`](verif/demo_sandbox/tb_top.sv) reads `vectors.txt`, drives
+- [`tb_top.sv`](verif/demo_tiny_alu/tb_top.sv) reads `vectors.txt`, drives
   one `(op,a,b)` per clock, and compares the registered DUT output
   to the expected on the cycle the result lands. Mismatches bump LVM
   `nerr` → FAIL.
 - There is **no** inline SV reference any more — the Python golden is
   the single source of truth, consumed offline via preproc.
 
-### cocotb side (`verif/demo_sandbox_cocotb/`) — live
+### cocotb side (`verif/demo_tiny_alu_cocotb/`) — live
 
 - Pure cocotb against `toplevel: alu` — no SV testbench wrapper. The
   shared helpers in
-  [`_alu_common.py`](verif/demo_sandbox_cocotb/_alu_common.py) import
-  `sandbox_model.AluModel` directly and scoreboard live every cycle.
+  [`_alu_common.py`](verif/demo_tiny_alu_cocotb/_alu_common.py) import
+  `tiny_alu_model.AluModel` directly and scoreboard live every cycle.
 - Two test modules
-  ([`test_alu_random.py`](verif/demo_sandbox_cocotb/test_alu_random.py),
-   [`test_alu_flags.py`](verif/demo_sandbox_cocotb/test_alu_flags.py)) so
+  ([`test_alu_random.py`](verif/demo_tiny_alu_cocotb/test_alu_random.py),
+   [`test_alu_flags.py`](verif/demo_tiny_alu_cocotb/test_alu_flags.py)) so
   rtl_buddy test selection maps cleanly to cocotb tests.
 
 ### Try it
 
 ```bash
-(cd verif/demo_sandbox        && uv run rb test random)           # SV (preproc + sim)
-(cd verif/demo_sandbox_cocotb && uv run rb test cocotb_random)    # cocotb (live)
+(cd verif/demo_tiny_alu        && uv run rb test random)           # SV (preproc + sim)
+(cd verif/demo_tiny_alu_cocotb && uv run rb test cocotb_random)    # cocotb (live)
 ```
 
 Both pass with **zero** mismatches. Break either side (mutate
-`AluModel.compute` in `sandbox_model.py`, or break the alu RTL) and
+`AluModel.compute` in `tiny_alu_model.py`, or break the alu RTL) and
 the corresponding flow fails loudly.
 
 ---
@@ -406,16 +406,16 @@ annotation at the cursor timestamp.
 ### Try it
 
 ```bash
-(cd verif/demo_sandbox    && uv run rb test basic)        # produce FST first
-(cd verif/demo_sandbox    && uv run rb wave basic)        # open Surfer
-(cd verif/demo_alu_accel  && uv run rb wave csr_smoke)    # multi-clock layout
+(cd verif/demo_tiny_alu    && uv run rb test basic)        # produce FST first
+(cd verif/demo_tiny_alu    && uv run rb wave basic)        # open Surfer
+(cd verif/demo_tiny_alu_subsys  && uv run rb wave csr_smoke)    # multi-clock layout
 ```
 
 ---
 
 ## DV Report — Test Outcomes Visualized
 
-[`verif/demo_sandbox/build_report.py`](verif/demo_sandbox/build_report.py) is a
+[`verif/demo_tiny_alu/build_report.py`](verif/demo_tiny_alu/build_report.py) is a
 post-run *visualization* step. It does not re-check correctness —
 the simulator already did, against the preproc-generated expected
 results. The report turns each test's artefacts into a markdown
@@ -445,36 +445,36 @@ For each test in the SV sandbox suite:
 ### Try it
 
 ```bash
-(cd verif/demo_sandbox && uv run rb -M debug regression -c ../../regression.yaml)
-(cd verif/demo_sandbox && uv run python build_report.py)
-open verif/demo_sandbox/report/index.md
+(cd verif/demo_tiny_alu && uv run rb -M debug regression -c ../../regression.yaml)
+(cd verif/demo_tiny_alu && uv run python build_report.py)
+open verif/demo_tiny_alu/report/index.md
 ```
 
 ---
 
 ## PeakRDL Register Generation
 
-The `demo_alu_accel` CSR block is generated from a SystemRDL description
-([`spec/demo_alu_accel/demo_alu_accel_csr.rdl`](spec/demo_alu_accel/demo_alu_accel_csr.rdl))
+The `demo_tiny_alu_subsys` CSR block is generated from a SystemRDL description
+([`spec/demo_tiny_alu_subsys/demo_tiny_alu_subsys_csr.rdl`](spec/demo_tiny_alu_subsys/demo_tiny_alu_subsys_csr.rdl))
 using [PeakRDL-regblock](https://peakrdl-regblock.readthedocs.io/).
 The generated SV files are committed; CI runs the regen script and
 `git diff --exit-code` to catch drift.
 
 ### How it is wired
 
-- **Source of truth**: `spec/demo_alu_accel/demo_alu_accel_csr.rdl` lives with
+- **Source of truth**: `spec/demo_tiny_alu_subsys/demo_tiny_alu_subsys_csr.rdl` lives with
   the spec, not the design. Edit this when register layout changes.
 - **Regen script**:
-  [`design/demo_alu_accel/gen_demo_alu_accel_csr.sh`](design/demo_alu_accel/gen_demo_alu_accel_csr.sh)
+  [`design/demo_tiny_alu_subsys/gen_demo_tiny_alu_subsys_csr.sh`](design/demo_tiny_alu_subsys/gen_demo_tiny_alu_subsys_csr.sh)
   invokes `peakrdl regblock` with `--cpuif apb4-flat
   --default-reset rst_n` and patches in Verilator-friendly lint
   waivers on the generated files.
-- **Output**: `demo_alu_accel_csr.sv` + `demo_alu_accel_csr_pkg.sv` in
-  `design/demo_alu_accel/`. Both are committed.
+- **Output**: `demo_tiny_alu_subsys_csr.sv` + `demo_tiny_alu_subsys_csr_pkg.sv` in
+  `design/demo_tiny_alu_subsys/`. Both are committed.
 - **Pinned deps**: `peakrdl` and `peakrdl-regblock` come from the
   rtl-buddy fork via `[tool.uv.sources]` in `pyproject.toml`.
 - **Hwif wiring**:
-  [`design/demo_alu_accel/demo_alu_accel_top.sv`](design/demo_alu_accel/demo_alu_accel_top.sv)
+  [`design/demo_tiny_alu_subsys/demo_tiny_alu_subsys_top.sv`](design/demo_tiny_alu_subsys/demo_tiny_alu_subsys_top.sv)
   consumes the generated `hwif_in`/`hwif_out` structs and threads
   them to the compute domain through `ip_cdc_handshake` /
   `ip_async_fifo`.
@@ -482,8 +482,8 @@ The generated SV files are committed; CI runs the regen script and
 ### Try it
 
 ```bash
-# Edit spec/demo_alu_accel/demo_alu_accel_csr.rdl, then:
-(cd design/demo_alu_accel && ./gen_demo_alu_accel_csr.sh)
+# Edit spec/demo_tiny_alu_subsys/demo_tiny_alu_subsys_csr.rdl, then:
+(cd design/demo_tiny_alu_subsys && ./gen_demo_tiny_alu_subsys_csr.sh)
 
 # Regression catches any RTL drift:
 uv run rb regression -c regression.yaml
@@ -501,26 +501,26 @@ tool defaults in `root_config.yaml`.
 ### How it is wired
 
 - **Synthesis config**:
-  [`synth/demo_sandbox/synth.yaml`](synth/demo_sandbox/synth.yaml) defines two
+  [`synth/demo_tiny_alu/synth.yaml`](synth/demo_tiny_alu/synth.yaml) defines two
   runs:
-  - `demo_sandbox_alu_synth_generic` — tech-independent, `reglvl: 0` (default).
-  - `demo_sandbox_alu_synth_nangate45` — tech-mapped to Nangate45 typical corner,
+  - `demo_tiny_alu_synth_generic` — tech-independent, `reglvl: 0` (default).
+  - `demo_tiny_alu_synth_nangate45` — tech-mapped to Nangate45 typical corner,
     `reglvl: 1000` (deferred until the PDK is fetched).
-  [`synth/demo_alu_accel/synth.yaml`](synth/demo_alu_accel/synth.yaml) adds the
-  whole-system run `demo_alu_accel_synth_generic`.
+  [`synth/demo_tiny_alu_subsys/synth.yaml`](synth/demo_tiny_alu_subsys/synth.yaml) adds the
+  whole-system run `demo_tiny_alu_subsys_synth_generic`.
 - **Constraints**:
-  [`synth/demo_sandbox/constraints.sdc`](synth/demo_sandbox/constraints.sdc)
+  [`synth/demo_tiny_alu/constraints.sdc`](synth/demo_tiny_alu/constraints.sdc)
   carries a 100 MHz `create_clock`. Yosys extracts the period and
   passes it to ABC for timing-driven mapping; the critical path
   becomes WNS in the results table.
 - **Tool defaults**: `cfg-synth-tools` (yosys) and `cfg-synth-libs`
   (`nangate45_typ`) in [`root_config.yaml`](root_config.yaml).
 - **PDK download**:
-  [`synth/demo_sandbox/download_pdk.sh`](synth/demo_sandbox/download_pdk.sh)
+  [`synth/demo_tiny_alu/download_pdk.sh`](synth/demo_tiny_alu/download_pdk.sh)
   fetches the Nangate45 Liberty from OpenROAD-flow-scripts (~6 MB).
   `pdk/` is gitignored.
 - **Flat-port wrapper for the system**:
-  [`design/demo_alu_accel/demo_alu_accel_synth_top.sv`](design/demo_alu_accel/demo_alu_accel_synth_top.sv)
+  [`design/demo_tiny_alu_subsys/demo_tiny_alu_subsys_synth_top.sv`](design/demo_tiny_alu_subsys/demo_tiny_alu_subsys_synth_top.sv)
   flattens the APB SV interface so Yosys can elaborate the top.
 - **Discoverable regression**:
   [`synth_regression.yaml`](synth_regression.yaml) drives
@@ -530,12 +530,12 @@ tool defaults in `root_config.yaml`.
 
 ```bash
 # tech-independent — no PDK needed
-uv run rb synth demo_sandbox_alu_synth_generic       -c synth/demo_sandbox/synth.yaml
-uv run rb synth demo_alu_accel_synth_generic -c synth/demo_alu_accel/synth.yaml
+uv run rb synth demo_tiny_alu_synth_generic       -c synth/demo_tiny_alu/synth.yaml
+uv run rb synth demo_tiny_alu_subsys_synth_generic -c synth/demo_tiny_alu_subsys/synth.yaml
 
 # tech-mapped — Nangate45 Liberty for the alu leaf
-./synth/demo_sandbox/download_pdk.sh
-uv run rb synth demo_sandbox_alu_synth_nangate45 -c synth/demo_sandbox/synth.yaml
+./synth/demo_tiny_alu/download_pdk.sh
+uv run rb synth demo_tiny_alu_synth_nangate45 -c synth/demo_tiny_alu/synth.yaml
 
 # discoverable regression — generic by default; bump -l to include nangate45
 uv run rb synth-regression -c synth_regression.yaml
@@ -547,7 +547,7 @@ slack against the SDC.
 
 ---
 
-## The `demo_alu_accel` System Block
+## The `demo_tiny_alu_subsys` System Block
 
 How the leaf IPs compose into the system demonstrator.
 
@@ -585,15 +585,15 @@ poll  status.FIFO_EMPTY=1 && status.BUSY=0
 read  result.Y, flags.*
 ```
 
-See [`spec/demo_alu_accel/README.md`](spec/demo_alu_accel/README.md) for the
+See [`spec/demo_tiny_alu_subsys/README.md`](spec/demo_tiny_alu_subsys/README.md) for the
 full register map and behaviour, and
-[`verif/demo_alu_accel/testplan.md`](verif/demo_alu_accel/testplan.md) for the
+[`verif/demo_tiny_alu_subsys/testplan.md`](verif/demo_tiny_alu_subsys/testplan.md) for the
 test → coverage mapping.
 
 ```bash
-(cd verif/demo_alu_accel && uv run rb test csr_smoke)     # CSR-direct
-(cd verif/demo_alu_accel && uv run rb test fifo_stream)   # FIFO mode (drives FULL + DRAIN)
-uv run rb synth demo_alu_accel_synth_generic -c synth/demo_alu_accel/synth.yaml
+(cd verif/demo_tiny_alu_subsys && uv run rb test csr_smoke)     # CSR-direct
+(cd verif/demo_tiny_alu_subsys && uv run rb test fifo_stream)   # FIFO mode (drives FULL + DRAIN)
+uv run rb synth demo_tiny_alu_subsys_synth_generic -c synth/demo_tiny_alu_subsys/synth.yaml
 ```
 
 ---

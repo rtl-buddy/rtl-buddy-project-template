@@ -42,4 +42,4 @@ Throughput: ≈ 1 transfer per 4 × max(`src_period`, `dst_period`).
 
 See [`specs.yaml`](specs.yaml). Exercised standalone in
 [`verif/ip_cdc_handshake/`](../../verif/ip_cdc_handshake/) and via
-instantiation inside `demo_alu_accel_top`.
+instantiation inside `demo_tiny_alu_subsys_top`.

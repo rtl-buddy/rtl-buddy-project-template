@@ -7,7 +7,7 @@ This repo is both:
 - a starter RTL project template for `rtl_buddy`
 - a runnable reference project that demonstrates the expected repo layout
 
-The project should stay runnable. `design/demo_sandbox/` is the primary working example and should not be left broken.
+The project should stay runnable. `design/demo_tiny_alu/` is the primary working example and should not be left broken.
 
 ## Block Categories
 
@@ -20,8 +20,8 @@ naming convention surfaces the category in the directory name:
   expected spec/design/verif/test shape for a new block. Copy these
   when starting fresh.
 - **Demo blocks** — `demo_*` end-to-end examples that exercise
-  specific rtl_buddy capabilities (`demo_sandbox`,
-  `demo_sandbox_cocotb`, `demo_alu_accel`, `demo_cdc_src_sync`).
+  specific rtl_buddy capabilities (`demo_tiny_alu`,
+  `demo_tiny_alu_cocotb`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`).
   Safe to delete when starting a new project.
 
 Preserve this categorisation in new work — name new leaf IP without a
@@ -51,7 +51,7 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 ```text
 root_config.yaml
 regression.yaml
-design/demo_sandbox/
+design/demo_tiny_alu/
 design/template/
 spec/template/                  # spec traceability example
 verif/template/
@@ -104,17 +104,17 @@ Use this repo to validate the project setup and `rtl_buddy` integration.
 ```bash
 # from repo root
 uv run rb --machine regression -c regression.yaml
-uv run rb --machine filelist demo_sandbox_alu -c design/demo_sandbox/models.yaml
-uv run rb --machine verible syntax design/demo_sandbox/demo_sandbox_alu.sv
+uv run rb --machine filelist demo_tiny_alu -c design/demo_tiny_alu/models.yaml
+uv run rb --machine verible syntax design/demo_tiny_alu/demo_tiny_alu.sv
 uv run rb --machine spec list
 uv run rb --machine spec check-design
 uv run rb --machine spec check-coverage
 
 # from suite dir
-cd verif/demo_sandbox
+cd verif/demo_tiny_alu
 uv run rb --machine test basic
 
-cd ../demo_sandbox_cocotb
+cd ../demo_tiny_alu_cocotb
 uv run rb --machine test cocotb_random
 ```
 
