@@ -1,0 +1,13 @@
+rtl-buddy-filetype: synth_config
+
+# Whole-system Yosys synthesis. Tech-independent only by default — proves
+# the PeakRDL-generated CSR + interface + CDC primitives all elaborate and
+# synthesize together. Tech-mapped runs follow the sandbox pattern; promote
+# reglvl when adding a Liberty-mapped variant.
+syntheses:
+  - name: "demo_alu_accel_synth_generic"
+    desc: "Tech-independent Yosys synthesis of demo_alu_accel_synth_top (flat-port wrapper)"
+    model: "demo_alu_accel_synth_top"
+    model_path: "../../design/demo_alu_accel/models.yaml"
+    tool: "yosys"
+    reglvl: 0

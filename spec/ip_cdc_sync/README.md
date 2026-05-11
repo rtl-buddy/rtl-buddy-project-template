@@ -25,4 +25,4 @@ default for low-MTBF requirements.
 
 See [`specs.yaml`](specs.yaml). Exercised standalone in
 [`verif/ip_cdc_sync/`](../../verif/ip_cdc_sync/) and via instantiation
-inside `ip_cdc_handshake` and `alu_accel_top`.
+inside `ip_cdc_handshake` and `demo_alu_accel_top`.

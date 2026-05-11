@@ -2,7 +2,7 @@
 
 A slim demonstrator FIFO that crosses two independent clock domains
 using gray-coded read/write pointers and 2-FF synchronizers. Used in
-[`alu_accel`](../alu_accel/) as the streaming input path that lets the
+[`demo_alu_accel`](../demo_alu_accel/) as the streaming input path that lets the
 APB host push (op, a, b) records on its own clock and the compute
 domain drain them at its own rate.
 
@@ -41,4 +41,4 @@ domain drain them at its own rate.
 
 See [`specs.yaml`](specs.yaml). Exercised standalone in
 [`verif/ip_async_fifo/`](../../verif/ip_async_fifo/) and via the
-streaming-input path in `alu_accel`.
+streaming-input path in `demo_alu_accel`.

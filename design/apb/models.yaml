@@ -1,7 +1,7 @@
 rtl-buddy-filetype: model_config
 
 # apb_intf is a pure SV interface — published as a library entry that
-# downstream blocks (alu_accel) include via -v.
+# downstream blocks (demo_alu_accel) include via -v.
 models:
   - name: "apb_intf"
     desc: "AMBA APB4 SV interface with manager/subordinate/monitor modports"

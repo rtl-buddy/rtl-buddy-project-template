@@ -3,13 +3,13 @@ rtl-buddy-filetype: reg_config
 
 # Discoverable list of suites. Leaf-IP suites (apb, ip_cdc_sync,
 # ip_cdc_handshake, ip_async_fifo) prove each component on its own;
-# alu_accel is the system-level demonstrator that integrates them.
+# demo_alu_accel is the system-level demonstrator that integrates them.
 test-configs:
   - "verif/apb/tests.yaml"
   - "verif/ip_cdc_sync/tests.yaml"
   - "verif/ip_cdc_handshake/tests.yaml"
   - "verif/ip_async_fifo/tests.yaml"
-  - "verif/sandbox/tests.yaml"
-  - "verif/sandbox_cocotb/tests.yaml"
-  - "verif/alu_accel/tests.yaml"
-  - "verif/template_cdc_src_sync/tests.yaml"
+  - "verif/demo_sandbox/tests.yaml"
+  - "verif/demo_sandbox_cocotb/tests.yaml"
+  - "verif/demo_alu_accel/tests.yaml"
+  - "verif/demo_cdc_src_sync/tests.yaml"

@@ -197,7 +197,7 @@ cfg-synth-tools:
 
 # Liberty libraries for technology mapping. Paths are resolved relative
 # to this file. The .lib files are not vendored — fetch with
-# `synth/sandbox/download_pdk.sh` before running tech-mapped synth.
+# `synth/demo_sandbox/download_pdk.sh` before running tech-mapped synth.
 cfg-synth-libs:
   - name: "nangate45_typ"
     path: "pdk/nangate45/lib/NangateOpenCellLibrary_typical.lib"

@@ -1,0 +1,24 @@
+rtl-buddy-filetype: spec_config
+
+blocks:
+  - name: "demo_alu_accel"
+    desc: "Multi-clock APB-mapped ALU accelerator (system demonstrator)"
+    docs:
+      - "README.md"
+    coverage-items:
+      - id: "ACCEL-CSR-WRITE"
+        desc: "APB write to a CSR completes (psel→penable→pready)"
+      - id: "ACCEL-CSR-READ"
+        desc: "APB read from a CSR completes"
+      - id: "ACCEL-CSR-DIRECT-OP"
+        desc: "CSR-direct mode launches and produces a matching result"
+      - id: "ACCEL-FIFO-PUSH"
+        desc: "FIFO mode push accepted (FIFO_FULL=0)"
+      - id: "ACCEL-FIFO-FULL"
+        desc: "FIFO_FULL asserts under sustained pushes"
+      - id: "ACCEL-FIFO-DRAIN"
+        desc: "FIFO_EMPTY asserts after streaming completes"
+      - id: "ACCEL-DONE-INC"
+        desc: "DONE_CNT increments by exactly N for N submitted ops"
+      - id: "ACCEL-RESULT-MATCH"
+        desc: "result.Y/flags match the Python golden (post-run replay)"

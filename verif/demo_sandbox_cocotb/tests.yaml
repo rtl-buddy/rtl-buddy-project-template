@@ -1,0 +1,47 @@
+# RTL-Buddy Test Configuration File
+rtl-buddy-filetype: test_config
+
+# Pure cocotb against the sandbox ALU — no SV testbench.
+# `toplevel` is the DUT module; cocotb drives ports directly from Python.
+testbenches:
+  - name: "tb_alu_random"
+    filelist: []
+    toplevel: demo_sandbox_alu
+    cocotb:
+      module: test_alu_random
+
+  - name: "tb_alu_flags"
+    filelist: []
+    toplevel: demo_sandbox_alu
+    cocotb:
+      module: test_alu_flags
+
+tests:
+  - name: "cocotb_random"
+    desc: "cocotb cosim — 256 random ops, scoreboard against shared sandbox_model.py"
+    reglvl: 0
+    model: "demo_sandbox_alu"
+    model_path: "../../design/demo_sandbox/models.yaml"
+    testbench: "tb_alu_random"
+    covers:
+      - "SAND-FUNC-OP-ADD"
+      - "SAND-FUNC-OP-SUB"
+      - "SAND-FUNC-OP-AND"
+      - "SAND-FUNC-OP-OR"
+      - "SAND-FUNC-OP-XOR"
+      - "SAND-FUNC-OP-SHL"
+      - "SAND-FUNC-OP-SHR"
+      - "SAND-FUNC-FLAG-Z"
+      - "SAND-FUNC-FLAG-N"
+
+  - name: "cocotb_flags"
+    desc: "cocotb cosim — directed corners exercising every flag"
+    reglvl: 0
+    model: "demo_sandbox_alu"
+    model_path: "../../design/demo_sandbox/models.yaml"
+    testbench: "tb_alu_flags"
+    covers:
+      - "SAND-FUNC-FLAG-C-ADD"
+      - "SAND-FUNC-FLAG-C-SUB"
+      - "SAND-FUNC-FLAG-V-ADD"
+      - "SAND-FUNC-FLAG-V-SUB"
