@@ -86,20 +86,16 @@ write_def     $OUT_DIR/${DESIGN}.def
 write_verilog $OUT_DIR/${DESIGN}.routed.v
 write_sdc     $OUT_DIR/${DESIGN}.routed.sdc
 
-# GDS streamout. OpenROAD's built-in `write_gds` is not always available
-# (depends on build flags); when missing, the canonical path is to hand
-# the routed DEF + cell GDS to KLayout. Both paths land here so the
-# prototype keeps working on either build.
+# GDS streamout. OpenROAD's built-in `write_gds` is not bound at the
+# Tcl level in current upstream — `gdsout.cpp` exists in ODB but has no
+# scripting wrapper. Canonical path is KLayout consuming the routed DEF
+# plus the standard-cell GDS. Both paths land here so the flow works on
+# either build.
 puts ">>> GDS streamout"
 if {[llength [info commands write_gds]] > 0} {
     write_gds -lib_name nangate45 -map_file "" -corner [list] -gds [list $MACRO_GDS] $OUT_DIR/${DESIGN}.gds
 } else {
-    puts "    write_gds unavailable in this OpenROAD build."
-    puts "    Run: klayout -zz -rd design_name=$DESIGN \\"
-    puts "                 -rd in_def=$OUT_DIR/${DESIGN}.def \\"
-    puts "                 -rd in_gds=$MACRO_GDS \\"
-    puts "                 -rd out_gds=$OUT_DIR/${DESIGN}.gds \\"
-    puts "                 -r <path-to>/def2gds.py"
+    puts "    OpenROAD has no Tcl write_gds; deferring to KLayout (run.sh)."
 }
 
 puts ">>> DONE"

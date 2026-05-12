@@ -16,6 +16,8 @@ declare -a FILES=(
   "lef/NangateOpenCellLibrary.tech.lef:$LEF_DIR/NangateOpenCellLibrary.tech.lef"
   "lef/NangateOpenCellLibrary.macro.mod.lef:$LEF_DIR/NangateOpenCellLibrary.macro.mod.lef"
   "gds/NangateOpenCellLibrary.gds:$PDK_DIR/gds/NangateOpenCellLibrary.gds"
+  "FreePDK45.lyt:$PDK_DIR/FreePDK45.lyt"
+  "FreePDK45.lyp:$PDK_DIR/FreePDK45.lyp"
 )
 
 mkdir -p "$LIB_DIR" "$LEF_DIR" "$PDK_DIR/gds"

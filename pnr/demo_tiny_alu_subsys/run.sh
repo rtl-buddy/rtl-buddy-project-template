@@ -34,4 +34,52 @@ mkdir -p artefacts
 # (once via the binary, once via a backend library). Unset to debug.
 export KMP_DUPLICATE_LIB_OK="${KMP_DUPLICATE_LIB_OK:-TRUE}"
 
-exec openroad -no_init -exit -log artefacts/openroad.log flow.tcl
+openroad -no_init -exit -log artefacts/openroad.log flow.tcl
+
+# GDS streamout via KLayout — upstream OpenROAD doesn't bind write_gds
+# at the Tcl level. Skip silently if klayout isn't installed; the
+# routed DEF is the load-bearing artefact for the demo.
+DESIGN="demo_tiny_alu_subsys_synth_top"
+DEF_IN="$SCRIPT_DIR/artefacts/${DESIGN}.def"
+GDS_OUT="$SCRIPT_DIR/artefacts/${DESIGN}.gds"
+PDK="$REPO_ROOT/pdk/nangate45"
+TECH_LYT="$PDK/FreePDK45.lyt"
+MACRO_GDS="$PDK/gds/NangateOpenCellLibrary.gds"
+DEF2STREAM="$REPO_ROOT/tools/openroad/def2stream.py"
+
+if [ ! -s "$DEF_IN" ]; then
+  echo "Routed DEF missing — OpenROAD stage failed?" >&2
+  exit 1
+fi
+
+KLAYOUT_BIN="${KLAYOUT_BIN:-}"
+if [ -z "$KLAYOUT_BIN" ] && command -v klayout >/dev/null 2>&1; then
+  KLAYOUT_BIN="$(command -v klayout)"
+fi
+if [ -z "$KLAYOUT_BIN" ] && [ -x "/Applications/KLayout/klayout.app/Contents/MacOS/klayout" ]; then
+  KLAYOUT_BIN="/Applications/KLayout/klayout.app/Contents/MacOS/klayout"
+fi
+
+if [ -z "$KLAYOUT_BIN" ]; then
+  echo ">>> KLayout not found; skipping GDS streamout."
+  echo "    Install via 'brew install --cask klayout' to enable."
+  exit 0
+fi
+
+echo ">>> GDS streamout via $KLAYOUT_BIN"
+"$KLAYOUT_BIN" -zz -nc \
+  -rd design_name="$DESIGN" \
+  -rd in_def="$DEF_IN" \
+  -rd in_files="$MACRO_GDS" \
+  -rd tech_file="$TECH_LYT" \
+  -rd layer_map="" \
+  -rd seal_file="" \
+  -rd out_file="$GDS_OUT" \
+  -r "$DEF2STREAM"
+
+if [ -s "$GDS_OUT" ]; then
+  echo ">>> Wrote $GDS_OUT ($(du -h "$GDS_OUT" | cut -f1))"
+else
+  echo "GDS streamout failed — $GDS_OUT missing." >&2
+  exit 1
+fi
