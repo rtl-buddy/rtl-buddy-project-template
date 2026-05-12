@@ -53,8 +53,10 @@ naming convention surfaces the category in the directory name:
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 
 Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
-across these blocks; `rb synth-regression -c synth_regression.yaml`
-synthesizes the alu leaf (287 gates) and the full system (1265 gates).
+across these blocks (plus one reglvl-gated SKIP for the source-sync
+demo); `rb synth-regression -c synth_regression.yaml` synthesizes
+the alu leaf (287 gates), the full system (1265 gates), and the
+source-sync chain (13 gates).
 
 ## Tooling Scope
 
@@ -152,7 +154,7 @@ uv run rb spec check-coverage
 # Single test         — one named test in a suite
 (cd verif/demo_tiny_alu && uv run rb test basic)
 
-# Sim regression      — every test listed in regression.yaml (12/12)
+# Sim regression      — every test listed in regression.yaml (12 PASS + 1 reglvl SKIP)
 uv run rb regression -c regression.yaml
 
 # Coverage regression — same, with merged LCOV HTML and Coverview zip
@@ -210,7 +212,7 @@ direction shows up as a missing item rather than going unnoticed.
 ### Try it
 
 ```bash
-uv run rb spec list             # 6 demonstrator blocks (44 coverage IDs total)
+uv run rb spec list             # 8 blocks (47 coverage IDs total)
 uv run rb spec check-design     # every block points at a design model
 uv run rb spec check-coverage   # every coverage ID is referenced by a test
 ```
@@ -292,7 +294,7 @@ output for CI.
 ### Try it
 
 ```bash
-uv run rb regression -c regression.yaml             # everything (12/12)
+uv run rb regression -c regression.yaml             # everything (12 PASS + 1 reglvl SKIP)
 uv run rb regression -c regression.yaml -l 0        # only reglvl 0 entries
 uv run rb --machine regression -c regression.yaml   # CI-style JSON output
 ```
