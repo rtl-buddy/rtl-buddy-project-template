@@ -195,13 +195,47 @@ cfg-synth-tools:
       synth-args: ""
       abc-args: ""
 
-# Liberty libraries for technology mapping. Paths are resolved relative
-# to this file. The .lib files are not vendored — fetch with
-# `synth/demo_tiny_alu/download_pdk.sh` before running tech-mapped synth.
-cfg-synth-libs:
+# Technology / PDK assets. Files are not vendored — fetch with
+# `synth/demo_tiny_alu_subsys/download_pdk.sh` (or the alu equivalent)
+# before running tech-mapped synth or P&R. Multiple PDKs can be
+# declared; synth + pnr platforms below select which one to use.
+cfg-pdk:
+  - name: "nangate45"
+    site: "FreePDK45_38x28_10R_NP_162NW_34O"
+    corners:
+      typ: "pdk/nangate45/lib/NangateOpenCellLibrary_typical.lib"
+    tech-lef: "pdk/nangate45/lef/NangateOpenCellLibrary.tech.lef"
+    macro-lef: "pdk/nangate45/lef/NangateOpenCellLibrary.macro.mod.lef"
+    cell-gds: "pdk/nangate45/gds/NangateOpenCellLibrary.gds"
+    klayout-tech: "pdk/nangate45/FreePDK45.lyt"
+    klayout-props: "pdk/nangate45/FreePDK45.lyp"
+    tie-hi: "LOGIC1_X1/Z"
+    tie-lo: "LOGIC0_X1/Z"
+    fill-cells:
+      - FILLCELL_X1
+      - FILLCELL_X2
+      - FILLCELL_X4
+      - FILLCELL_X8
+      - FILLCELL_X16
+      - FILLCELL_X32
+
+# Synth platforms — name + PDK + corner. Referenced by `platform:` in synth.yaml.
+cfg-synth-platforms:
   - name: "nangate45_typ"
-    path: "pdk/nangate45/lib/NangateOpenCellLibrary_typical.lib"
-# End synth configuration
+    pdk: "nangate45"
+    corner: "typ"
+
+# P&R platforms — name + PDK + STA corner + P&R-specific knobs.
+# Referenced by `platform:` in pnr.yaml.
+cfg-pnr-platforms:
+  - name: "nangate45_typ"
+    pdk: "nangate45"
+    sta-corner: "typ"
+    cts-buffer: "BUF_X4"
+    routing-layers:
+      signal: "metal2-metal8"
+      clock: "metal4-metal8"
+# End synth / pnr configuration
 
 # CDC lint tool defaults — `tool:` in cdc.yaml selects the entry.
 cfg-cdc-tools:
