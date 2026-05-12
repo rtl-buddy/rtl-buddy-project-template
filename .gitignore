@@ -37,6 +37,7 @@ coverview_*.zip
 tags
 **.gtkw
 **.tcl
+!pnr/**/*.tcl
 **.nfs*
 **.json
 !.claude/settings.json
