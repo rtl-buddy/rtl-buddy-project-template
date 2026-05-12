@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fetches the Nangate45 typical-corner Liberty file used by the
-# `alu_synth_nangate45` synth run. The PDK is intentionally not
+# `demo_tiny_alu_synth_nangate45` synth run. The PDK is intentionally not
 # vendored — download once per checkout to exercise the tech-mapped
 # flow.
 set -euo pipefail
