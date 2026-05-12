@@ -1,0 +1,14 @@
+rtl-buddy-filetype: test_config
+
+testbenches:
+  - name: "tb_counter"
+    filelist:
+      - "tb_counter.sv"
+
+tests:
+  - name: "basic"
+    desc: "Counter reset + count + hold; runs on both Verilator and Icarus"
+    reglvl: 0
+    model: "counter"
+    model_path: "../../design/icarus_smoke/models.yaml"
+    testbench: "tb_counter"

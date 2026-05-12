@@ -1,0 +1,7 @@
+rtl-buddy-filetype: model_config
+
+models:
+  - name: "counter"
+    desc: "Minimal 4-bit counter used as the Icarus end-to-end smoke target."
+    filelist:
+      - "counter.sv"

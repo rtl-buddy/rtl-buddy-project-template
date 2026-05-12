@@ -138,9 +138,29 @@ cfg-rtl-builder:
         run-time: >-
           -l simv.log 
           -xlrm hier_inst_seed -diag hier_seed
-    builder-simv: "simv" 
+    builder-simv: "simv"
     # vcs
     # TODO in case we need platform specific builder, can use -platform in builder name
+  - <<: *rtl-builder-template
+    name: "icarus"
+    builder: "iverilog"
+    simulator-family: "icarus"
+    sim-rand-seed-prefix: "+seed="
+    builder-opts:
+      # debug-mode dumps VCD via $dumpfile/$dumpvars when DUMP is defined
+      debug:
+        compile-time: >-
+          -g2012
+          -gsupported-assertions
+          -DDUMP
+        run-time: ""
+      # regression-mode w/o trace
+      reg:
+        compile-time: >-
+          -g2012
+          -gsupported-assertions
+        run-time: ""
+    builder-simv: "simv"
 # cfg-rtl-builder
 # End RTL builder configuration
 
