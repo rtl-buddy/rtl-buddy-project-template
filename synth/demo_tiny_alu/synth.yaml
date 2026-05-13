@@ -19,8 +19,7 @@ syntheses:
     model: "demo_tiny_alu"
     model_path: "../../design/demo_tiny_alu/models.yaml"
     tool: "yosys"
-    libraries:
-      - "nangate45_typ"
+    platform: "nangate45_typ"
     constraints: "constraints.sdc"
     # Deferred tier — the Liberty file is not vendored. Download with
     # `synth/demo_tiny_alu/download_pdk.sh` and then invoke directly:
