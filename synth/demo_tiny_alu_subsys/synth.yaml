@@ -10,4 +10,17 @@ syntheses:
     model: "demo_tiny_alu_subsys_synth_top"
     model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
     tool: "yosys"
+    constraints: "constraints.sdc"
     reglvl: 0
+
+  - name: "demo_tiny_alu_subsys_synth_nangate45"
+    desc: "Tech-mapped Yosys synthesis of demo_tiny_alu_subsys_synth_top to Nangate45 typical corner"
+    model: "demo_tiny_alu_subsys_synth_top"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "yosys"
+    platform: "nangate45_typ"
+    constraints: "constraints.sdc"
+    # Deferred tier — the Liberty file is not vendored. Download with
+    # `synth/demo_tiny_alu_subsys/download_pdk.sh` and invoke directly:
+    #   rb synth demo_tiny_alu_subsys_synth_nangate45 -c synth/demo_tiny_alu_subsys/synth.yaml
+    reglvl: 1000

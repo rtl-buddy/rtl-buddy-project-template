@@ -49,7 +49,7 @@ naming convention surfaces the category in the directory name:
 |-----------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `demo_tiny_alu`        | Tiny 8-bit ALU leaf compute with Python golden model + SV/LVM cosim          | [`design/demo_tiny_alu/`](design/demo_tiny_alu/), [`spec/demo_tiny_alu/`](spec/demo_tiny_alu/), [`verif/demo_tiny_alu/`](verif/demo_tiny_alu/) |
 | `demo_tiny_alu_cocotb` | cocotb peer of `demo_tiny_alu` driving the same DUT against the same golden  | [`verif/demo_tiny_alu_cocotb/`](verif/demo_tiny_alu_cocotb/)                                                                       |
-| `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU   | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/) |
+| `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the OpenROAD P&R prototype | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 
 Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
@@ -132,8 +132,10 @@ uv run rb skill install --project
 │   └── demo_cdc_src_sync/  # demo — propagation test through the A→B→C chain
 ├── synth/
 │   ├── demo_tiny_alu/       # demo — Yosys synth of the ALU leaf (generic + Nangate45)
-│   ├── demo_tiny_alu_subsys/     # demo — Yosys synth of the system block (generic)
+│   ├── demo_tiny_alu_subsys/     # demo — Yosys synth of the system block (generic + Nangate45)
 │   └── demo_cdc_src_sync/  # demo — Yosys synth of the source-sync chain
+├── pnr/
+│   └── demo_tiny_alu_subsys/     # demo — OpenROAD P&R prototype (Nangate45)
 ├── lint/
 │   └── cdc/                # CDC lint configs (one entry per demo / base-IP analysis)
 ├── common/                 # shared SV verification helpers (LVM macros)
@@ -539,6 +541,10 @@ uv run rb synth demo_tiny_alu_subsys_synth_generic -c synth/demo_tiny_alu_subsys
 ./synth/demo_tiny_alu/download_pdk.sh
 uv run rb synth demo_tiny_alu_synth_nangate45 -c synth/demo_tiny_alu/synth.yaml
 
+# tech-mapped — Nangate45 Liberty for the full system block
+./synth/demo_tiny_alu_subsys/download_pdk.sh
+uv run rb synth demo_tiny_alu_subsys_synth_nangate45 -c synth/demo_tiny_alu_subsys/synth.yaml
+
 # discoverable regression — generic by default; bump -l to include nangate45
 uv run rb synth-regression -c synth_regression.yaml
 uv run rb synth-regression -c synth_regression.yaml -l 1000
@@ -546,6 +552,31 @@ uv run rb synth-regression -c synth_regression.yaml -l 1000
 
 The tech-mapped run reports gate count, area (µm²), and worst-negative
 slack against the SDC.
+
+## Physical Implementation (prototype)
+
+A standalone OpenROAD flow takes the tech-mapped `demo_tiny_alu_subsys`
+netlist through floorplan, placement, CTS, and routing on Nangate45.
+This is a hand-rolled prototype ahead of an eventual `rb pnr`
+subcommand — drive it directly:
+
+```bash
+# Liberty + LEF + cell GDS
+./synth/demo_tiny_alu_subsys/download_pdk.sh
+
+# tech-mapped synth (if not already done)
+uv run rb synth demo_tiny_alu_subsys_synth_nangate45 \
+    -c synth/demo_tiny_alu_subsys/synth.yaml
+
+# place + route — outputs routed DEF, post-route netlist, timing report
+./pnr/demo_tiny_alu_subsys/run.sh
+```
+
+Outputs land in `pnr/demo_tiny_alu_subsys/artefacts/`. See
+[`pnr/demo_tiny_alu_subsys/README.md`](pnr/demo_tiny_alu_subsys/README.md)
+for the reference results and stage breakdown. Requires a local
+`openroad` build; the macro GDS is downloaded alongside the LEF so the
+flow is self-contained once the script runs.
 
 ---
 
