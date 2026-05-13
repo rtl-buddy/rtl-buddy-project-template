@@ -199,7 +199,7 @@ cfg-synth-tools:
 # `synth/demo_tiny_alu_subsys/download_pdk.sh` (or the alu equivalent)
 # before running tech-mapped synth or P&R. Multiple PDKs can be
 # declared; synth + pnr platforms below select which one to use.
-cfg-pdk:
+cfg-pdks:
   - name: "nangate45"
     site: "FreePDK45_38x28_10R_NP_162NW_34O"
     corners:
@@ -230,7 +230,7 @@ cfg-synth-platforms:
 cfg-pnr-platforms:
   - name: "nangate45_typ"
     pdk: "nangate45"
-    sta-corner: "typ"
+    corner: "typ"
     cts-buffer: "BUF_X4"
     routing-layers:
       signal: "metal2-metal8"
