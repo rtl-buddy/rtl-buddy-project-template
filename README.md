@@ -268,8 +268,8 @@ work to a regression.
 ```
 
 Per-test artefacts land at `<suite>/artefacts/<test>/` (gitignored).
-The SV/LVM sandbox testbench writes a transaction log (`txn.log`)
-used later by the DV report.
+The SV/LVM `demo_tiny_alu` testbench writes a transaction log
+(`txn.log`) used later by the DV report.
 
 ---
 
@@ -282,8 +282,9 @@ output for CI.
 ### How it is wired
 
 - **Top-level config**: [`regression.yaml`](regression.yaml) lists
-  each suite's `tests.yaml` (7 suites today: 4 leaf-IP + sandbox +
-  demo_tiny_alu_cocotb + demo_tiny_alu_subsys).
+  each suite's `tests.yaml` (8 suites today: 4 base-IP suites +
+  `demo_tiny_alu` + `demo_tiny_alu_cocotb` + `demo_tiny_alu_subsys` +
+  `demo_cdc_src_sync`).
 - **Reglvl gating**: each test in `tests.yaml` has a `reglvl`
   (0 = always run, larger = deferred tiers, 10000 = disabled).
   `--reg-level N` (alias `-l`) caps the run.
@@ -341,7 +342,7 @@ that suite instead. Coverview viewer setup: see
 
 ## Golden-Model Cosim — One Spec, Two Flows
 
-The sandbox proves a single Python golden
+The `demo_tiny_alu` blocks prove a single Python golden
 ([`spec/demo_tiny_alu/tiny_alu_model.py`](spec/demo_tiny_alu/tiny_alu_model.py))
 against the same DUT from two independent verif suites. Drift in
 either direction surfaces immediately.
@@ -428,7 +429,7 @@ snapshot for evidence.
 
 ### What it produces
 
-For each test in the SV sandbox suite:
+For each test in the `verif/demo_tiny_alu` suite:
 - **`report/<test>.md`** — declared objective (from `tests.yaml`
   `desc:`), declared `covers:` IDs, PASS/FAIL pulled from
   `<artefacts>/<test>/test.log`, embedded waveform PNG, FST path,
