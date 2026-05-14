@@ -468,7 +468,7 @@ wheels = [
 [[package]]
 name = "rtl-buddy-cdc"
 version = "0.1.0"
-source = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git#55bafd4d5447adbba27a1debf186d35196dde8f9" }
+source = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git#25a1d6be322725feb6880445737d30c5228d036f" }
 dependencies = [
     { name = "typer" },
 ]
