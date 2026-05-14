@@ -66,6 +66,8 @@ template the supported flows are:
 - **Verilator** for the open-source compile/sim/regression/coverage path
 - **VCS** for teams using Synopsys flows
 - **Yosys** (rtl-buddy fork) for synthesis (generic + tech-mapped)
+- **rtl-buddy-cdc** for `rb cdc` clock-domain-crossing lint
+- **OpenROAD** for `rb pnr` (floorplan → P&R → optional GDSII streamout); KLayout for GDS rendering
 - **cocotb** for Python-driven testbenches
 - **Surfer** + WCP for live waveform viewing and headless capture
 - **Coverview** for browser-based coverage dashboards
@@ -175,6 +177,9 @@ uv run rb -M cov regression -c regression.yaml \
 
 # Regenerate PeakRDL CSRs (from spec/demo_tiny_alu_subsys/demo_tiny_alu_subsys_csr.rdl)
 (cd design/demo_tiny_alu_subsys && ./gen_demo_tiny_alu_subsys_csr.sh)
+
+# CDC lint regression — clock-domain-crossing checks across all configured analyses
+uv run rb cdc-regression -c lint/cdc/cdc_regression.yaml
 
 # Synth regression    — generic synth runs (tech-mapped is gated by reglvl)
 uv run rb synth-regression -c synth_regression.yaml
@@ -492,6 +497,51 @@ The generated SV files are committed; CI runs the regen script and
 
 # Regression catches any RTL drift:
 uv run rb regression -c regression.yaml
+```
+
+---
+
+## CDC Lint — `rb cdc` / `rb cdc-regression`
+
+Static clock-domain-crossing checks driven by an SDC per analysis,
+with optional waivers. Same shape as the sim/synth flows: a
+`cdc.yaml` per directory enumerating analyses, an optional
+`cdc_regression.yaml` discoverable list, and tool defaults in
+`root_config.yaml`.
+
+### How it is wired
+
+- **CDC config**: [`lint/cdc/cdc.yaml`](lint/cdc/cdc.yaml) declares
+  one entry per analysis with `name`, `model`, `model_path:` pointer
+  into `design/.../models.yaml`, `tool:`, an SDC `constraints:` file,
+  and an optional `waivers:` file. Three analyses today:
+  - `ip_cdc_handshake_lint` — the request/ack handshake IP
+  - `demo_tiny_alu_subsys_lint` — the multi-clock APB↔compute system
+    (uses [`demo_tiny_alu_subsys.waivers`](lint/cdc/demo_tiny_alu_subsys.waivers))
+  - `demo_cdc_src_sync_lint` — the source-synchronous A→B→C chain;
+    relies on internal-pin `create_generated_clock` declarations
+- **Tool defaults**: `cfg-cdc-tools` in
+  [`root_config.yaml`](root_config.yaml) defines the `rtl-buddy-cdc`
+  entry and its options (default `sync-depth: 2`). `tool:` in
+  `cdc.yaml` selects the entry.
+- **Discoverable regression**:
+  [`lint/cdc/cdc_regression.yaml`](lint/cdc/cdc_regression.yaml)
+  drives `rb cdc-regression` across all listed `cdc.yaml` files.
+
+### Try it
+
+```bash
+# list the configured analyses
+uv run rb cdc --list -c lint/cdc/cdc.yaml
+
+# run one analysis by name
+uv run rb cdc ip_cdc_handshake_lint -c lint/cdc/cdc.yaml
+
+# run everything in this cdc.yaml
+uv run rb cdc -c lint/cdc/cdc.yaml
+
+# discoverable regression — every cdc.yaml in cdc_regression.yaml
+uv run rb cdc-regression -c lint/cdc/cdc_regression.yaml
 ```
 
 ---
