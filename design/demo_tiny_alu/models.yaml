@@ -1,0 +1,8 @@
+# RTL-Buddy RTL Model Configuration File
+rtl-buddy-filetype: model_config
+
+models:
+  - name: "demo_tiny_alu"
+    desc: "Tiny 8-bit ALU — sandbox demonstrator DUT"
+    filelist: ["-F test_modules.f"]
+    spec: "../../spec/demo_tiny_alu/specs.yaml"

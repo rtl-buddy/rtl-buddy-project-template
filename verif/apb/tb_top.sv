@@ -3,7 +3,7 @@
 // Instantiates `apb_intf`, drives the manager side from an initial block
 // and a subordinate-side stub that exercises stall + pslverr. Confirms
 // the modport contract compiles and runs end-to-end. Real APB protocol
-// coverage closes through verif/alu_accel/.
+// coverage closes through verif/demo_tiny_alu_subsys/.
 
 `include "lvm_core.sv"
 

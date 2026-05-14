@@ -1,0 +1,68 @@
+// demo_tiny_alu_subsys_csr.rdl — SystemRDL register description for the ALU
+// accelerator's APB-mapped CSR block. Compiled to SystemVerilog by
+// design/demo_tiny_alu_subsys/gen_demo_tiny_alu_subsys_csr.sh using PeakRDL.
+//
+// All registers are 32-bit, word-aligned, on the apb_clk domain. The
+// hwif side is wired in design/demo_tiny_alu_subsys/demo_tiny_alu_subsys_top.sv.
+
+reg ctrl_r {
+    desc = "Accelerator control. SRC picks the operand source for the
+            compute domain; GO is a single-cycle launch pulse used in
+            CSR-direct mode (ignored when SRC = FIFO).";
+
+    field { sw = rw; hw = r; desc = "0 = CSR direct, 1 = FIFO streaming."; } SRC[1] = 0;
+    field { sw = rw; hw = r; singlepulse; desc = "Write 1 to launch one CSR-direct compute. Self-clearing."; } GO[1] = 0;
+};
+
+reg status_r {
+    desc = "Compute-domain status (FIFO flags + completion counter), all
+            synchronized into apb_clk for software polling.";
+
+    field { sw = r; hw = w; desc = "Compute pipeline busy (CSR-direct or FIFO)."; }     BUSY[1]      = 0;
+    field { sw = r; hw = w; desc = "FIFO write-side full flag (apb_clk pre-push view)."; } FIFO_FULL[1] = 0;
+    field { sw = r; hw = w; desc = "FIFO read-side empty flag (compute view, synced)."; } FIFO_EMPTY[1] = 0;
+    field { sw = r; hw = w; desc = "Increments on each completed compute."; }            DONE_CNT[8]  = 0;
+};
+
+reg op_r        { desc = "Opcode for CSR-direct mode (sandbox alu opcodes).";
+                  field { sw = rw; hw = r; } OP[3] = 0; };
+
+reg operand_a_r { desc = "Operand A for CSR-direct mode.";
+                  field { sw = rw; hw = r; } A[8] = 0; };
+
+reg operand_b_r { desc = "Operand B for CSR-direct mode.";
+                  field { sw = rw; hw = r; } B[8] = 0; };
+
+reg result_r    { desc = "Latest compute result, synchronized from compute domain.";
+                  field { sw = r; hw = w; } Y[8] = 0; };
+
+reg flags_r     { desc = "Latest compute flags {VF,NF,CF,ZF}, synchronized from compute domain.";
+                  field { sw = r; hw = w; } ZF[1] = 0;
+                  field { sw = r; hw = w; } CF[1] = 0;
+                  field { sw = r; hw = w; } NF[1] = 0;
+                  field { sw = r; hw = w; } VF[1] = 0; };
+
+reg fifo_push_r {
+    desc = "Write triggers a push of (OP,A,B) into the streaming-input async FIFO.
+            Software must poll status.FIFO_FULL=0 before writing. The PUSH bit is
+            a self-clearing strobe consumed by the FIFO write side.";
+
+    field { sw = w;  hw = r; singlepulse; desc = "Write 1 to push the held OP/A/B."; } PUSH[1] = 0;
+    field { sw = rw; hw = r; } OP[3] = 0;
+    field { sw = rw; hw = r; } A[8]  = 0;
+    field { sw = rw; hw = r; } B[8]  = 0;
+};
+
+addrmap demo_tiny_alu_subsys_csr {
+    desc = "Tiny ALU accelerator CSR block (APB4, 32-bit data).";
+    default regwidth = 32;
+
+    ctrl_r        ctrl        @ 0x00;
+    status_r      status      @ 0x04;
+    op_r          op          @ 0x08;
+    operand_a_r   operand_a   @ 0x0C;
+    operand_b_r   operand_b   @ 0x10;
+    result_r      result      @ 0x14;
+    flags_r       flags       @ 0x18;
+    fifo_push_r   fifo_push   @ 0x1C;
+};

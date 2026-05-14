@@ -1,0 +1,20 @@
+# RTL-Buddy P&R Configuration File
+rtl-buddy-filetype: pnr_config
+
+# OpenROAD-driven place-and-route for demo_tiny_alu_subsys on Nangate45.
+# Consumes the tech-mapped netlist from `rb synth demo_tiny_alu_subsys_synth_nangate45`.
+# Reglvl-deferred — invoke directly:
+#   rb pnr demo_tiny_alu_subsys_pnr_nangate45 -c pnr/demo_tiny_alu_subsys/pnr.yaml
+runs:
+  - name: "demo_tiny_alu_subsys_pnr_nangate45"
+    desc: "OpenROAD P&R of demo_tiny_alu_subsys on Nangate45 typ corner"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_synth_nangate45"
+    synth-path: "../../synth/demo_tiny_alu_subsys/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys/constraints.sdc"
+    platform: "nangate45_typ"
+    floorplan:
+      utilization: 0.55
+      aspect: 1.0
+      core-margin: 2.0
+    reglvl: 1000
