@@ -4,9 +4,9 @@
 
 package demo_tiny_alu_subsys_csr_pkg;
 
-    localparam ALU_ACCEL_CSR_DATA_WIDTH = 32;
-    localparam ALU_ACCEL_CSR_MIN_ADDR_WIDTH = 5;
-    localparam ALU_ACCEL_CSR_SIZE = 'h20;
+    localparam DEMO_TINY_ALU_SUBSYS_CSR_DATA_WIDTH = 32;
+    localparam DEMO_TINY_ALU_SUBSYS_CSR_MIN_ADDR_WIDTH = 5;
+    localparam DEMO_TINY_ALU_SUBSYS_CSR_SIZE = 'h20;
 
     typedef struct {
         logic next;
