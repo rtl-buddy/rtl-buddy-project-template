@@ -49,7 +49,7 @@ naming convention surfaces the category in the directory name:
 |-----------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `demo_tiny_alu`        | Tiny 8-bit ALU leaf compute with Python golden model + SV/LVM cosim          | [`design/demo_tiny_alu/`](design/demo_tiny_alu/), [`spec/demo_tiny_alu/`](spec/demo_tiny_alu/), [`verif/demo_tiny_alu/`](verif/demo_tiny_alu/) |
 | `demo_tiny_alu_cocotb` | cocotb peer of `demo_tiny_alu` driving the same DUT against the same golden  | [`verif/demo_tiny_alu_cocotb/`](verif/demo_tiny_alu_cocotb/)                                                                       |
-| `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the OpenROAD P&R prototype | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
+| `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the `rb pnr` Nangate45 flow | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 
 Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
@@ -135,7 +135,7 @@ uv run rb skill install --project
 │   ├── demo_tiny_alu_subsys/     # demo — Yosys synth of the system block (generic + Nangate45)
 │   └── demo_cdc_src_sync/  # demo — Yosys synth of the source-sync chain
 ├── pnr/
-│   └── demo_tiny_alu_subsys/     # demo — OpenROAD P&R prototype (Nangate45)
+│   └── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
 ├── lint/
 │   └── cdc/                # CDC lint configs (one entry per demo / base-IP analysis)
 ├── common/                 # shared SV verification helpers (LVM macros)
