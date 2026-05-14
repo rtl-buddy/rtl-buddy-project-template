@@ -553,12 +553,11 @@ uv run rb synth-regression -c synth_regression.yaml -l 1000
 The tech-mapped run reports gate count, area (µm²), and worst-negative
 slack against the SDC.
 
-## Physical Implementation (prototype)
+## Physical Implementation
 
-A standalone OpenROAD flow takes the tech-mapped `demo_tiny_alu_subsys`
-netlist through floorplan, placement, CTS, and routing on Nangate45.
-This is a hand-rolled prototype ahead of an eventual `rb pnr`
-subcommand — drive it directly:
+`rb pnr` takes the tech-mapped `demo_tiny_alu_subsys` netlist through
+floorplan, placement, CTS, routing, and (optionally) GDS streamout +
+PNG rendering via KLayout. Driven by `pnr/demo_tiny_alu_subsys/pnr.yaml`:
 
 ```bash
 # Liberty + LEF + cell GDS
@@ -569,14 +568,15 @@ uv run rb synth demo_tiny_alu_subsys_synth_nangate45 \
     -c synth/demo_tiny_alu_subsys/synth.yaml
 
 # place + route — outputs routed DEF, post-route netlist, timing report
-./pnr/demo_tiny_alu_subsys/run.sh
+uv run rb pnr demo_tiny_alu_subsys_pnr_nangate45 \
+    -c pnr/demo_tiny_alu_subsys/pnr.yaml -l 1000
+
+# add --gds --png to stream out GDS + render PNG via KLayout
 ```
 
-Outputs land in `pnr/demo_tiny_alu_subsys/artefacts/`. See
-[`pnr/demo_tiny_alu_subsys/README.md`](pnr/demo_tiny_alu_subsys/README.md)
-for the reference results and stage breakdown. Requires a local
-`openroad` build; the macro GDS is downloaded alongside the LEF so the
-flow is self-contained once the script runs.
+Outputs land in `pnr/demo_tiny_alu_subsys/artefacts/<run>/`. Requires a
+local `openroad` build (referenced via `cfg-pnr-tools` if outside PATH);
+KLayout is optional and only needed for `--gds`/`--png`.
 
 ---
 
