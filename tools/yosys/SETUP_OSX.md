@@ -66,7 +66,7 @@ yosys --version
 # Expected: Yosys 0.x ... rtl-buddy/yosys
 ```
 
-`rtl_buddy synth -c synth/sandbox/synth.yaml` should now elaborate and
+`rtl_buddy synth -c synth/demo_tiny_alu/synth.yaml` should now elaborate and
 synthesize the sandbox ALU (~287 gates tech-independent).
 
 ## Notes

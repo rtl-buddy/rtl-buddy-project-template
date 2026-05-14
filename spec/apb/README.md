@@ -38,5 +38,5 @@ A two-phase access:
 ## Coverage targets
 
 See [`specs.yaml`](specs.yaml). The interface itself is exercised end-to-end
-through the [`alu_accel`](../alu_accel/) block; `verif/apb/` provides a
+through the [`demo_tiny_alu_subsys`](../demo_tiny_alu_subsys/) block; `verif/apb/` provides a
 compile/elaboration smoke test for the modport contract.

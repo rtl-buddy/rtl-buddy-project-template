@@ -1,0 +1,5 @@
+# RTL-Buddy CDC Regression Configuration File
+rtl-buddy-filetype: cdc_reg_config
+
+cdc-configs:
+  - "cdc.yaml"
