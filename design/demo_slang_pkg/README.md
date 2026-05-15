@@ -27,7 +27,16 @@ ERROR: syntax error, unexpected TOK_IMPORT, expecting '#' or '(' or ';'
 ## How to exercise
 
 1. Build yosys-slang per [`tools/yosys-slang/SETUP_OSX.md`](../../tools/yosys-slang/SETUP_OSX.md). End-state: `slang.so` exists at a known path.
-2. Once `rtl_buddy` ships [#90](https://github.com/rtl-buddy/rtl_buddy/pull/90) in a release (current state: open, draft / ready-for-review), bump the template's pinned `rtl_buddy` version. Until then, `frontend: "slang"` in synth.yaml is silently dropped by the released `rtl_buddy==4.0.0` — pyserde lenience — and the synth falls back to `read_verilog`, which fails on this design as documented above.
+2. Get an `rtl_buddy` install that has the `frontend:` field plumbed through. Three states, depending on where rtl_buddy#90 is in its lifecycle:
+
+   | rtl_buddy state | What goes in the template's `pyproject.toml` `[tool.uv.sources]` |
+   |---|---|
+   | **Today** — [#90](https://github.com/rtl-buddy/rtl_buddy/pull/90) open, not yet merged | Local editable on the PR branch: `rtl_buddy = { path = "../../../rtl_buddy/.worktrees/pr-88-slang", editable = true }` (or wherever you've checked out `feature/88-slang`) |
+   | **After #90 merges into `rtl-buddy/main`** | Local editable on main: `rtl_buddy = { path = "../../../rtl_buddy", editable = true }` (canonical setup — your local main tracks the eventual release) |
+   | **After the next `rtl_buddy` release ships** | Bump the pinned `rtl_buddy==<version>` in `[project].dependencies`; remove the `[tool.uv.sources]` override entirely |
+
+   Without one of these, released `rtl_buddy==4.0.0` (the template's current pin) silently drops `frontend: "slang"` from synth.yaml — pyserde lenience — and the synth falls back to `read_verilog`, which fails on this design as documented above. PR #22 itself can't merge until rtl_buddy reaches state 3.
+
 3. Edit `synth/demo_slang_pkg/synth.yaml` to point `tool_overrides.yosys.plugin_path` at your `slang.so`, or set `cfg-synth-tools.opts.plugin-path` in `root_config.yaml` to make it project-wide.
 4. Run:
 
