@@ -1,0 +1,10 @@
+# RTL-Buddy RTL Model Configuration File
+rtl-buddy-filetype: model_config
+
+models:
+  - name: "demo_synth_incdir"
+    desc: >-
+      Repro for rtl_buddy issue #69 — `+incdir+` in a filelist produces a
+      spurious `read_verilog -sv -defer <dir>` line in the generated
+      Yosys script. See ./README.md.
+    filelist: ["-F test_modules.f"]
