@@ -43,3 +43,16 @@ runs:
       saif: "../../verif/demo_tiny_alu_subsys/artefacts/csr_smoke/dump.saif"
       scope: "tb_top/u_dut"
     reglvl: 1000
+
+  - name: "demo_tiny_alu_subsys_power_postpnr"
+    desc: "Post-PnR power on routed ODB (CTS-buffered clock, SAIF activity)"
+    tool: "openroad"
+    mode: "dynamic"
+    netlist-source: "pnr"
+    pnr: "demo_tiny_alu_subsys_pnr_nangate45"
+    pnr-path: "../../pnr/demo_tiny_alu_subsys/pnr.yaml"
+    platform: "nangate45_typ"
+    activity:
+      saif: "../../verif/demo_tiny_alu_subsys/artefacts/csr_smoke/dump.saif"
+      scope: "tb_top/u_dut"
+    reglvl: 1000
