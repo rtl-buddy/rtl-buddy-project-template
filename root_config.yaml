@@ -179,8 +179,9 @@ cfg-coverview:
     generate-tables: "line"
 # End coverage configuration
 
-# Surfer waveform viewer (used by `rb wave` and the sandbox build_report.py
-# for headless screenshot capture). `path: "surfer"` resolves via $PATH.
+# Surfer waveform viewer (used by `rb wave` and
+# `verif/demo_tiny_alu/build_report.py` for headless screenshot capture).
+# `path: "surfer"` resolves via $PATH.
 cfg-surfer:
   - name: "surfer-default"
     path: "surfer"
