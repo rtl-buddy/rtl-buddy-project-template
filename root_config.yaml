@@ -245,6 +245,16 @@ cfg-cdc-tools:
       sync-depth: 2
 # End CDC configuration
 
+# FPV tool defaults — `tool:` in fpv.yaml selects the entry. `sby` must
+# be on PATH along with at least one solver (yices, z3, boolector...).
+# See concepts/fpv.md for install steps.
+cfg-fpv-tools:
+  - name: "sby"
+    tool: "sby"
+    opts:
+      timeout: 600
+# End FPV configuration
+
 
 # Regression config
 cfg-rtl-reg:

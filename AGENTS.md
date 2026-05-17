@@ -116,9 +116,13 @@ uv run rb --machine test basic
 
 cd ../demo_tiny_alu_cocotb
 uv run rb --machine test cocotb_random
+
+# from an fpv suite dir (requires sby + yices/z3 on PATH)
+cd ../../fpv/demo_fpv_counter
+uv run rb --machine fpv
 ```
 
-`test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly.
+`test`, `randtest`, and `fpv` are typically run from the suite directory so relative paths in the suite's `tests.yaml` / `fpv.yaml` resolve correctly.
 
 ## When rtl_buddy Changes
 

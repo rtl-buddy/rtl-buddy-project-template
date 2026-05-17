@@ -51,6 +51,7 @@ naming convention surfaces the category in the directory name:
 | `demo_tiny_alu_cocotb` | cocotb peer of `demo_tiny_alu` driving the same DUT against the same golden  | [`verif/demo_tiny_alu_cocotb/`](verif/demo_tiny_alu_cocotb/)                                                                       |
 | `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the `rb pnr` Nangate45 flow | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
+| `demo_fpv_counter`    | Saturating counter with bound SVA-style checker; minimal end-to-end example for the `rb fpv` (SymbiYosys) flow | [`design/demo_fpv_counter/`](design/demo_fpv_counter/), [`fpv/demo_fpv_counter/`](fpv/demo_fpv_counter/) |
 
 Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
 across these blocks (plus one reglvl-gated SKIP for the source-sync
@@ -82,6 +83,7 @@ External prerequisites:
 - Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, for `rb verible …`)
 - Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`); macOS notes in [`tools/yosys/SETUP_OSX.md`](tools/yosys/SETUP_OSX.md)
 - OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
+- SymbiYosys (`sby`) plus at least one SMT solver — `brew install yices2 z3` covers the engines used by the bundled `demo_fpv_counter` (optional, for `rb fpv …`); install steps in [docs/concepts/fpv.md](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/fpv/)
 - Surfer — build from the [rtl-buddy fork](https://github.com/rtl-buddy/surfer) onto `PATH` (optional, for `rb wave` and headless waveform capture)
 
 Sync the project environment after cloning:
@@ -116,7 +118,8 @@ uv run rb skill install --project
 │   ├── template/           # workflow template — starter design files for a new block
 │   ├── demo_tiny_alu/       # demo — tiny ALU leaf DUT
 │   ├── demo_tiny_alu_subsys/     # demo — PeakRDL CSR + multi-clock top + compute wrapper
-│   └── demo_cdc_src_sync/  # demo — source-synchronous CDC reference (internal-pin clock forwarding)
+│   ├── demo_cdc_src_sync/  # demo — source-synchronous CDC reference (internal-pin clock forwarding)
+│   └── demo_fpv_counter/   # demo — saturating counter for the `rb fpv` (SymbiYosys) flow
 ├── spec/
 │   ├── apb/  ip_cdc_sync/  ip_cdc_handshake/  ip_async_fifo/   # base IP specs
 │   ├── template/           # workflow template — spec traceability skeleton
@@ -136,6 +139,8 @@ uv run rb skill install --project
 │   └── demo_cdc_src_sync/  # demo — Yosys synth of the source-sync chain
 ├── pnr/
 │   └── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
+├── fpv/
+│   └── demo_fpv_counter/   # demo — `rb fpv` (SymbiYosys) flow with bound checker module
 ├── lint/
 │   └── cdc/                # CDC lint configs (one entry per demo / base-IP analysis)
 ├── common/                 # shared SV verification helpers (LVM macros)
@@ -178,6 +183,9 @@ uv run rb -M cov regression -c regression.yaml \
 
 # Synth regression    — generic synth runs (tech-mapped is gated by reglvl)
 uv run rb synth-regression -c synth_regression.yaml
+
+# Formal verification — bounded proof + cover via SymbiYosys
+(cd fpv/demo_fpv_counter && uv run rb fpv)
 ```
 
 Each section below walks through *what* the feature does, *how it is

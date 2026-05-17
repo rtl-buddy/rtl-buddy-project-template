@@ -1,0 +1,7 @@
+# RTL-Buddy FPV Regression Configuration File
+rtl-buddy-filetype: fpv_reg_config
+
+# Discoverable list of fpv.yaml suites. `rb fpv-regression` walks each
+# entry and applies the `-l/--reg-level` filter.
+fpv-configs:
+  - "fpv/demo_fpv_counter/fpv.yaml"
