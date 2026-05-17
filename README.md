@@ -8,11 +8,13 @@ CDC primitives, an async FIFO, a tiny ALU) has its own spec, testplan,
 and runnable test. They compose into a multi-clock APB-mapped ALU
 accelerator with PeakRDL-generated CSRs (`demo_tiny_alu_subsys`).
 
-Together they exercise every headline `rtl_buddy` capability — spec
+Together they exercise the main day-to-day `rtl_buddy` workflows — spec
 traceability, test, regression, coverage, golden-model cosim (SV +
 cocotb), `rb wave` + headless Surfer captures, DV reports, PeakRDL
-register generation, and Yosys synthesis — so the mechanics stay in
-focus instead of the DUT.
+register generation, Yosys synthesis, OpenROAD P&R, and CDC lint — so
+the mechanics stay in focus instead of the DUT. Formal property
+verification is supported by `rtl_buddy`, but this template does not yet
+ship a bundled `fpv/` example.
 
 ## Demonstrator at a Glance
 
@@ -72,6 +74,7 @@ template the supported flows are:
 - **Surfer** + WCP for live waveform viewing and headless capture
 - **Coverview** for browser-based coverage dashboards
 - **PeakRDL** for SystemRDL → SystemVerilog register block generation
+- **SymbiYosys (`sby`)** for downstream formal flows you add to the project; this template includes the root-config hook but not a bundled FPV demo suite
 
 ## Setup
 
@@ -85,6 +88,7 @@ External prerequisites:
 - Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`); macOS notes in [`tools/yosys/SETUP_OSX.md`](tools/yosys/SETUP_OSX.md)
 - OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
 - Surfer — build from the [rtl-buddy fork](https://github.com/rtl-buddy/surfer) onto `PATH` (optional, for `rb wave` and headless waveform capture)
+- SymbiYosys (`sby`) plus a solver such as `yices`, `z3`, or `boolector` (optional, only needed if you add `fpv/` suites)
 
 Sync the project environment after cloning:
 
@@ -697,6 +701,8 @@ Typical next steps:
 - Expand [`regression.yaml`](regression.yaml) and
   [`synth_regression.yaml`](synth_regression.yaml) to include your
   real suites.
+- If your project uses formal verification, add `fpv/` suites plus
+  matching `cfg-fpv-tools` entries and regression wiring.
 - Rewrite the repo docs ([`README.md`](README.md),
   [`AGENTS.md`](AGENTS.md)) so they describe your project instead of
   the template.
