@@ -245,6 +245,16 @@ cfg-cdc-tools:
       sync-depth: 2
 # End CDC configuration
 
+# Formal tool defaults — add `fpv/` suites when your project is ready
+# to exercise `rb fpv` or `rb fpv-regression`.
+cfg-fpv-tools:
+  - name: "sby"
+    tool: "sby"
+    opts:
+      timeout: 600
+      extra-args: ""
+# End formal configuration
+
 
 # Regression config
 cfg-rtl-reg:
