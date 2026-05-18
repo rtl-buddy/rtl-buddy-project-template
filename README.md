@@ -8,11 +8,13 @@ CDC primitives, an async FIFO, a tiny ALU) has its own spec, testplan,
 and runnable test. They compose into a multi-clock APB-mapped ALU
 accelerator with PeakRDL-generated CSRs (`demo_tiny_alu_subsys`).
 
-Together they exercise every headline `rtl_buddy` capability — spec
+Together they exercise the main day-to-day `rtl_buddy` workflows — spec
 traceability, test, regression, coverage, golden-model cosim (SV +
 cocotb), `rb wave` + headless Surfer captures, DV reports, PeakRDL
-register generation, and Yosys synthesis — so the mechanics stay in
-focus instead of the DUT.
+register generation, Yosys synthesis, OpenROAD P&R, and CDC lint — so
+the mechanics stay in focus instead of the DUT. Formal property
+verification is supported by `rtl_buddy`, but this template does not yet
+ship a bundled `fpv/` example.
 
 ## Demonstrator at a Glance
 
@@ -72,6 +74,7 @@ template the supported flows are:
 - **Surfer** + WCP for live waveform viewing and headless capture
 - **Coverview** for browser-based coverage dashboards
 - **PeakRDL** for SystemRDL → SystemVerilog register block generation
+- **SymbiYosys (`sby`)** for downstream formal flows you add to the project; this template includes the root-config hook but not a bundled FPV demo suite
 
 ## Setup
 
@@ -79,12 +82,14 @@ External prerequisites:
 
 - `uv`, Python 3.11
 - A simulator on `PATH` — Verilator (open-source) and/or VCS
-- `lcov` for LCOV/HTML coverage export
-- `coverview` (Antmicro) for the Coverview package path
+- `lcov` for LCOV/HTML coverage export — `brew install lcov` on macOS; `apt-get install lcov` on Debian/Ubuntu (needed for the `--coverage-html` step of `rb -M cov regression`)
+- `coverview` (Antmicro) for the Coverview package path — see [`coverview.md`](coverview.md)
 - Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, for `rb verible …`)
 - Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`); macOS notes in [`tools/yosys/SETUP_OSX.md`](tools/yosys/SETUP_OSX.md)
+- yosys-slang — build the [yosys-slang plugin](https://github.com/povik/yosys-slang) (optional; only if any synth or CDC analysis sets `frontend: "slang"` for SV-2017 designs the built-in Yosys frontend rejects); macOS notes in [`tools/yosys-slang/SETUP_OSX.md`](tools/yosys-slang/SETUP_OSX.md)
 - OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
 - Surfer — build from the [rtl-buddy fork](https://github.com/rtl-buddy/surfer) onto `PATH` (optional, for `rb wave` and headless waveform capture)
+- SymbiYosys (`sby`) plus a solver such as `yices`, `z3`, or `boolector` (optional, only needed if you add `fpv/` suites)
 
 Sync the project environment after cloning:
 
@@ -141,7 +146,7 @@ uv run rb skill install --project
 ├── lint/
 │   └── cdc/                # CDC lint configs (one entry per demo / base-IP analysis)
 ├── common/                 # shared SV verification helpers (LVM macros)
-├── tools/                  # toolchain setup notes (yosys, openroad)
+├── tools/                  # toolchain setup notes (yosys, yosys-slang, openroad)
 └── pyproject.toml          # uv-managed project env + pinned rtl_buddy
 ```
 
@@ -342,6 +347,13 @@ open coverage_merge.html
 When invoked from a suite directory the merged artefacts land in
 that suite instead. Coverview viewer setup: see
 [`coverview.md`](coverview.md).
+
+The `verilator-coverage` job in
+[`.github/workflows/verilator.yml`](.github/workflows/verilator.yml)
+runs the same `-M cov regression --coverage-merge --coverage-html` on
+every push and uploads the merged HTML report (`coverage-html`) and
+LCOV data (`coverage-data`) as workflow artifacts, so browsing
+coverage from a PR is one download away.
 
 ---
 
@@ -697,6 +709,8 @@ Typical next steps:
 - Expand [`regression.yaml`](regression.yaml) and
   [`synth_regression.yaml`](synth_regression.yaml) to include your
   real suites.
+- If your project uses formal verification, add `fpv/` suites plus
+  matching `cfg-fpv-tools` entries and regression wiring.
 - Rewrite the repo docs ([`README.md`](README.md),
   [`AGENTS.md`](AGENTS.md)) so they describe your project instead of
   the template.

@@ -179,8 +179,9 @@ cfg-coverview:
     generate-tables: "line"
 # End coverage configuration
 
-# Surfer waveform viewer (used by `rb wave` and the sandbox build_report.py
-# for headless screenshot capture). `path: "surfer"` resolves via $PATH.
+# Surfer waveform viewer (used by `rb wave` and
+# `verif/demo_tiny_alu/build_report.py` for headless screenshot capture).
+# `path: "surfer"` resolves via $PATH.
 cfg-surfer:
   - name: "surfer-default"
     path: "surfer"
@@ -251,6 +252,16 @@ cfg-cdc-tools:
     opts:
       sync-depth: 2
 # End CDC configuration
+
+# Formal tool defaults — add `fpv/` suites when your project is ready
+# to exercise `rb fpv` or `rb fpv-regression`.
+cfg-fpv-tools:
+  - name: "sby"
+    tool: "sby"
+    opts:
+      timeout: 600
+      extra-args: ""
+# End formal configuration
 
 
 # Regression config
