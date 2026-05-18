@@ -48,9 +48,48 @@ jobs:
         #                       (default: run all levels)
         #   -s <N>              start from level N, skipping earlier levels
         #   -M reg|debug|cov    builder mode override (default: reg)
-        #
-        # Coverage options (Verilator only, requires cov builder mode):
-        #   --coverage-merge        merge coverage data across all tests
-        #   --coverage-html         generate merged LCOV HTML report
-        #   --coverage-coverview    generate Coverview zip from merged coverage
         run: uv run rtl-buddy --machine -B verilator regression -c regression.yaml
+
+  verilator-coverage:
+    runs-on: ubuntu-latest
+    container:
+      image: verilator/verilator:v5.042
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked --python 3.11
+
+      # `--coverage-html` shells out to lcov's genhtml; the Verilator
+      # base image does not ship it.
+      - name: Install lcov
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends lcov
+
+      - name: Run coverage regression
+        run: |
+          uv run rtl-buddy --machine -B verilator -M cov regression \
+            -c regression.yaml --coverage-merge --coverage-html
+
+      - name: Upload merged LCOV HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: coverage_merge.html/
+          if-no-files-found: error
+
+      - name: Upload merged LCOV data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data
+          path: cov_dir/coverage_merged.info
+          if-no-files-found: error
