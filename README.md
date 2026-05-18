@@ -83,6 +83,7 @@ External prerequisites:
 - `coverview` (Antmicro) for the Coverview package path
 - Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, for `rb verible …`)
 - Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`); macOS notes in [`tools/yosys/SETUP_OSX.md`](tools/yosys/SETUP_OSX.md)
+- yosys-slang — build the [yosys-slang plugin](https://github.com/povik/yosys-slang) (optional; only if any synth or CDC analysis sets `frontend: "slang"` for SV-2017 designs the built-in Yosys frontend rejects); macOS notes in [`tools/yosys-slang/SETUP_OSX.md`](tools/yosys-slang/SETUP_OSX.md)
 - OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
 - Surfer — build from the [rtl-buddy fork](https://github.com/rtl-buddy/surfer) onto `PATH` (optional, for `rb wave` and headless waveform capture)
 
@@ -141,7 +142,7 @@ uv run rb skill install --project
 ├── lint/
 │   └── cdc/                # CDC lint configs (one entry per demo / base-IP analysis)
 ├── common/                 # shared SV verification helpers (LVM macros)
-├── tools/                  # toolchain setup notes (yosys, openroad)
+├── tools/                  # toolchain setup notes (yosys, yosys-slang, openroad)
 └── pyproject.toml          # uv-managed project env + pinned rtl_buddy
 ```
 
