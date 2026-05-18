@@ -1,0 +1,15 @@
+# RTL-Buddy Synthesis Configuration File
+rtl-buddy-filetype: synth_config
+
+# Regression for rtl_buddy issue #69 — guards against `+incdir+` filelist
+# entries leaking back into `synth.ys` as a bare-directory
+# `read_verilog -sv -defer <dir>` line. See
+# `design/demo_synth_incdir/README.md` for details.
+syntheses:
+  - name: "demo_synth_incdir_synth_generic"
+    desc: "Tech-independent Yosys synth — regression for rtl_buddy#69 (+incdir+ filelist handling)"
+    model: "demo_synth_incdir"
+    model_path: "../../design/demo_synth_incdir/models.yaml"
+    tool: "yosys"
+    constraints: "constraints.sdc"
+    reglvl: 0
