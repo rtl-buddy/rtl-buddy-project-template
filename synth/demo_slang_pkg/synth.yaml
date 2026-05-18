@@ -13,14 +13,11 @@
 #   2. Update `plugin_path` below to point at *your* slang.so.
 #      (Absolute path, or relative to the project root containing
 #      root_config.yaml.)
-#   3. Wait for rtl_buddy#90 to ship in a release, then bump the
-#      pinned `rtl_buddy` dep so `frontend` is honored — current
-#      released `rtl_buddy==4.0.0` silently drops the field (pyserde
-#      lenience), at which point the synth falls back to read_verilog
-#      and fails on this design's SV-2017 constructs.
-#   4. Then:
+#   3. Then:
 #        uv run rb synth demo_slang_pkg_synth_slang \
 #            -c synth/demo_slang_pkg/synth.yaml
+#
+# Requires rtl_buddy>=4.1.0 for the `frontend` field to be honored.
 #
 # `reglvl: 1000` excludes this block from default `rb synth-regression`
 # runs so the template's regression stays green on a vanilla install

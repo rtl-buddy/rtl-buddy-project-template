@@ -450,7 +450,7 @@ wheels = [
 
 [[package]]
 name = "rtl-buddy"
-version = "4.0.0"
+version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -460,9 +460,9 @@ dependencies = [
     { name = "ruamel-yaml" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/df/23/aafc898ade65480d36624f116239d8b6a2d38983f3831b6966745ad66efd/rtl_buddy-4.0.0.tar.gz", hash = "sha256:b5dca7b03f0529930bda4c981e51a5924384868772a8aab64bb9d7ccd6f8e5c0", size = 230916, upload-time = "2026-05-13T08:56:13.601Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/c2/be9958e0b6583eb36a152365244b54750245d07c12b2ba92e5f3c95d5f86/rtl_buddy-4.1.0.tar.gz", hash = "sha256:b7dc75d0ebd4c33ab71823a5bae47a07f2f3e3950aa2fa4b2cb8b52b60a5be13", size = 267947, upload-time = "2026-05-18T06:56:20.228Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/8f/3c1b61eb3c95ac489107a65204a21ec0210ea820be25606fe4cdc2057653/rtl_buddy-4.0.0-py3-none-any.whl", hash = "sha256:7627e3c56529c55804673c45b21bf40c00d77e3b108ee915b95bde9a5e4c9e44", size = 187883, upload-time = "2026-05-13T08:56:11.893Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/22/fff0e6eaae385d5fcb9afdd9742817426999032565505b0b4278ec9eac81/rtl_buddy-4.1.0-py3-none-any.whl", hash = "sha256:6d9432b932a49762edb455160a4afbeb615e41a347dfb4082924ba34c18a4cc1", size = 224306, upload-time = "2026-05-18T06:56:17.909Z" },
 ]
 
 [[package]]
@@ -494,7 +494,7 @@ requires-dist = [
     { name = "peakrdl", git = "https://github.com/rtl-buddy/PeakRDL.git?subdirectory=peakrdl" },
     { name = "peakrdl-regblock", git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "rtl-buddy", specifier = "==4.0.0" },
+    { name = "rtl-buddy", specifier = "==4.1.0" },
     { name = "rtl-buddy-cdc", git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git" },
 ]
 
