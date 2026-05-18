@@ -238,6 +238,13 @@ cfg-pnr-platforms:
       clock: "metal4-metal8"
 # End synth / pnr configuration
 
+# Power analysis tool defaults — `tool:` in power.yaml selects the entry.
+# Power runs reuse cfg-pnr-platforms entries for Liberty/corner lookup.
+cfg-power-tools:
+  - name: "openroad"
+    tool: "openroad"
+# End power configuration
+
 # CDC lint tool defaults — `tool:` in cdc.yaml selects the entry.
 cfg-cdc-tools:
   - name: "rtl-buddy-cdc"

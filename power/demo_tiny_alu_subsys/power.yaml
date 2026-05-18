@@ -1,0 +1,58 @@
+rtl-buddy-filetype: power_config
+
+# OpenROAD-driven power analysis for demo_tiny_alu_subsys on Nangate45.
+# Consumes the tech-mapped netlist from
+#   `rb synth demo_tiny_alu_subsys_synth_nangate45`.
+#
+# Reglvl-deferred — invoke directly:
+#   rb power demo_tiny_alu_subsys_power_static  -c power/demo_tiny_alu_subsys/power.yaml
+#   rb power demo_tiny_alu_subsys_power_dynamic -c power/demo_tiny_alu_subsys/power.yaml
+runs:
+  - name: "demo_tiny_alu_subsys_power_static"
+    desc: "Static-mode power on Nangate45 typ corner (OpenROAD defaults)"
+    tool: "openroad"
+    mode: "static"
+    synth: "demo_tiny_alu_subsys_synth_nangate45"
+    synth-path: "../../synth/demo_tiny_alu_subsys/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys/constraints.sdc"
+    platform: "nangate45_typ"
+    reglvl: 1000
+
+  - name: "demo_tiny_alu_subsys_power_dynamic"
+    desc: "Dynamic-mode power with synthetic global activity (0.2 toggle / 0.5 duty)"
+    tool: "openroad"
+    mode: "dynamic"
+    synth: "demo_tiny_alu_subsys_synth_nangate45"
+    synth-path: "../../synth/demo_tiny_alu_subsys/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys/constraints.sdc"
+    platform: "nangate45_typ"
+    activity:
+      default-toggle-rate: 0.2
+      default-static-prob: 0.5
+    reglvl: 1000
+
+  - name: "demo_tiny_alu_subsys_power_saif"
+    desc: "Dynamic-mode power driven by SAIF captured from csr_smoke simulation"
+    tool: "openroad"
+    mode: "dynamic"
+    synth: "demo_tiny_alu_subsys_synth_nangate45"
+    synth-path: "../../synth/demo_tiny_alu_subsys/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys/constraints.sdc"
+    platform: "nangate45_typ"
+    activity:
+      saif: "../../verif/demo_tiny_alu_subsys/artefacts/csr_smoke/dump.saif"
+      scope: "tb_top/u_dut"
+    reglvl: 1000
+
+  - name: "demo_tiny_alu_subsys_power_postpnr"
+    desc: "Post-PnR power on routed ODB (CTS-buffered clock, SAIF activity)"
+    tool: "openroad"
+    mode: "dynamic"
+    netlist-source: "pnr"
+    pnr: "demo_tiny_alu_subsys_pnr_nangate45"
+    pnr-path: "../../pnr/demo_tiny_alu_subsys/pnr.yaml"
+    platform: "nangate45_typ"
+    activity:
+      saif: "../../verif/demo_tiny_alu_subsys/artefacts/csr_smoke/dump.saif"
+      scope: "tb_top/u_dut"
+    reglvl: 1000
