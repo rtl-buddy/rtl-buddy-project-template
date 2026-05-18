@@ -4,6 +4,11 @@ rtl-buddy-filetype: cdc_config
 # Each entry runs the configured CDC tool against the named model.
 # `constraints:` is the SDC; `waivers:` is optional. Paths are resolved
 # relative to this file.
+#
+# Slang-required SV examples are tracked in issue #21 and will land
+# once rtl-buddy-cdc#5 (slang frontend) and rtl_buddy#88 are released.
+# The new analyses will exercise `rb cdc` with the slang frontend
+# alongside the Yosys-backed analyses below.
 analyses:
   - name: "ip_cdc_handshake_lint"
     desc: "CDC lint of the request/ack handshake IP"

@@ -8,3 +8,4 @@ synth-configs:
   - "synth/demo_tiny_alu_subsys/synth.yaml"
   - "synth/demo_cdc_src_sync/synth.yaml"
   - "synth/demo_synth_incdir/synth.yaml"
+  - "synth/demo_slang_pkg/synth.yaml"   # reglvl 1000 — opt-in via --reg-level once yosys-slang is set up
