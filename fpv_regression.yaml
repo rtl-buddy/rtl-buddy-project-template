@@ -1,0 +1,8 @@
+# RTL-Buddy FPV Regression Configuration File
+rtl-buddy-filetype: fpv_reg_config
+
+# Discoverable list of fpv.yaml files. `rb fpv-regression` walks each
+# entry, running every verification within at or below the active
+# --reg-level.
+fpv-configs:
+  - "fpv/demo_fpv_counter/fpv.yaml"
