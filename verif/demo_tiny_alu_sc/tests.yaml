@@ -1,0 +1,21 @@
+# RTL-Buddy Test Configuration File
+rtl-buddy-filetype: test_config
+
+# SystemC + Verilator cosim of demo_tiny_alu, run through `rb test`.
+# Verilator emits the DUT as an sc_module, builds against user-provided
+# sc_main.cpp. cfg-systemc in root_config supplies SYSTEMC_HOME + CXX.
+testbenches:
+  - name: "tb_alu_sc"
+    filelist: []
+    toplevel: "demo_tiny_alu"
+    systemc:
+      sc_main: "sc_main.cpp"
+      cflags: ["-std=c++17"]
+
+tests:
+  - name: "basic_sc"
+    desc: "SystemC cosim — 8 directed opcode vectors with self-check"
+    reglvl: 0
+    model: "demo_tiny_alu"
+    model_path: "../../design/demo_tiny_alu/models.yaml"
+    testbench: "tb_alu_sc"

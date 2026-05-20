@@ -263,6 +263,17 @@ cfg-fpv-tools:
       extra-args: ""
 # End formal configuration
 
+# SystemC cosim — required when a testbench in tests.yaml declares a
+# `systemc:` block (Verilator --sc + user-provided sc_main.cpp).
+# `home` resolves to $SYSTEMC_HOME when unset. `cxx` optionally pins
+# the compiler used to link the cosim binary for ABI parity with the
+# locally-built libsystemc. Remove this block in projects that do not
+# use SystemC cosim — its absence is only fatal when a SystemC test runs.
+# cfg-systemc:
+#   home: "${SYSTEMC_HOME}"
+#   cxx: "/opt/homebrew/bin/g++-15"
+# End SystemC configuration
+
 
 # Regression config
 cfg-rtl-reg:
