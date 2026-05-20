@@ -116,6 +116,11 @@ uv run rb --machine test basic
 
 cd ../demo_tiny_alu_cocotb
 uv run rb --machine test cocotb_random
+
+# from an FPV suite dir
+cd fpv/demo_fpv_counter
+uv run rb --machine fpv          # runs every verification in fpv.yaml
+uv run rb --machine fpv --list   # dry-list verification names
 ```
 
 `test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly.
