@@ -117,7 +117,7 @@ uv run rb --machine test basic
 cd ../demo_tiny_alu_cocotb
 uv run rb --machine test cocotb_random
 
-cd ../demo_tiny_alu_sc       # requires cfg-systemc in root_config.yaml
+cd ../demo_tiny_alu_sc       # requires $SYSTEMC_HOME or cfg-systemc.home set
 uv run rb --machine test basic_sc
 
 # from an FPV suite dir

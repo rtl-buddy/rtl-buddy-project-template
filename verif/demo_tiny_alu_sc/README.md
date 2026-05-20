@@ -49,9 +49,10 @@ uv run rb --machine test basic_sc
 3. **Compiler ABI parity** — the `g++` used to build the cosim binary must
    match the one used to build `libsystemc.a` (libstdc++ vs libc++, GCC vs
    clang version). Pin it via `cfg-systemc.cxx` in `root_config.yaml`.
-4. **Uncomment `cfg-systemc:` in `root_config.yaml`** — the block is
-   commented out by default because the demo opts in rather than imposing
-   a SystemC dependency on every template clone.
+4. **`$SYSTEMC_HOME` exported** (or override `cfg-systemc.home` in
+   `root_config.yaml`). The block ships enabled with `home: ${SYSTEMC_HOME}`;
+   `rb test` only fails when the env var is unset *and* you actually run
+   a SystemC test, so clones that never touch SystemC are unaffected.
 
 ## Why a SystemC peer
 
