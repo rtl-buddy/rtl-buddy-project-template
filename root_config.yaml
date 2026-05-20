@@ -268,15 +268,21 @@ cfg-fpv-tools:
 # is only fatal when a SystemC test actually runs, so this block is safe
 # to keep in projects that do not (yet) use SystemC.
 #
-#   home — install root containing include/ and lib/libsystemc.{a,dylib,so}.
-#          When unset (null), falls back to the $SYSTEMC_HOME env var.
-#          ${VAR} and ~ in the value are expanded.
-#   cxx  — optional. Pin the C++ compiler used to link the cosim binary
-#          for ABI parity with the locally-built libsystemc (libstdc++ vs
-#          libc++, GCC vs clang version).
+#   home    — install root containing include/ and lib/libsystemc.{a,dylib,so}.
+#             When unset (null), falls back to the $SYSTEMC_HOME env var.
+#             ${VAR} and ~ in the value are expanded.
+#   cxx     — optional. Pin the C++ compiler used to link the cosim binary
+#             for ABI parity with the locally-built libsystemc (libstdc++ vs
+#             libc++, GCC vs clang version).
+#   cflags  — project-wide -CFLAGS tokens. Per-testbench `systemc.cflags`
+#             append on top; the SystemC include path is auto-emitted.
+#   ldflags — project-wide -LDFLAGS tokens. Per-testbench `systemc.ldflags`
+#             append on top; -lsystemc is auto-emitted.
 cfg-systemc:
   home: "${SYSTEMC_HOME}"
   # cxx: "/opt/homebrew/bin/g++-15"
+  cflags: ["-std=c++17"]
+  ldflags: []
 # End SystemC configuration
 
 

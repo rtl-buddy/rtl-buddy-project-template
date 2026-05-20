@@ -10,7 +10,9 @@ testbenches:
     toplevel: "demo_tiny_alu"
     systemc:
       sc_main: "sc_main.cpp"
-      cflags: ["-std=c++17"]
+      # -std=c++17 lives in root_config.yaml's cfg-systemc.cflags as a
+      # project-wide default. Add per-testbench cflags here only when
+      # this suite needs tokens the rest of the project does not.
 
 tests:
   - name: "basic_sc"
