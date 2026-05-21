@@ -1,0 +1,40 @@
+# RTL-Buddy Test Configuration File
+rtl-buddy-filetype: test_config
+
+# NOTE: tb_axi_fifo (vendor) uses axi_test.sv which relies on complex OOP class
+# type parameterization. Verilator cannot resolve nested class types as type
+# parameters — this is a known Verilator limitation. tb_axi_fifo therefore
+# requires a full-OOP simulator (Questa/VCS) to compile and run, and is not
+# wired up in this Verilator-first template.
+
+testbenches:
+  - name: "tb_axi_fifo_simple"
+    filelist:
+      - "../../design/pulp-platform-axi/pp_axi.vlt"
+      - "tb_axi_fifo_simple.sv"
+
+  - name: "tb_top"
+    filelist:
+      - "../../design/pulp-platform-axi/pp_axi.vlt"
+      - "-v ../../vendor/pulp-platform/axi/test/axi_synth_bench.sv"
+      - "tb_top.sv"
+
+tests:
+  - name: "axi_fifo_simple"
+    desc: "FIFO-01..04: single write/read, back-to-back writes, reads after fills"
+    reglvl: 0
+    model: "pp_axi"
+    model_path: "../../design/pulp-platform-axi/models.yaml"
+    testbench: "tb_axi_fifo_simple"
+
+  - name: "synth_bench"
+    desc: "Instantiate axi_synth_bench to verify all adapter variants elaborate cleanly"
+    reglvl: 0
+    model: "pp_axi"
+    model_path: "../../design/pulp-platform-axi/models.yaml"
+    testbench: "tb_top"
+    # SYNTHESIS gates out vendor sim-only initial-block assumptions
+    # (e.g. axi_to_detailed_mem $fatal at t=0) for synth_bench's parameter
+    # sweep. Matches the test's elaboration-only intent.
+    plusdefines:
+      SYNTHESIS: "1"

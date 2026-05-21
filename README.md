@@ -11,6 +11,7 @@ This repository is a clean starting point for a new RTL project: it includes a r
 - A matching verification suite under [`verif/sandbox/`](verif/sandbox/)
 - Starter blocks and configs that demonstrate `rtl_buddy` features under [`design/template/`](design/template/) and [`verif/template/`](verif/template/)
 - A minimal Verilator coverage example, including merged HTML coverage export
+- A worked third-party IP integration example under [`design/pulp-platform-axi/`](design/pulp-platform-axi/) and [`verif/pulp-platform-axi/`](verif/pulp-platform-axi/), wiring up the [`pulp-platform/axi`](https://github.com/pulp-platform/axi) interconnect as vendored submodules
 
 ## Tooling Scope
 
@@ -35,6 +36,12 @@ Then sync the project environment after cloning:
 
 ```bash
 uv sync --locked --python 3.11
+```
+
+If you plan to use the `pulp-platform-axi` example, also initialise the vendor submodules:
+
+```bash
+git submodule update --init --recursive
 ```
 
 This installs the pinned `rtl_buddy` dependency and the Python packages used by the template.
@@ -68,8 +75,11 @@ This writes `SKILL.md` to `~/.claude/skills/rtl_buddy/` and `~/.codex/skills/rtl
 │   └── template/           # starter design files for a new block
 ├── verif/
 │   ├── sandbox/            # runnable example test suite
-│   └── template/           # starter verification files for a new block
+│   ├── template/           # starter verification files for a new block
+│   └── pulp-platform-axi/  # third-party AXI interconnect example tests
 ├── common/                 # shared RTL helpers used by the examples
+├── design/pulp-platform-axi/  # filelists + lint waivers for the vendored AXI IP
+├── vendor/pulp-platform/      # submodules: pulp-platform AXI, common_cells, common_verification
 ├── tools/                  # Bundling tools in your project
 └── pyproject.toml          # project env and pinned rtl_buddy dependency
 ```
@@ -101,6 +111,24 @@ If you want to exercise the bundled Verible setup:
 ```bash
 uv run rb verible syntax design/sandbox/test_module.sv
 ```
+
+## Third-Party IP Example: pulp-platform AXI
+
+The [`design/pulp-platform-axi/`](design/pulp-platform-axi/) block shows how to integrate
+external SystemVerilog IP — in this case the [`pulp-platform/axi`](https://github.com/pulp-platform/axi)
+interconnect — into an `rtl_buddy` project. It includes a curated common_cells
+filelist, Verilator lint waivers scoped to the vendor tree, and two tests:
+
+```bash
+# Directed FIFO testbench (Verilator-compatible)
+cd verif/pulp-platform-axi
+uv run rb test axi_fifo_simple
+
+# Elaboration sweep of every adapter variant in axi_synth_bench
+uv run rb test synth_bench
+```
+
+See [`design/pulp-platform-axi/README.md`](design/pulp-platform-axi/README.md) for details.
 
 ## Coverage Example
 
