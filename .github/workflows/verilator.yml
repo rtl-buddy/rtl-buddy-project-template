@@ -2,8 +2,9 @@ name: Verilator Regression
 
 # This workflow runs the rtl_buddy regression suite inside the official
 # Verilator Docker container. It installs project dependencies (including
-# rtl_buddy) from the committed uv.lock, then runs the regression defined
-# in regression.yaml.
+# rtl_buddy) from the committed uv.lock, builds SystemC from source (cached
+# across runs), exports SYSTEMC_HOME, then runs the regression defined in
+# regression.yaml.
 #
 # Trigger on every push. Common alternatives:
 #   on:
@@ -13,6 +14,12 @@ name: Verilator Regression
 #       branches: [main]
 on: [push]
 
+env:
+  # Accellera SystemC release used by the SystemC cosim suites. Bump the
+  # tag here when you want to roll forward; the build step rebuilds and
+  # the actions/cache key picks up the new version automatically.
+  SYSTEMC_VERSION: "3.0.2"
+
 jobs:
   verilator-test:
     runs-on: ubuntu-latest
@@ -21,10 +28,14 @@ jobs:
       # installation on Ubuntu. Pin to a specific release tag so CI is
       # reproducible. Browse available tags at:
       # https://hub.docker.com/r/verilator/verilator/tags
-      image: verilator/verilator:v5.042
+      image: verilator/verilator:v5.048
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Initialise vendor submodules (e.g. pulp-platform/axi) so the
+          # corresponding test suites can resolve their RTL filelists.
+          submodules: recursive
 
       # Install uv into the container. The package cache is keyed on
       # uv.lock so repeated runs with an unchanged lockfile skip downloads.
@@ -37,6 +48,31 @@ jobs:
       # This includes rtl_buddy and any other packages declared in pyproject.toml.
       - name: Install dependencies
         run: uv sync --locked --python 3.11
+
+      # SystemC install (cached) — required by verif/demo_tiny_alu_sc/.
+      # First run builds + caches to /opt/systemc (~2 min); subsequent runs
+      # restore the cache (~5 s).
+      - name: Cache SystemC build
+        id: systemc-cache
+        uses: actions/cache@v4
+        with:
+          path: /opt/systemc
+          key: systemc-${{ env.SYSTEMC_VERSION }}-${{ runner.os }}-v1
+
+      - name: Build SystemC
+        if: steps.systemc-cache.outputs.cache-hit != 'true'
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends cmake build-essential ca-certificates curl
+          mkdir -p /tmp/sc-build && cd /tmp/sc-build
+          curl -fsSL "https://github.com/accellera-official/systemc/archive/refs/tags/${SYSTEMC_VERSION}.tar.gz" | tar xz
+          cd "systemc-${SYSTEMC_VERSION}"
+          cmake -B build -DCMAKE_INSTALL_PREFIX=/opt/systemc -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=17
+          cmake --build build -j"$(nproc)"
+          cmake --install build
+
+      - name: Export SYSTEMC_HOME
+        run: echo "SYSTEMC_HOME=/opt/systemc" >> "$GITHUB_ENV"
 
       - name: Run regression
         # Runs the full regression defined in regression.yaml.
@@ -53,10 +89,14 @@ jobs:
   verilator-coverage:
     runs-on: ubuntu-latest
     container:
-      image: verilator/verilator:v5.042
+      image: verilator/verilator:v5.048
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Initialise vendor submodules (e.g. pulp-platform/axi) so the
+          # corresponding test suites can resolve their RTL filelists.
+          submodules: recursive
 
       - uses: astral-sh/setup-uv@v5
         with:
@@ -72,6 +112,27 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends lcov
+
+      - name: Cache SystemC build
+        id: systemc-cache
+        uses: actions/cache@v4
+        with:
+          path: /opt/systemc
+          key: systemc-${{ env.SYSTEMC_VERSION }}-${{ runner.os }}-v1
+
+      - name: Build SystemC
+        if: steps.systemc-cache.outputs.cache-hit != 'true'
+        run: |
+          apt-get install -y --no-install-recommends cmake build-essential ca-certificates curl
+          mkdir -p /tmp/sc-build && cd /tmp/sc-build
+          curl -fsSL "https://github.com/accellera-official/systemc/archive/refs/tags/${SYSTEMC_VERSION}.tar.gz" | tar xz
+          cd "systemc-${SYSTEMC_VERSION}"
+          cmake -B build -DCMAKE_INSTALL_PREFIX=/opt/systemc -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=17
+          cmake --build build -j"$(nproc)"
+          cmake --install build
+
+      - name: Export SYSTEMC_HOME
+        run: echo "SYSTEMC_HOME=/opt/systemc" >> "$GITHUB_ENV"
 
       - name: Run coverage regression
         run: |

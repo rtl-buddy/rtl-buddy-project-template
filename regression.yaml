@@ -11,5 +11,7 @@ test-configs:
   - "verif/ip_async_fifo/tests.yaml"
   - "verif/demo_tiny_alu/tests.yaml"
   - "verif/demo_tiny_alu_cocotb/tests.yaml"
+  - "verif/demo_tiny_alu_sc/tests.yaml"
   - "verif/demo_tiny_alu_subsys/tests.yaml"
   - "verif/demo_cdc_src_sync/tests.yaml"
+  - "verif/demo_pulp_platform_axi/tests.yaml"
