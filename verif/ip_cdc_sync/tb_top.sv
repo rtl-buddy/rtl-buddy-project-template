@@ -15,11 +15,17 @@ module tb_top;
     .clk, .rst_n, .d, .q
   );
 
-  // Cover labels mirror CDCSYNC-* IDs (kept simple for Verilator SVA)
+  // Cover labels mirror CDCSYNC-* IDs (kept simple for Verilator SVA).
+  // The DUT uses rst_n as an async reset; sampling it synchronously in
+  // these cover properties is intentional for testbench coverage and is
+  // not a CDC issue — suppress Verilator's SYNCASYNCNET warning so the
+  // coverage build does not promote it to a fatal error under -Wall.
+  /* verilator lint_off SYNCASYNCNET */
   CDCSYNC_RESET:   cover property (@(posedge clk) !rst_n && q == 1'b0);
   CDCSYNC_D_LOW:   cover property (@(posedge clk) rst_n && d == 1'b0 && q == 1'b0);
   CDCSYNC_D_HIGH:  cover property (@(posedge clk) rst_n && d == 1'b1 && q == 1'b1);
   CDCSYNC_LATENCY: cover property (@(posedge clk) rst_n && d != q);
+  /* verilator lint_on SYNCASYNCNET */
 
   initial begin
     clk = 1'b0; rst_n = 1'b0; d = 1'b0;
