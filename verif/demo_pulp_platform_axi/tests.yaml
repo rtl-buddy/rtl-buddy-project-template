@@ -10,12 +10,12 @@ rtl-buddy-filetype: test_config
 testbenches:
   - name: "tb_axi_fifo_simple"
     filelist:
-      - "../../design/pulp-platform-axi/pp_axi.vlt"
+      - "../../design/demo_pulp_platform_axi/pp_axi.vlt"
       - "tb_axi_fifo_simple.sv"
 
   - name: "tb_top"
     filelist:
-      - "../../design/pulp-platform-axi/pp_axi.vlt"
+      - "../../design/demo_pulp_platform_axi/pp_axi.vlt"
       - "-v ../../vendor/pulp-platform/axi/test/axi_synth_bench.sv"
       - "tb_top.sv"
 
@@ -24,14 +24,14 @@ tests:
     desc: "FIFO-01..04: single write/read, back-to-back writes, reads after fills"
     reglvl: 0
     model: "pp_axi"
-    model_path: "../../design/pulp-platform-axi/models.yaml"
+    model_path: "../../design/demo_pulp_platform_axi/models.yaml"
     testbench: "tb_axi_fifo_simple"
 
   - name: "synth_bench"
     desc: "Instantiate axi_synth_bench to verify all adapter variants elaborate cleanly"
     reglvl: 0
     model: "pp_axi"
-    model_path: "../../design/pulp-platform-axi/models.yaml"
+    model_path: "../../design/demo_pulp_platform_axi/models.yaml"
     testbench: "tb_top"
     # SYNTHESIS gates out vendor sim-only initial-block assumptions
     # (e.g. axi_to_detailed_mem $fatal at t=0) for synth_bench's parameter

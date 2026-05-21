@@ -8,13 +8,13 @@ template as a worked example of how to integrate third-party RTL with
 ## Layout
 
 ```
-design/pulp-platform-axi/
+design/demo_pulp_platform_axi/
   pp_axi.f             — full AXI src filelist (Bender compile order)
   axi_common_cells.f   — common_cells subset required by axi (25 files)
   pp_axi.vlt           — Verilator lint waivers scoped to vendor code
   models.yaml          — pp_axi model entry for rtl_buddy
 
-verif/pulp-platform-axi/
+verif/demo_pulp_platform_axi/
   tb_axi_fifo_simple.sv  — Verilator-compatible directed testbench for axi_fifo_intf
   tb_top.sv              — elaboration-only wrapper for axi_synth_bench
   tests.yaml             — axi_fifo_simple + synth_bench tests
@@ -38,7 +38,7 @@ vendor/pulp-platform/
 
 ```bash
 # Quick functional check: directed FIFO test, all 11 checks pass
-cd verif/pulp-platform-axi
+cd verif/demo_pulp_platform_axi
 uv run rb test axi_fifo_simple
 
 # Elaboration sweep: every adapter variant in axi_synth_bench
