@@ -32,6 +32,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Initialise vendor submodules (e.g. pulp-platform/axi) so the
+          # corresponding test suites can resolve their RTL filelists.
+          submodules: recursive
 
       # Install uv into the container. The package cache is keyed on
       # uv.lock so repeated runs with an unchanged lockfile skip downloads.
@@ -89,6 +93,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Initialise vendor submodules (e.g. pulp-platform/axi) so the
+          # corresponding test suites can resolve their RTL filelists.
+          submodules: recursive
 
       - uses: astral-sh/setup-uv@v5
         with:

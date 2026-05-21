@@ -1,0 +1,8 @@
+`verilator_config
+lint_off -rule GENUNNAMED   -file "*/pulp-platform/*"
+lint_off -rule SYNCASYNCNET -file "*/pulp-platform/*"
+lint_off -rule UNDRIVEN     -file "*/pulp-platform/*"
+lint_off -rule ASCRANGE     -file "*/pulp-platform/*"
+lint_off -rule UNOPTFLAT    -file "*/pulp-platform/*"
+lint_off -rule UNSIGNED     -file "*/pulp-platform/*"
+lint_off -rule IMPLICIT     -file "*/pulp-platform/*"

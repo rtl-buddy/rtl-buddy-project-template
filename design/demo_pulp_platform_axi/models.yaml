@@ -1,0 +1,6 @@
+# RTL-Buddy RTL Model Configuration File
+rtl-buddy-filetype: model_config
+
+models:
+  - name      : "pp_axi"
+    filelist  : [ "-F pp_axi.f" ]

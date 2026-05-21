@@ -55,6 +55,12 @@ naming convention surfaces the category in the directory name:
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 | `demo_fpv_counter`    | Saturating up-counter with a bound SVA checker for `rb fpv` (bmc-proves no-overflow, cover-reaches saturation) | [`design/demo_fpv_counter/`](design/demo_fpv_counter/), [`fpv/demo_fpv_counter/`](fpv/demo_fpv_counter/) |
 
+### Third-party IP
+
+| IP                  | What it shows                                                                                       | Paths                                                                                                                            |
+|---------------------|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `demo_pulp_platform_axi` | Vendoring third-party SV IP — pulp-platform AXI interconnect via git submodules, with a curated filelist, scoped Verilator lint waivers, a directed FIFO testbench, and an elaboration sweep across all adapter variants | [`design/demo_pulp_platform_axi/`](design/demo_pulp_platform_axi/), [`verif/demo_pulp_platform_axi/`](verif/demo_pulp_platform_axi/), [`vendor/pulp-platform/`](vendor/pulp-platform/) |
+
 Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
 across these blocks (plus one reglvl-gated SKIP for the source-sync
 demo); `rb synth-regression -c synth_regression.yaml` synthesizes
@@ -104,6 +110,13 @@ uv sync --locked --python 3.11
 `peakrdl-regblock` (for CSR generation) and the pinned `rtl_buddy` are
 all installed automatically.
 
+If you plan to use the `demo_pulp_platform_axi` example, also initialise the
+vendor submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
 Install the `rtl_buddy` agent skill once per machine so Claude Code /
 Codex workflows can use it:
 
@@ -128,7 +141,8 @@ uv run rb skill install --project
 │   ├── demo_tiny_alu/       # demo — tiny ALU leaf DUT
 │   ├── demo_tiny_alu_subsys/     # demo — PeakRDL CSR + multi-clock top + compute wrapper
 │   ├── demo_cdc_src_sync/  # demo — source-synchronous CDC reference (internal-pin clock forwarding)
-│   └── demo_fpv_counter/   # demo — saturating counter exercised by `rb fpv`
+│   ├── demo_fpv_counter/   # demo — saturating counter exercised by `rb fpv`
+│   └── demo_pulp_platform_axi/  # third-party — filelists + Verilator waivers for the vendored AXI IP
 ├── spec/
 │   ├── apb/  ip_cdc_sync/  ip_cdc_handshake/  ip_async_fifo/   # base IP specs
 │   ├── template/           # workflow template — spec traceability skeleton
@@ -141,7 +155,8 @@ uv run rb skill install --project
 │   ├── demo_tiny_alu/       # demo — SV/LVM cosim suite + DV report + Surfer layout
 │   ├── demo_tiny_alu_cocotb/# demo — cocotb cosim against the shared Python golden
 │   ├── demo_tiny_alu_subsys/     # demo — system-level multi-clock APB suite
-│   └── demo_cdc_src_sync/  # demo — propagation test through the A→B→C chain
+│   ├── demo_cdc_src_sync/  # demo — propagation test through the A→B→C chain
+│   └── demo_pulp_platform_axi/  # third-party — pulp-platform AXI directed + elaboration tests
 ├── synth/
 │   ├── demo_tiny_alu/       # demo — Yosys synth of the ALU leaf (generic + Nangate45)
 │   ├── demo_tiny_alu_subsys/     # demo — Yosys synth of the system block (generic + Nangate45)
@@ -152,6 +167,8 @@ uv run rb skill install --project
 │   └── demo_fpv_counter/   # demo — `rb fpv` saturating counter (bmc + cover)
 ├── lint/
 │   └── cdc/                # CDC lint configs (one entry per demo / base-IP analysis)
+├── vendor/
+│   └── pulp-platform/      # third-party — axi, common_cells, common_verification submodules
 ├── common/                 # shared SV verification helpers (LVM macros)
 ├── tools/                  # toolchain setup notes (yosys, yosys-slang, openroad)
 └── pyproject.toml          # uv-managed project env + pinned rtl_buddy
@@ -321,6 +338,52 @@ uv run rb regression -c regression.yaml             # everything (12 PASS + 1 re
 uv run rb regression -c regression.yaml -l 0        # only reglvl 0 entries
 uv run rb --machine regression -c regression.yaml   # CI-style JSON output
 ```
+
+---
+
+## Third-Party IP — vendoring `pulp-platform/axi`
+
+The `demo_pulp_platform_axi` block shows how to integrate external
+SystemVerilog IP into an `rtl_buddy` project without giving up Verilator
+lint hygiene on your own RTL. It pulls in the
+[`pulp-platform/axi`](https://github.com/pulp-platform/axi) interconnect
+(plus `common_cells` and `common_verification`) as git submodules,
+under `vendor/pulp-platform/`.
+
+### How it is wired
+
+- **Submodules**: `vendor/pulp-platform/{axi,common_cells,common_verification}`
+  pinned via `.gitmodules`. CI checks out with `submodules: recursive`.
+- **Curated filelists**:
+  [`design/demo_pulp_platform_axi/pp_axi.f`](design/demo_pulp_platform_axi/pp_axi.f) +
+  [`axi_common_cells.f`](design/demo_pulp_platform_axi/axi_common_cells.f) are
+  Bender-style compile-ordered filelists — only the 25 common_cells
+  primitives needed by `axi`, dependency-level ordered, with no
+  `tech_cells_generic`.
+- **Scoped lint waivers**:
+  [`pp_axi.vlt`](design/demo_pulp_platform_axi/pp_axi.vlt) restricts vendor-only
+  waivers (GENUNNAMED, SYNCASYNCNET, UNDRIVEN, ASCRANGE, UNOPTFLAT,
+  UNSIGNED, IMPLICIT) to `*/pulp-platform/*`. Your own RTL stays under
+  full lint.
+- **Tests**:
+  [`tb_axi_fifo_simple.sv`](verif/demo_pulp_platform_axi/tb_axi_fifo_simple.sv)
+  is a directed Verilator-friendly test of `axi_fifo_intf`;
+  [`tb_top.sv`](verif/demo_pulp_platform_axi/tb_top.sv) is an elaboration-only
+  wrapper for vendor `axi_synth_bench`, with `plusdefines: SYNTHESIS=1`
+  silencing vendor sim-only `$fatal` assumptions at t=0.
+
+### Try it
+
+```bash
+git submodule update --init --recursive          # once after clone
+
+(cd verif/demo_pulp_platform_axi && uv run rb test axi_fifo_simple)
+(cd verif/demo_pulp_platform_axi && uv run rb test synth_bench)
+```
+
+See [`design/demo_pulp_platform_axi/README.md`](design/demo_pulp_platform_axi/README.md)
+for details on the Verilator limitation that excludes the vendor OOP
+`tb_axi_fifo` test from this template's flow.
 
 ---
 

@@ -1,0 +1,9 @@
+[submodule "vendor/pulp-platform/axi"]
+	path = vendor/pulp-platform/axi
+	url = https://github.com/pulp-platform/axi
+[submodule "vendor/pulp-platform/common_cells"]
+	path = vendor/pulp-platform/common_cells
+	url = https://github.com/pulp-platform/common_cells.git
+[submodule "vendor/pulp-platform/common_verification"]
+	path = vendor/pulp-platform/common_verification
+	url = https://github.com/pulp-platform/common_verification.git
