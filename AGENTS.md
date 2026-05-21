@@ -21,8 +21,8 @@ naming convention surfaces the category in the directory name:
   when starting fresh.
 - **Demo blocks** — `demo_*` end-to-end examples that exercise
   specific rtl_buddy capabilities (`demo_tiny_alu`,
-  `demo_tiny_alu_cocotb`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`).
-  Safe to delete when starting a new project.
+  `demo_tiny_alu_cocotb`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`,
+  `demo_fpv_counter`). Safe to delete when starting a new project.
 
 Preserve this categorisation in new work — name new leaf IP without a
 prefix, new demos with `demo_*`, and don't touch `template/` unless
@@ -51,10 +51,12 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 ```text
 root_config.yaml
 regression.yaml
+fpv_regression.yaml
 design/demo_tiny_alu/
 design/template/
 spec/template/                  # spec traceability example
 verif/template/
+fpv/demo_fpv_counter/
 pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
 uv.lock                        # committed lockfile for reproducible project setup
 .python-version                # pinned Python version for uv
@@ -104,6 +106,7 @@ Use this repo to validate the project setup and `rtl_buddy` integration.
 ```bash
 # from repo root
 uv run rb --machine regression -c regression.yaml
+uv run rb --machine fpv-regression -c fpv_regression.yaml
 uv run rb --machine filelist demo_tiny_alu -c design/demo_tiny_alu/models.yaml
 uv run rb --machine verible syntax design/demo_tiny_alu/demo_tiny_alu.sv
 uv run rb --machine spec list
@@ -126,11 +129,11 @@ uv run rb --machine fpv          # runs every verification in fpv.yaml
 uv run rb --machine fpv --list   # dry-list verification names
 ```
 
-`test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly.
+`test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly. Likewise, run `fpv` from the suite directory that contains the relevant `fpv.yaml`, and run `fpv-regression` from the repo root.
 
 ## When rtl_buddy Changes
 
-- Add or adjust examples in `design/`, `verif/`, and `spec/` if the feature needs visible coverage.
+- Add or adjust examples in `design/`, `verif/`, `spec/`, and `fpv/` if the feature needs visible coverage.
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
 - Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Commit only the dependency pin (`pyproject.toml` / `uv.lock`) — skill files are gitignored.
