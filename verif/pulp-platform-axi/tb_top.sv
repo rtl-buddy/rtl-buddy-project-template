@@ -16,6 +16,7 @@ module tb_top;
     repeat (5) @(posedge clk);
     rst_n = 1'b1;
     repeat (20) @(posedge clk);
+    $display("PASS synth_bench: all axi_synth_bench adapter variants elaborated");
     $finish(0);
   end
 
