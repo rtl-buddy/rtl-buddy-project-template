@@ -1,0 +1,35 @@
+# RTL-Buddy CDC Configuration File
+rtl-buddy-filetype: cdc_config
+
+# Each entry runs the configured CDC tool against the named model.
+# `constraints:` is the SDC; `waivers:` is optional. Paths are resolved
+# relative to this file.
+#
+# Slang-required SV examples are tracked in issue #21 and will land
+# once rtl-buddy-cdc#5 (slang frontend) and rtl_buddy#88 are released.
+# The new analyses will exercise `rb cdc` with the slang frontend
+# alongside the Yosys-backed analyses below.
+analyses:
+  - name: "ip_cdc_handshake_lint"
+    desc: "CDC lint of the request/ack handshake IP"
+    model: "ip_cdc_handshake"
+    model_path: "../../design/common/models.yaml"
+    tool: "rtl-buddy-cdc"
+    constraints: "ip_cdc_handshake.sdc"
+
+  - name: "demo_tiny_alu_subsys_lint"
+    desc: "CDC lint of the multi-clock ALU accelerator (apb_clk ↔ cclk)"
+    model: "demo_tiny_alu_subsys_top"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "rtl-buddy-cdc"
+    constraints: "demo_tiny_alu_subsys.sdc"
+    waivers: "demo_tiny_alu_subsys.waivers"
+
+  - name: "demo_cdc_src_sync_lint"
+    desc: >-
+      Source-synchronous chain (A → B0/B1 → C0/C1) verified via
+      internal-pin create_generated_clock declarations rooted at ck_a.
+    model: "demo_cdc_src_sync_top"
+    model_path: "../../design/demo_cdc_src_sync/models.yaml"
+    tool: "rtl-buddy-cdc"
+    constraints: "demo_cdc_src_sync.sdc"

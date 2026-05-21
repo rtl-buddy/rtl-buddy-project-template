@@ -1,0 +1,33 @@
+# Surfer signal layout for the alu_accel multi-clock testbench.
+# Auto-loaded by `rb wave <test>` when present in this suite dir.
+
+scope_select tb_top
+
+divider_add APB
+variable_add tb_top.apb_clk
+variable_add tb_top.apb_rst_n
+variable_add tb_top.bus.psel
+variable_add tb_top.bus.penable
+variable_add tb_top.bus.pwrite
+variable_add tb_top.bus.paddr
+variable_add tb_top.bus.pwdata
+variable_add tb_top.bus.pready
+variable_add tb_top.bus.prdata
+
+divider_add CSR_status
+variable_add tb_top.u_dut.pending_apb_q
+variable_add tb_top.u_dut.fifo_empty_in_apb
+variable_add tb_top.u_dut.fifo_wr_full
+variable_add tb_top.u_dut.done_cnt_q
+
+divider_add Compute_domain
+variable_add tb_top.cclk
+variable_add tb_top.crst_n
+variable_add tb_top.u_dut.u_compute.cmd_valid
+variable_add tb_top.u_dut.u_compute.op_q
+variable_add tb_top.u_dut.u_compute.a_q
+variable_add tb_top.u_dut.u_compute.b_q
+variable_add tb_top.u_dut.u_compute.result_valid
+variable_add tb_top.u_dut.u_compute.result_y
+
+zoom_fit

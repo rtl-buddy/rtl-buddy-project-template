@@ -1,0 +1,16 @@
+# RTL-Buddy Regression Configuration File
+rtl-buddy-filetype: reg_config
+
+# Discoverable list of suites. Leaf-IP suites (apb, ip_cdc_sync,
+# ip_cdc_handshake, ip_async_fifo) prove each component on its own;
+# demo_tiny_alu_subsys is the system-level demonstrator that integrates them.
+test-configs:
+  - "verif/apb/tests.yaml"
+  - "verif/ip_cdc_sync/tests.yaml"
+  - "verif/ip_cdc_handshake/tests.yaml"
+  - "verif/ip_async_fifo/tests.yaml"
+  - "verif/demo_tiny_alu/tests.yaml"
+  - "verif/demo_tiny_alu_cocotb/tests.yaml"
+  - "verif/demo_tiny_alu_subsys/tests.yaml"
+  - "verif/demo_cdc_src_sync/tests.yaml"
+  - "verif/pulp-platform-axi/tests.yaml"

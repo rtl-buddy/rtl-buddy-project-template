@@ -35,9 +35,10 @@ cfg-rtl-builder:
           --binary --timescale 1ns/10ps 
           +1800-2023ext+sv
           -sv
-          --compiler clang 
+          --compiler clang
           --x-initial unique
-          --assert 
+          --x-assign 1
+          --assert
           --assert-case
           -Wall
           -Wwarn-lint
@@ -49,11 +50,11 @@ cfg-rtl-builder:
           -Wno-WIDTHTRUNC
           -o simv
           +define+DUMP
-          --trace-fst 
+          --trace-fst
           --trace-params
           --trace-structs
           --trace-max-array 32
-          --trace-max-width 64
+          --trace-max-width 256
         # run-time 
         # rand-reset (2: rand, 1:ones, 0:zeros)
         run-time: &vrl_run_time >-
@@ -65,9 +66,10 @@ cfg-rtl-builder:
           --binary --timescale 1ns/10ps 
           +1800-2023ext+sv
           -sv
-          --compiler clang 
-          --x-initial unique 
-          --assert 
+          --compiler clang
+          --x-initial unique
+          --x-assign 1
+          --assert
           --assert-case
           -Wall
           -Wwarn-lint
@@ -87,9 +89,14 @@ cfg-rtl-builder:
           -sv
           --compiler clang
           --x-initial unique
+          --x-assign 1
           --assert
           --assert-case
-          --coverage
+          --coverage-expr
+          --coverage-expr-max 256
+          --coverage-line
+          --coverage-toggle
+          --coverage-user
           -Wall
           -Wwarn-lint
           -Wno-DECLFILENAME
@@ -140,7 +147,7 @@ cfg-rtl-builder:
 # Verible configuration
 cfg-verible:
   - name: "verible-macos"
-    path: "tools/verible/macos/active/bin"
+    path: "/opt/homebrew/bin"
     extra_args: &verible_extra_args
       # extra verible lint args
       # see lint help for --rules, comma-sep lint rules, (-) excl, (+) incl
@@ -153,7 +160,7 @@ cfg-verible:
           -no-trailing-spaces,
           -parameter-name-style
   - name: "verible-x86_64"
-    path: "tools/verible/x86_64/active/bin"
+    path: "/usr/local/bin"
     extra_args:
       <<: *verible_extra_args
 # End verible configuration
@@ -162,14 +169,106 @@ cfg-verible:
 cfg-coverage:
   - name: "verilator"
     use-lcov: true
+  - name: "vcs"
+    use-lcov: true
+
+cfg-coverview:
+  - name: "verilator"
+    config:
+      title: "rtl-buddy coverview"
+    generate-tables: "line"
 # End coverage configuration
+
+# Surfer waveform viewer (used by `rb wave` and
+# `verif/demo_tiny_alu/build_report.py` for headless screenshot capture).
+# `path: "surfer"` resolves via $PATH.
+cfg-surfer:
+  - name: "surfer-default"
+    path: "surfer"
+    wcp-port: 0
+# End surfer configuration
+
+# Synthesis tool defaults — `tool:` in synth.yaml selects the entry.
+cfg-synth-tools:
+  - name: "yosys"
+    tool: "yosys"
+    opts:
+      synth-args: ""
+      abc-args: ""
+
+# Technology / PDK assets. Files are not vendored — fetch with
+# `synth/demo_tiny_alu_subsys/download_pdk.sh` (or the alu equivalent)
+# before running tech-mapped synth or P&R. Multiple PDKs can be
+# declared; synth + pnr platforms below select which one to use.
+cfg-pdks:
+  - name: "nangate45"
+    site: "FreePDK45_38x28_10R_NP_162NW_34O"
+    corners:
+      typ: "pdk/nangate45/lib/NangateOpenCellLibrary_typical.lib"
+    tech-lef: "pdk/nangate45/lef/NangateOpenCellLibrary.tech.lef"
+    macro-lef: "pdk/nangate45/lef/NangateOpenCellLibrary.macro.mod.lef"
+    cell-gds: "pdk/nangate45/gds/NangateOpenCellLibrary.gds"
+    klayout-tech: "pdk/nangate45/FreePDK45.lyt"
+    klayout-props: "pdk/nangate45/FreePDK45.lyp"
+    tie-hi: "LOGIC1_X1/Z"
+    tie-lo: "LOGIC0_X1/Z"
+    fill-cells:
+      - FILLCELL_X1
+      - FILLCELL_X2
+      - FILLCELL_X4
+      - FILLCELL_X8
+      - FILLCELL_X16
+      - FILLCELL_X32
+
+# Synth platforms — name + PDK + corner. Referenced by `platform:` in synth.yaml.
+cfg-synth-platforms:
+  - name: "nangate45_typ"
+    pdk: "nangate45"
+    corner: "typ"
+
+# P&R platforms — name + PDK + STA corner + P&R-specific knobs.
+# Referenced by `platform:` in pnr.yaml.
+cfg-pnr-platforms:
+  - name: "nangate45_typ"
+    pdk: "nangate45"
+    corner: "typ"
+    cts-buffer: "BUF_X4"
+    routing-layers:
+      signal: "metal2-metal8"
+      clock: "metal4-metal8"
+# End synth / pnr configuration
+
+# Power analysis tool defaults — `tool:` in power.yaml selects the entry.
+# Power runs reuse cfg-pnr-platforms entries for Liberty/corner lookup.
+cfg-power-tools:
+  - name: "openroad"
+    tool: "openroad"
+# End power configuration
+
+# CDC lint tool defaults — `tool:` in cdc.yaml selects the entry.
+cfg-cdc-tools:
+  - name: "rtl-buddy-cdc"
+    tool: "rtl-buddy-cdc"
+    opts:
+      sync-depth: 2
+# End CDC configuration
+
+# Formal tool defaults — add `fpv/` suites when your project is ready
+# to exercise `rb fpv` or `rb fpv-regression`.
+cfg-fpv-tools:
+  - name: "sby"
+    tool: "sby"
+    opts:
+      timeout: 600
+      extra-args: ""
+# End formal configuration
 
 
 # Regression config
 cfg-rtl-reg:
   {
     # regression config yaml, discover full list of reg from this root
-    reg-cfg-path: "design/regression.yaml" 
+    reg-cfg-path: "regression.yaml"
   }
 
 # TODO cfg-rtl-lint : RTL Code Linter

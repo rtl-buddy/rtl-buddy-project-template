@@ -3,10 +3,22 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy>=2.2.0",
+  "rtl_buddy==4.1.0",
+  "rtl-buddy-cdc",
   "cocotb==2.0.1",
   "pytest==8.4.2",
+  "info-process",
+  "peakrdl",
+  "peakrdl-regblock",
 ]
 
 [tool.uv]
 package = false
+
+[tool.uv.sources]
+info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
+peakrdl = { git = "https://github.com/rtl-buddy/PeakRDL.git", subdirectory = "peakrdl" }
+peakrdl-regblock = { git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" }
+# Pinned CDC linter consumed via subprocess by `rb cdc`. No PyPI release
+# yet; pin to the git repo so `which rtl-buddy-cdc` works after `uv sync`.
+rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git" }

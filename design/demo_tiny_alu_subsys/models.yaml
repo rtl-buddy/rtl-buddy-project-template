@@ -1,0 +1,19 @@
+rtl-buddy-filetype: model_config
+
+models:
+  - name: "demo_tiny_alu_subsys_top"
+    desc: "Multi-clock APB-mapped ALU accelerator (CSR-direct + FIFO stream)"
+    filelist: ["-F demo_tiny_alu_subsys.f"]
+    spec: "../../spec/demo_tiny_alu_subsys/specs.yaml"
+
+  - name: "demo_tiny_alu_subsys_compute"
+    desc: "Compute-domain core that drives the alu (used in standalone tests)"
+    filelist:
+      - "-v ../demo_tiny_alu/demo_tiny_alu.sv"
+      - "-v demo_tiny_alu_subsys_compute.sv"
+    spec: "../../spec/demo_tiny_alu_subsys/specs.yaml"
+
+  - name: "demo_tiny_alu_subsys_synth_top"
+    desc: "Flat-port synthesis wrapper around demo_tiny_alu_subsys_top (used by rb synth)"
+    filelist: ["-F demo_tiny_alu_subsys_synth.f"]
+    spec: "../../spec/demo_tiny_alu_subsys/specs.yaml"

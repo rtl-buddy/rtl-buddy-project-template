@@ -1,0 +1,21 @@
+rtl-buddy-filetype: test_config
+
+testbenches:
+  - name: "tb_ip_cdc_sync"
+    filelist:
+      - "+incdir+../../common"
+      - "tb_top.sv"
+
+tests:
+  - name: "smoke"
+    desc: "ip_cdc_sync 0→1→0 transitions; latency = STAGES cycles"
+    reglvl: 0
+    plusargs: { lvm_verbosity: 2 }
+    model: "ip_cdc_sync"
+    model_path: "../../design/common/models.yaml"
+    testbench: "tb_ip_cdc_sync"
+    covers:
+      - "CDCSYNC-RESET"
+      - "CDCSYNC-D-LOW"
+      - "CDCSYNC-D-HIGH"
+      - "CDCSYNC-LATENCY"

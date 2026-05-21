@@ -1,0 +1,18 @@
+rtl-buddy-filetype: spec_config
+
+blocks:
+  - name: "ip_async_fifo"
+    desc: "Gray-code dual-clock async FIFO"
+    docs:
+      - "README.md"
+    coverage-items:
+      - id: "AFIFO-PUSH"
+        desc: "at least one accepted write transaction"
+      - id: "AFIFO-POP"
+        desc: "at least one accepted read transaction"
+      - id: "AFIFO-FULL"
+        desc: "wr_full asserts at least once"
+      - id: "AFIFO-EMPTY"
+        desc: "rd_empty asserts at least once after some pops"
+      - id: "AFIFO-ORDER"
+        desc: "data ordering preserved across the boundary"

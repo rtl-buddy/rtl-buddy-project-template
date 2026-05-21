@@ -7,7 +7,26 @@ This repo is both:
 - a starter RTL project template for `rtl_buddy`
 - a runnable reference project that demonstrates the expected repo layout
 
-The project should stay runnable. `design/sandbox/` is the primary working example and should not be left broken.
+The project should stay runnable. `design/demo_tiny_alu/` is the primary working example and should not be left broken.
+
+## Block Categories
+
+Blocks shipped with this template fall into three categories. The
+naming convention surfaces the category in the directory name:
+
+- **Base IP** — leaf, reusable components (`apb`, `ip_cdc_sync`,
+  `ip_cdc_handshake`, `ip_async_fifo`). No prefix.
+- **Workflow templates** — `template/` skeletons that show the
+  expected spec/design/verif/test shape for a new block. Copy these
+  when starting fresh.
+- **Demo blocks** — `demo_*` end-to-end examples that exercise
+  specific rtl_buddy capabilities (`demo_tiny_alu`,
+  `demo_tiny_alu_cocotb`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`).
+  Safe to delete when starting a new project.
+
+Preserve this categorisation in new work — name new leaf IP without a
+prefix, new demos with `demo_*`, and don't touch `template/` unless
+you're updating the starter skeleton itself.
 
 ## This Is A Template Repo
 
@@ -31,10 +50,11 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 
 ```text
 root_config.yaml
-design/regression.yaml
-design/sandbox/
+regression.yaml
+design/demo_tiny_alu/
 design/template/
-tools/verible/                 # bundled Verible binaries (macOS and x86_64)
+spec/template/                  # spec traceability example
+verif/template/
 pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
 uv.lock                        # committed lockfile for reproducible project setup
 .python-version                # pinned Python version for uv
@@ -49,6 +69,7 @@ The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and material
 - **uv** — install from Astral and make sure it is on `PATH`.
 - **Python 3.11** — standard interpreter for this repo.
 - **Verilator** — e.g. `brew install verilator` on macOS, or build from source.
+- **Verible** — e.g. `brew tap chipsalliance/verible && brew install verible` on macOS, or see the [Verible releases](https://github.com/chipsalliance/verible/releases) for other platforms.
 
 ### Setup steps
 
@@ -66,13 +87,6 @@ uv run rb skill install
 
 Re-run after upgrading `rtl_buddy`. Use `--project` to install into this repo instead of your user home; `uv run rb skill --help` shows all options.
 
-Verible binaries are bundled under `tools/verible/` — macOS under `macos/active/bin/`, Linux x86_64 under `x86_64/active/bin/`. No separate Verible install is needed.
-
-```bash
-# macOS only: strip quarantine xattr from bundled Verible binaries
-(cd tools/verible/macos && xattr -rd com.apple.quarantine active)
-```
-
 ## rtl_buddy Development Overrides
 
 Normal project work should stay on the pinned dependency in `pyproject.toml` / `uv.lock`.
@@ -89,20 +103,31 @@ Use this repo to validate the project setup and `rtl_buddy` integration.
 
 ```bash
 # from repo root
-uv run rb --machine regression -c design/regression.yaml
-uv run rb --machine filelist test_module -c design/sandbox/models.yaml
-uv run rb --machine verible syntax design/sandbox/test_module.sv
+uv run rb --machine regression -c regression.yaml
+uv run rb --machine filelist demo_tiny_alu -c design/demo_tiny_alu/models.yaml
+uv run rb --machine verible syntax design/demo_tiny_alu/demo_tiny_alu.sv
+uv run rb --machine spec list
+uv run rb --machine spec check-design
+uv run rb --machine spec check-coverage
 
 # from suite dir
-cd verif/sandbox
+cd verif/demo_tiny_alu
 uv run rb --machine test basic
+
+cd ../demo_tiny_alu_cocotb
+uv run rb --machine test cocotb_random
+
+# from an FPV suite dir
+cd fpv/demo_fpv_counter
+uv run rb --machine fpv          # runs every verification in fpv.yaml
+uv run rb --machine fpv --list   # dry-list verification names
 ```
 
 `test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly.
 
 ## When rtl_buddy Changes
 
-- Add or adjust examples in `design/` if the feature needs visible coverage.
+- Add or adjust examples in `design/`, `verif/`, and `spec/` if the feature needs visible coverage.
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
 - Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Commit only the dependency pin (`pyproject.toml` / `uv.lock`) — skill files are gitignored.

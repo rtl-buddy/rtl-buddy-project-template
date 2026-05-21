@@ -1,0 +1,7 @@
+# RTL-Buddy RTL Model Configuration File
+rtl-buddy-filetype: model_config
+
+models:
+  - name: "demo_slang_pkg_top"
+    desc: "SV-2017 module with parameterised package import — requires yosys-slang for synth"
+    filelist: ["-F demo_slang_pkg_top.f"]

@@ -1,0 +1,26 @@
+rtl-buddy-filetype: synth_config
+
+# Whole-system Yosys synthesis. Tech-independent only by default — proves
+# the PeakRDL-generated CSR + interface + CDC primitives all elaborate and
+# synthesize together. Tech-mapped runs follow the sandbox pattern; promote
+# reglvl when adding a Liberty-mapped variant.
+syntheses:
+  - name: "demo_tiny_alu_subsys_synth_generic"
+    desc: "Tech-independent Yosys synthesis of demo_tiny_alu_subsys_synth_top (flat-port wrapper)"
+    model: "demo_tiny_alu_subsys_synth_top"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "yosys"
+    constraints: "constraints.sdc"
+    reglvl: 0
+
+  - name: "demo_tiny_alu_subsys_synth_nangate45"
+    desc: "Tech-mapped Yosys synthesis of demo_tiny_alu_subsys_synth_top to Nangate45 typical corner"
+    model: "demo_tiny_alu_subsys_synth_top"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "yosys"
+    platform: "nangate45_typ"
+    constraints: "constraints.sdc"
+    # Deferred tier — the Liberty file is not vendored. Download with
+    # `synth/demo_tiny_alu_subsys/download_pdk.sh` and invoke directly:
+    #   rb synth demo_tiny_alu_subsys_synth_nangate45 -c synth/demo_tiny_alu_subsys/synth.yaml
+    reglvl: 1000
