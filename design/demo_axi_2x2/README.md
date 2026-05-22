@@ -28,8 +28,17 @@ verif/demo_axi_2x2/
 
 - **Address map**: `[0x0000_0000, 0x1000_0000) → m0`, `[0x1000_0000, 0x2000_0000) → m1`.
 - **Directed traffic**: per-master state machine (IDLE → AW/W → WAIT_B → AR → WAIT_R)
-  issues N writes followed by N reads, sweeping the slave address regions.
-  Slaves combinationally accept all transactions and return synthesized R/B beats.
+  issues interleaved single-beat and burst (awlen ∈ {0, 3, 7}) writes + reads
+  for the duration of the run, sweeping the slave address regions.
+- **Phase-driven congestion**: a phase machine steers both masters at the same
+  target during HOT_T0 (cycles 300–1099) and HOT_T1 (cycles 1900–2699) so the
+  xbar must serialise the streams; WARMUP / MIXED phases alternate targets
+  with the masters offset against each other.
+- **Synthetic slave stalls**: each slave model drops `awready` / `wready` /
+  `arready` on a fixed cycle-count pattern and inserts a per-channel B / R
+  response delay. `out0` is the low-latency target (short, frequent dips);
+  `out1` is the slow target (aggressive W stalls + multi-cycle response
+  latency) — so HOT_T1 surfaces visibly more back-pressure than HOT_T0.
 - **FST dump**: `DUMP` define enables a full-design FST waveform — the input to
   `rb axi-profile run` for AXI performance analysis.
 
@@ -41,9 +50,8 @@ uv run rb test basic_traffic
 ```
 
 The first run compiles `pp_axi.f` + the wrapper + the TB; subsequent runs are
-incremental. Tests pass when both masters complete their configured transaction
-count (default 128 per master) and the slave-side checker sees no protocol
-violations.
+incremental. The test runs for a fixed 3,200 cycles (covering all four traffic
+phases plus a drain window) and passes as long as no protocol violations fire.
 
 ## AXI profiler integration
 
