@@ -1,0 +1,10 @@
+rtl-buddy-filetype: model_config
+models:
+  - name: axi_2x2
+    desc: 2x2 AXI4 crossbar (pulp-platform) — demonstration target for rb axi-profile
+    filelist:
+      - -F axi_2x2.f
+    # NB: the `axi_bundles` field (rtl_buddy >= post-#164) will point at
+    # `axi_2x2.axi-bundles.yaml` once the template's rtl_buddy pin is
+    # bumped past the v4.2.0 line. The manifest file is already
+    # committed next to this model so the wiring is a one-line follow-up.

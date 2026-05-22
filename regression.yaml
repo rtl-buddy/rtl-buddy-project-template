@@ -15,3 +15,4 @@ test-configs:
   - "verif/demo_tiny_alu_subsys/tests.yaml"
   - "verif/demo_cdc_src_sync/tests.yaml"
   - "verif/demo_pulp_platform_axi/tests.yaml"
+  - "verif/demo_axi_2x2/tests.yaml"

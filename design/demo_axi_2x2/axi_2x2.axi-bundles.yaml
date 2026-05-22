@@ -1,0 +1,148 @@
+schema_version: "1.0"
+design_top: axi_2x2
+generated_by: hand-authored
+generated_at: "2026-05-22T00:00:00Z"
+# Per-bundle clock_signal points at the testbench-visible clock pin.
+# `rb axi-profile run` auto-extracts the testbench top scope name
+# (tb.name = `tb_axi_2x2`) and prepends it when a manifest path
+# doesn't resolve verbatim, so relative paths work here.
+bundles:
+  - name: in0
+    master_path: system.dut
+    slave_path: system.dut.in0
+    protocol: AXI4
+    data_width: 32
+    id_width: 4
+    source: user
+    default_view: parent
+    clock_signal: clk
+    signals:
+      arvalid: s_axi_in0_arvalid
+      arready: s_axi_in0_arready
+      araddr:  s_axi_in0_araddr
+      arid:    s_axi_in0_arid
+      arlen:   s_axi_in0_arlen
+      arsize:  s_axi_in0_arsize
+      awvalid: s_axi_in0_awvalid
+      awready: s_axi_in0_awready
+      awaddr:  s_axi_in0_awaddr
+      awid:    s_axi_in0_awid
+      awlen:   s_axi_in0_awlen
+      awsize:  s_axi_in0_awsize
+      rvalid:  s_axi_in0_rvalid
+      rready:  s_axi_in0_rready
+      rid:     s_axi_in0_rid
+      rresp:   s_axi_in0_rresp
+      rlast:   s_axi_in0_rlast
+      wvalid:  s_axi_in0_wvalid
+      wready:  s_axi_in0_wready
+      wlast:   s_axi_in0_wlast
+      bvalid:  s_axi_in0_bvalid
+      bready:  s_axi_in0_bready
+      bid:     s_axi_in0_bid
+      bresp:   s_axi_in0_bresp
+
+  - name: in1
+    master_path: system.dut
+    slave_path: system.dut.in1
+    protocol: AXI4
+    data_width: 32
+    id_width: 4
+    source: user
+    default_view: parent
+    clock_signal: clk
+    signals:
+      arvalid: s_axi_in1_arvalid
+      arready: s_axi_in1_arready
+      araddr:  s_axi_in1_araddr
+      arid:    s_axi_in1_arid
+      arlen:   s_axi_in1_arlen
+      arsize:  s_axi_in1_arsize
+      awvalid: s_axi_in1_awvalid
+      awready: s_axi_in1_awready
+      awaddr:  s_axi_in1_awaddr
+      awid:    s_axi_in1_awid
+      awlen:   s_axi_in1_awlen
+      awsize:  s_axi_in1_awsize
+      rvalid:  s_axi_in1_rvalid
+      rready:  s_axi_in1_rready
+      rid:     s_axi_in1_rid
+      rresp:   s_axi_in1_rresp
+      rlast:   s_axi_in1_rlast
+      wvalid:  s_axi_in1_wvalid
+      wready:  s_axi_in1_wready
+      wlast:   s_axi_in1_wlast
+      bvalid:  s_axi_in1_bvalid
+      bready:  s_axi_in1_bready
+      bid:     s_axi_in1_bid
+      bresp:   s_axi_in1_bresp
+
+  - name: out0
+    master_path: system.dut
+    slave_path: system.dut.out0
+    protocol: AXI4
+    data_width: 32
+    id_width: 5
+    source: user
+    default_view: parent
+    clock_signal: clk
+    signals:
+      arvalid: m_axi_out0_arvalid
+      arready: m_axi_out0_arready
+      araddr:  m_axi_out0_araddr
+      arid:    m_axi_out0_arid
+      arlen:   m_axi_out0_arlen
+      arsize:  m_axi_out0_arsize
+      awvalid: m_axi_out0_awvalid
+      awready: m_axi_out0_awready
+      awaddr:  m_axi_out0_awaddr
+      awid:    m_axi_out0_awid
+      awlen:   m_axi_out0_awlen
+      awsize:  m_axi_out0_awsize
+      rvalid:  m_axi_out0_rvalid
+      rready:  m_axi_out0_rready
+      rid:     m_axi_out0_rid
+      rresp:   m_axi_out0_rresp
+      rlast:   m_axi_out0_rlast
+      wvalid:  m_axi_out0_wvalid
+      wready:  m_axi_out0_wready
+      wlast:   m_axi_out0_wlast
+      bvalid:  m_axi_out0_bvalid
+      bready:  m_axi_out0_bready
+      bid:     m_axi_out0_bid
+      bresp:   m_axi_out0_bresp
+
+  - name: out1
+    master_path: system.dut
+    slave_path: system.dut.out1
+    protocol: AXI4
+    data_width: 32
+    id_width: 5
+    source: user
+    default_view: parent
+    clock_signal: clk
+    signals:
+      arvalid: m_axi_out1_arvalid
+      arready: m_axi_out1_arready
+      araddr:  m_axi_out1_araddr
+      arid:    m_axi_out1_arid
+      arlen:   m_axi_out1_arlen
+      arsize:  m_axi_out1_arsize
+      awvalid: m_axi_out1_awvalid
+      awready: m_axi_out1_awready
+      awaddr:  m_axi_out1_awaddr
+      awid:    m_axi_out1_awid
+      awlen:   m_axi_out1_awlen
+      awsize:  m_axi_out1_awsize
+      rvalid:  m_axi_out1_rvalid
+      rready:  m_axi_out1_rready
+      rid:     m_axi_out1_rid
+      rresp:   m_axi_out1_rresp
+      rlast:   m_axi_out1_rlast
+      wvalid:  m_axi_out1_wvalid
+      wready:  m_axi_out1_wready
+      wlast:   m_axi_out1_wlast
+      bvalid:  m_axi_out1_bvalid
+      bready:  m_axi_out1_bready
+      bid:     m_axi_out1_bid
+      bresp:   m_axi_out1_bresp
