@@ -1,0 +1,27 @@
+# rb fpv configuration for the ABV-features demo.
+#
+# A passing `rb fpv demo_abv_features_safety` invocation now produces:
+#
+#   - Result: PASS (`property proved (bmc, depth 32)`)
+#   - COI column with a non-trivial percentage — the proportion of
+#     design cells reachable from the inline `assert` (#136)
+#   - Assumes column showing `0 used, 1 dead` — the tautological
+#     `assume (en || !en)` in the DUT (#135)
+#   - Vacuity column suppressed (no `|->` antecedents to check today;
+#     #134 lights up when the property file is rewritten through a
+#     slang frontend that accepts the SVA implication operator).
+rtl-buddy-filetype: fpv_config
+
+verifications:
+  - name: "demo_abv_features_safety"
+    desc: "Inline-assertion DUT — exercises COI + dead-assume reporting"
+    tool: "sby"
+    model: "demo_abv_features"
+    model_path: "../../design/demo_abv_features/models.yaml"
+    top: "demo_abv_features"
+    # No external property files — assertions live inline in the DUT.
+    properties: []
+    mode: "bmc"
+    depth: 32
+    engines:
+      - "smtbmc yices"

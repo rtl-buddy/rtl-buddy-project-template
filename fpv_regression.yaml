@@ -6,3 +6,4 @@ rtl-buddy-filetype: fpv_reg_config
 # --reg-level.
 fpv-configs:
   - "fpv/demo_fpv_counter/fpv.yaml"
+  - "fpv/demo_abv_features/fpv.yaml"
