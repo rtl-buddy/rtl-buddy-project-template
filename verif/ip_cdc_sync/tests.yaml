@@ -2,10 +2,10 @@ rtl-buddy-filetype: test_config
 
 testbenches:
   - name: "tb_ip_cdc_sync"
+    toplevel: "tb_top"
     filelist:
       - "+incdir+../../common"
       - "tb_top.sv"
-
 tests:
   - name: "smoke"
     desc: "ip_cdc_sync 0→1→0 transitions; latency = STAGES cycles"

@@ -3,10 +3,10 @@ rtl-buddy-filetype: test_config
 
 testbenches:
   - name: "tb_top"
+    toplevel: "tb_top"
     filelist:
       - "+incdir+../../common"
       - "tb_top.sv"
-
 tests:
   - name: "basic"
     desc: "Drive ck_a, toggle d_in, check propagation to q_out_c0/c1"
