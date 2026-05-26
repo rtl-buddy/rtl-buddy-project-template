@@ -117,6 +117,13 @@ uv run rb --machine spec check-coverage
 cd verif/demo_tiny_alu
 uv run rb --machine test basic
 
+# Hierarchy rendering (rtl-buddy-view #99). `--view dut` (default)
+# renders the model's module tree rooted at its DUT; `--view tb`
+# renders the testbench tree with the DUT called out as a subtree,
+# using the test's tb.toplevel to anchor the new --tb-top flag.
+uv run rb hier demo_tiny_alu                   --format tree            # DUT view
+uv run rb hier basic --view tb --format tree                            # TB view
+
 cd ../demo_tiny_alu_cocotb
 uv run rb --machine test cocotb_random
 
@@ -130,6 +137,12 @@ uv run rb --machine fpv --list   # dry-list verification names
 ```
 
 `test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly. Likewise, run `fpv` from the suite directory that contains the relevant `fpv.yaml`, and run `fpv-regression` from the repo root.
+
+`hier --view tb` requires the test's testbench entry in `tests.yaml`
+to carry a `toplevel:` field (the SV module name at the testbench's
+root). All shipped templates include this; new suites copied from
+`verif/template/` inherit it. Without `toplevel:`, `--view tb`
+silently degrades to the DUT-rooted view.
 
 ## When rtl_buddy Changes
 

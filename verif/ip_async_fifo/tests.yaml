@@ -2,10 +2,10 @@ rtl-buddy-filetype: test_config
 
 testbenches:
   - name: "tb_ip_async_fifo"
+    toplevel: "tb_top"
     filelist:
       - "+incdir+../../common"
       - "tb_top.sv"
-
 tests:
   - name: "smoke"
     desc: "fill+drain across asymmetric clocks; ordering scoreboard; full/empty bins"

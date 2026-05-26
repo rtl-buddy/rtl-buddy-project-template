@@ -2,10 +2,10 @@ rtl-buddy-filetype: test_config
 
 testbenches:
   - name: "tb_ip_cdc_handshake"
+    toplevel: "tb_top"
     filelist:
       - "+incdir+../../common"
       - "tb_top.sv"
-
 tests:
   - name: "smoke"
     desc: "6 vector transfers across asymmetric clocks; payload + backpressure scoreboarded"

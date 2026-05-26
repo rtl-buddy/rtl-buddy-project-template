@@ -5,11 +5,11 @@ rtl-buddy-filetype: test_config
 # preproc.py through spec/demo_tiny_alu/tiny_alu_model.py (the Python golden).
 testbenches:
   - name: "tb_top"
+    toplevel: "tb_top"
     filelist:
       - "+incdir+../../common"
       - "../../verif/demo_tiny_alu/cov_alu.sv"
       - "tb_top.sv"
-
 tests:
   - name: "basic"
     desc: "smoke — exercise each opcode once with non-zero operands; vectors from Python golden"
