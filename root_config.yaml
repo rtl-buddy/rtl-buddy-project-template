@@ -261,6 +261,13 @@ cfg-fpv-tools:
     opts:
       timeout: 600
       extra-args: ""
+      # Path to the built yosys-slang shared library, required when an
+      # `fpv.yaml` verification picks `frontend: slang` (the default
+      # `frontend: verilog` ignores this field). Follows the install
+      # convention from `tools/yosys-slang/SETUP_OSX.md` — adjust to
+      # the absolute path of your built `slang.so` if you installed
+      # elsewhere.
+      plugin-path: "tools/yosys-slang/build/slang.so"
 # End formal configuration
 
 # SystemC cosim — required when a testbench in tests.yaml declares a
