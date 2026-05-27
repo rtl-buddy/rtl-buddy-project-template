@@ -5,10 +5,16 @@ rtl-buddy-filetype: fpv_config
 # files are bound checker modules; `top:` is the DUT (the bind brings
 # the checker in alongside it). Paths are resolved relative to this
 # file.
+#
+# frontend: slang is required — the checker reaches the DUT via a
+# `bind`, which only the yosys-slang frontend elaborates (the native
+# verilog frontend silently drops it). Point cfg-fpv-tools.opts.
+# plugin-path at your built slang.so (see root_config.yaml).
 verifications:
   - name: "demo_fpv_counter_safety"
     desc: "Bounded proof: counter never overflows past MAX"
     tool: "sby"
+    frontend: "slang"
     model: "demo_fpv_counter"
     model_path: "../../design/demo_fpv_counter/models.yaml"
     top: "demo_fpv_counter"
@@ -22,6 +28,7 @@ verifications:
   - name: "demo_fpv_counter_reaches_max"
     desc: "Cover: a trace exists where counter == MAX"
     tool: "sby"
+    frontend: "slang"
     model: "demo_fpv_counter"
     model_path: "../../design/demo_fpv_counter/models.yaml"
     top: "demo_fpv_counter"

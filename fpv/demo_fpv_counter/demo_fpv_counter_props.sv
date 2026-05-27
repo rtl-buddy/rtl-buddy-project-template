@@ -1,21 +1,28 @@
 // SVA-style properties for demo_fpv_counter, used by `rb fpv`.
 //
 // We bind the checker into the DUT so the design RTL stays free of
-// formal-only constructs. Assertions are written as immediate
-// `assert` / `cover` inside `always @(posedge clk)` blocks because
-// that is the subset Yosys's native Verilog frontend supports today.
-// Broader SVA (`property`, sequence operators, `default clocking`)
-// will land alongside the slang frontend tracked in rtl_buddy issue
-// #88.
+// formal-only constructs. The bind is what makes this checker reach
+// the design, and `bind` is only elaborated by the slang frontend —
+// so fpv.yaml sets `frontend: slang` (the native Yosys verilog
+// frontend silently drops bind directives, which would leave the proof
+// with no assertions at all). See tools/yosys-slang/SETUP_OSX.md for
+// building the plugin that `cfg-fpv-tools.opts.plugin-path` points at.
 
 module demo_fpv_counter_props #(
-  parameter int unsigned MAX   = 7,
+  // Defaults mirror the DUT (see demo_fpv_counter.sv on why MAX != 2**WIDTH-1);
+  // the bind below overrides both with the DUT's actual parameters.
+  parameter int unsigned MAX   = 5,
   parameter int unsigned WIDTH = $clog2(MAX + 1)
 )(
   input logic              clk,
   input logic              rst_n,
   input logic [WIDTH-1:0]  cnt
 );
+
+  // The defined initial state comes from the DUT's `cnt = '0` power-up
+  // value (see demo_fpv_counter.sv), so no reset assumption is needed
+  // here — the BMC trace starts from cnt==0 and the property must hold
+  // for every reachable state thereafter.
 
   // Safety: counter must never exceed MAX once reset is released.
   always @(posedge clk) begin
