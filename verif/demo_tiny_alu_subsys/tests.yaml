@@ -2,10 +2,10 @@ rtl-buddy-filetype: test_config
 
 testbenches:
   - name: "tb_top"
+    toplevel: "tb_top"
     filelist:
       - "+incdir+../../common"
       - "tb_top.sv"
-
 tests:
   - name: "csr_smoke"
     desc: "CSR-direct mode: 4 ops via APB writes; scoreboard each result against SV ref + Python golden"

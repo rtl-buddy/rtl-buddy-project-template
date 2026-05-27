@@ -2,10 +2,10 @@ rtl-buddy-filetype: test_config
 
 testbenches:
   - name: "tb_apb"
+    toplevel: "tb_top"
     filelist:
       - "+incdir+../../common"
       - "tb_top.sv"
-
 tests:
   - name: "smoke"
     desc: "APB modport compile + read/write/stall/pslverr smoke"

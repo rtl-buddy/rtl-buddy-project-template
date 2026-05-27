@@ -4,7 +4,15 @@ rtl-buddy-filetype: test_config
 # List testbenches contained in this verif dir
 testbenches :
   - name: "tb_top"
-    filelist: 
+    # `toplevel:` names the SystemVerilog module that sits at the
+    # top of this testbench's elaboration. Required for cocotb /
+    # systemc testbenches; optional but recommended for Verilator /
+    # VCS — when set, `rb hier <test> --view tb` (rtl-buddy-view
+    # #99) renders the *testbench* hierarchy with the DUT called
+    # out as a subtree. Without it, --view tb silently degrades to
+    # the DUT-only view.
+    toplevel: "tb_top"
+    filelist:
       - "+incdir+../../common"
       - "tb_top.sv"
 

@@ -16,3 +16,4 @@ test-configs:
   - "verif/demo_cdc_src_sync/tests.yaml"
   - "verif/demo_pulp_platform_axi/tests.yaml"
   - "verif/demo_abv_features/tests.yaml"
+  - "verif/demo_axi_2x2/tests.yaml"
