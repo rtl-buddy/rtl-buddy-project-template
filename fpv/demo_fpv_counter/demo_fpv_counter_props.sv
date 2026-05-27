@@ -31,6 +31,18 @@ module demo_fpv_counter_props #(
     end
   end
 
+  // Reset: while reset is asserted, the counter is held at 0. The async
+  // reset zeroes cnt combinationally, so this holds at every clock where
+  // rst_n is low. Without it, dropping the design's reset assignment is
+  // invisible to both the safety and cover properties (the counter still
+  // behaves correctly in steady state) — this is the property that makes
+  // that mutation observable.
+  always @(posedge clk) begin
+    if (!rst_n) begin
+      assert (cnt == '0);
+    end
+  end
+
   // Cover: a trace exists where counter reaches MAX. Surfaces as an
   // engine "cover reached" result under `mode: cover` in fpv.yaml.
   always @(posedge clk) begin
