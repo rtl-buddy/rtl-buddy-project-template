@@ -4,7 +4,8 @@
 //   * #129 — SVA in `rb test` via Verilator `--assert` (testbench-side
 //     SVA — see verif/demo_abv_features/tb_top.sv)
 //   * #134 — auto-derived vacuity covers for `|->` properties
-//     (waiting on a slang-fronted `rb fpv` path)
+//     (via the slang-fronted `rb fpv` path — see
+//     fpv/demo_abv_features/demo_abv_features_props_slang.sv)
 //   * #135 — dead-assume detection (structural)
 //   * #136 — cone-of-influence (COI) coverage
 //

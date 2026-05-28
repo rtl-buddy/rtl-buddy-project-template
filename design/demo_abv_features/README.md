@@ -12,7 +12,7 @@ correctly in your environment.
 | **#129 — SVA in `rb test`** | `verif/demo_abv_features/` | `assertions: true` in `tests.yaml` injects Verilator `--assert`; the results table grows an **Assertions** column |
 | **#136 — COI coverage** | `fpv/demo_abv_features/` | `rb fpv` results table grows a **COI** column showing `89% (8/9)` — the fraction of design cells in the assertion's cone of influence |
 | **#135 — Dead-assume detection** | `fpv/demo_abv_features/` | Results table grows an **Assumes** column showing `0 used, 1 dead` — the intentionally tautological `assume (en \|\| !en)` is flagged as structurally dead |
-| **#134 — Vacuity covers** | (not yet exercised here) | Requires `\|->` SVA properties; lights up automatically once a slang-fronted FPV path is wired in. The umbrella tracks this in [rtl_buddy#134](https://github.com/rtl-buddy/rtl_buddy/issues/134) |
+| **#134 — Vacuity covers** | `fpv/demo_abv_features/` (`demo_abv_features_vacuity` verification, slang-fronted) | Results table grows a **Vacuity** column showing `1/2 vacuous` — `p_safe_count` (antecedent `en`) reaches its cover, `p_vacuous` (antecedent `1'b0`) is flagged as unreachable. Reads `demo_abv_features_props_slang.sv` via `frontend: slang` since yosys's native verilog frontend does not parse `\|->` |
 
 ## Files
 
@@ -33,9 +33,12 @@ correctly in your environment.
 cd verif/demo_abv_features
 rb test smoke_with_sva
 
-# rb fpv demo — sby + yosys COI walk
+# rb fpv demo — sby + yosys COI walk + dead-assume
 cd fpv/demo_abv_features
 rb fpv demo_abv_features_safety
+
+# rb fpv demo — slang-fronted vacuity covers
+rb fpv demo_abv_features_vacuity
 ```
 
 ## Why the assertions live in different places
@@ -52,5 +55,9 @@ The testbench-side property (`CNT_MONOTONE` in
 to skip evaluation during reset, which is the safer pattern for
 Verilator-driven simulation.
 
-A future demo can exercise vacuity (#134) by adding `|->` properties
-through a slang-fronted FPV path once that lands in rtl_buddy.
+Vacuity (#134) is exercised by the `demo_abv_features_vacuity`
+verification, which reads `fpv/demo_abv_features/demo_abv_features_props_slang.sv`
+through the slang-fronted FPV path (`frontend: slang` in `fpv.yaml`).
+The native yosys verilog frontend does not parse `|->` / `|=>`, so the
+slang plugin is required — `cfg-fpv-tools[].opts.plugin-path` in
+`root_config.yaml` must point at `tools/yosys-slang/build/slang.so`.
