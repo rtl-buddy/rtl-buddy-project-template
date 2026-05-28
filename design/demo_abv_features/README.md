@@ -60,4 +60,6 @@ verification, which reads `fpv/demo_abv_features/demo_abv_features_props_slang.s
 through the slang-fronted FPV path (`frontend: slang` in `fpv.yaml`).
 The native yosys verilog frontend does not parse `|->` / `|=>`, so the
 slang plugin is required — `cfg-fpv-tools[].opts.plugin-path` in
-`root_config.yaml` must point at `tools/yosys-slang/build/slang.so`.
+`root_config.yaml` must point at your built `slang.so` (the template
+ships with the sibling-checkout default `../yosys-slang/build/slang.so`,
+matching the precedent in `synth/demo_slang_pkg/synth.yaml`).

@@ -8,9 +8,10 @@
 #     COI: 89% (8/9), Assumes: 0 used, 1 dead.
 #
 #   - `demo_abv_features_vacuity` uses the slang frontend
-#     (`frontend: slang` — requires `tools/yosys-slang/build/slang.so`
-#     pointed at by `cfg-fpv-tools[].opts.plugin-path` in
-#     `root_config.yaml`) and reads the `_props_slang.sv` file with
+#     (`frontend: slang` — requires a built `slang.so` pointed at by
+#     `cfg-fpv-tools[].opts.plugin-path` in `root_config.yaml`; the
+#     template defaults to the sibling-checkout path
+#     `../yosys-slang/build/slang.so`) and reads the `_props_slang.sv` file with
 #     `|->` properties. Exercises vacuity covers (#134): one
 #     property's antecedent is reachable, the other (`1'b0 |-> …`) is
 #     not — rb fpv reports `Vacuity: 1/2 vacuous`.
