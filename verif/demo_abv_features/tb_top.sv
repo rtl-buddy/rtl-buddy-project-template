@@ -35,15 +35,17 @@ module tb_top;
   );
   /* verilator lint_on SYNCASYNCNET */
 
-  // Drive stimulus on `negedge clk`, half a cycle before the SVA's
-  // `@(posedge clk)` sample. Driving stimulus on `posedge clk` with
-  // blocking `=` (the natural `initial`-script shape) races the SVA's
-  // preponed-region sample on yosys-slang frontends and on some
-  // simulators (notably the open-source `--assert --timing` flow),
-  // and the assertion is silently never triggered — same SVA, same
-  // DUT, broken-counter mutation goes unflagged. Driving on `negedge`
-  // settles the inputs before the next sample point so the assertion
-  // fires correctly regardless of simulator.
+  // Stimulus is driven on `negedge clk`, half a cycle before the DUT
+  // and SVA both sample on the next posedge. Driving on `posedge clk`
+  // with blocking `=` (the natural `initial`-script shape) puts the
+  // stimulus writes and the DUT's `always_ff @(posedge clk)` input
+  // sample in the same time slot's Active region — IEEE 1800 §4.7
+  // leaves their relative order undefined, so a simulator that writes
+  // stimulus first makes the DUT sample post-write values at the same
+  // edge (counter increments at reset release instead of starting
+  // next cycle). Driving on `negedge` settles inputs cleanly before
+  // the next sample point and removes the race. Keep this; do not
+  // refactor back to `posedge`.
   initial begin
     clk = 1'b0; rst_n = 1'b0; en = 1'b0;
     repeat (3) @(negedge clk);
