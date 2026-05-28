@@ -35,12 +35,21 @@ module tb_top;
   );
   /* verilator lint_on SYNCASYNCNET */
 
+  // Drive stimulus on `negedge clk`, half a cycle before the SVA's
+  // `@(posedge clk)` sample. Driving stimulus on `posedge clk` with
+  // blocking `=` (the natural `initial`-script shape) races the SVA's
+  // preponed-region sample on yosys-slang frontends and on some
+  // simulators (notably the open-source `--assert --timing` flow),
+  // and the assertion is silently never triggered — same SVA, same
+  // DUT, broken-counter mutation goes unflagged. Driving on `negedge`
+  // settles the inputs before the next sample point so the assertion
+  // fires correctly regardless of simulator.
   initial begin
     clk = 1'b0; rst_n = 1'b0; en = 1'b0;
-    repeat (3) @(posedge clk);
+    repeat (3) @(negedge clk);
     rst_n = 1'b1;
     en    = 1'b1;
-    repeat (MAX + 2) @(posedge clk);
+    repeat (MAX + 2) @(negedge clk);
     if (cnt !== MAX[WIDTH-1:0])
       `lvm_rpt_err(("expected cnt to saturate at MAX"));
     $display("PASS demo_abv_features counted up to %0d", cnt);
