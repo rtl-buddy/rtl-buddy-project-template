@@ -35,12 +35,23 @@ module tb_top;
   );
   /* verilator lint_on SYNCASYNCNET */
 
+  // Stimulus is driven on `negedge clk`, half a cycle before the DUT
+  // and SVA both sample on the next posedge. Driving on `posedge clk`
+  // with blocking `=` (the natural `initial`-script shape) puts the
+  // stimulus writes and the DUT's `always_ff @(posedge clk)` input
+  // sample in the same time slot's Active region — IEEE 1800 §4.7
+  // leaves their order undefined, and a simulator that writes
+  // stimulus first makes the DUT sample post-write values at the same
+  // edge (counter increments at reset release instead of starting
+  // next cycle). Driving on `negedge` settles inputs cleanly before
+  // the next sample point and removes the race. Keep this; do not
+  // refactor back to `posedge`.
   initial begin
     clk = 1'b0; rst_n = 1'b0; en = 1'b0;
-    repeat (3) @(posedge clk);
+    repeat (3) @(negedge clk);
     rst_n = 1'b1;
     en    = 1'b1;
-    repeat (MAX + 2) @(posedge clk);
+    repeat (MAX + 2) @(negedge clk);
     if (cnt !== MAX[WIDTH-1:0])
       `lvm_rpt_err(("expected cnt to saturate at MAX"));
     $display("PASS demo_abv_features counted up to %0d", cnt);
