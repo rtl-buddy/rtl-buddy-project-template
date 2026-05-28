@@ -1,0 +1,47 @@
+# RTL-Buddy Mutation Testing Configuration File
+rtl-buddy-filetype: mut_config
+
+# ─── PREREQUISITES (NOT runnable on this template's pinned toolchain) ───
+# `rb mut` is newer than the pinned `rtl_buddy==4.2.0` and the mutation
+# engine needs Python 3.13, so this campaign does not run out of the box.
+# To exercise it you need:
+#   - rtl_buddy >= 5.2            (provides the `rb mut` subcommand)
+#   - Python 3.13                 (rtl-buddy-xeno requires >= 3.13)
+#   - pip install "rtl-buddy-xeno[verible,slang]"   (the mutation engine)
+#   - a built yosys-slang plugin  (already required by this FPV demo;
+#                                  see tools/yosys-slang/SETUP_OSX.md)
+# Committed as a documented reference for when the template bumps its
+# rtl_buddy / Python pins. Tracked in rtl-buddy/rtl_buddy#206.
+# ────────────────────────────────────────────────────────────────────────
+#
+# Mutation campaign for demo_fpv_counter. The mutation engine
+# (rtl-buddy-xeno) rewrites the design file; each mutant is re-proved
+# against the `verify` FPV verification below. A mutant is "killed" when
+# the proof flips from PASS to FAIL, "survived" when it still passes
+# (a signal that the property set is too weak to notice that change).
+name: "demo_fpv_counter"
+model: "demo_fpv_counter"
+model_path: "../../design/demo_fpv_counter/models.yaml"
+
+# The single design file to mutate (must live within the model dir so
+# each mutant can be materialised into an isolated copy of the tree).
+design_file: "../../design/demo_fpv_counter/demo_fpv_counter.sv"
+
+# Which xeno MutationKinds to apply. These are the operators that have
+# candidate sites in this counter: the saturating `+`, the enable/bound
+# condition, and the register assignment.
+operators:
+  - arith_flip      # cnt + 1  ->  cnt - 1
+  - cond_negate     # (en && cnt < MAX)  ->  !(en && cnt < MAX)
+  - cond_const      # condition -> 1 / -> 0
+  - assign_drop     # drop the counter's non-blocking assignment
+
+# The kill oracle: the bounded safety proof. A mutant is killed when it
+# makes this verification FAIL.
+verify:
+  fpv_config: "fpv.yaml"
+  verification: "demo_fpv_counter_safety"
+
+budget:
+  max_mutants: 20
+  schedule: round_robin
