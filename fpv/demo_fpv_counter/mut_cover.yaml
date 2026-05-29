@@ -1,0 +1,35 @@
+# RTL-Buddy Mutation Testing Configuration File
+rtl-buddy-filetype: mut_config
+
+# ─── PREREQUISITES (NOT runnable on this template's pinned toolchain) ───
+# Same prerequisites as mut.yaml: rtl_buddy >= 5.2, Python 3.13,
+# pip install "rtl-buddy-xeno[verible,slang]", and a built yosys-slang
+# plugin. See mut.yaml and rtl-buddy/rtl_buddy#206.
+# ────────────────────────────────────────────────────────────────────────
+#
+# Companion to mut.yaml that uses the *cover* verification as the kill
+# oracle instead of the safety proof. Where the safety property only
+# catches mutants that push cnt above MAX, the cover property
+# (`cnt == MAX` is reachable) catches the complementary failure mode:
+# mutants that leave the counter stuck low so it can never reach MAX.
+# Running both campaigns shows why one property is not a sufficient
+# oracle on its own.
+name: "demo_fpv_counter_cover"
+model: "demo_fpv_counter"
+model_path: "../../design/demo_fpv_counter/models.yaml"
+
+design_file: "../../design/demo_fpv_counter/demo_fpv_counter.sv"
+
+operators:
+  - arith_flip
+  - cond_negate
+  - cond_const
+  - assign_drop
+
+verify:
+  fpv_config: "fpv.yaml"
+  verification: "demo_fpv_counter_reaches_max"   # cover oracle
+
+budget:
+  max_mutants: 20
+  schedule: round_robin

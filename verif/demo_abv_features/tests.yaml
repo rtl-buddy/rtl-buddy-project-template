@@ -1,0 +1,26 @@
+# rb test configuration for the ABV-features demo.
+#
+# Setting `assertions: true` injects Verilator's `--assert` and
+# `--coverage-user` flags at compile time, parses `%Error: ...
+# Assertion failed` lines from the simulation log, and adds an
+# Assertions column to the rb test results table (#129).
+rtl-buddy-filetype: test_config
+
+testbenches:
+  - name: "tb_top"
+    filelist:
+      - "+incdir+../../common"
+      - "tb_top.sv"
+
+tests:
+  - name: "smoke_with_sva"
+    desc: "Smoke test with SVA compiled in (#129 demo)"
+    reglvl: 0
+    model: "demo_abv_features"
+    model_path: "../../design/demo_abv_features/models.yaml"
+    testbench: "tb_top"
+    sim_timeout: 30
+    # The new knob — when true and the builder is Verilator, rtl_buddy
+    # appends `--assert` + `--coverage-user` to the compile command and
+    # surfaces assertion firings in the results table.
+    assertions: true

@@ -1,0 +1,49 @@
+# rb fpv configuration for the ABV-features demo.
+#
+# Two verification entries:
+#
+#   - `demo_abv_features_safety` uses the default (verilog) frontend
+#     and exercises COI (#136) + dead-assume (#135) reporting on the
+#     DUT's inline `` `ifdef FORMAL `` assertions. Result: PASS,
+#     COI: 89% (8/9), Assumes: 0 used, 1 dead.
+#
+#   - `demo_abv_features_vacuity` uses the slang frontend
+#     (`frontend: slang` — requires a built `slang.so` pointed at by
+#     `cfg-fpv-tools[].opts.plugin-path` in `root_config.yaml`; the
+#     template defaults to the sibling-checkout path
+#     `../yosys-slang/build/slang.so`) and reads the `_props_slang.sv` file with
+#     `|->` properties. Exercises vacuity covers (#134): one
+#     property's antecedent is reachable, the other (`1'b0 |-> …`) is
+#     not — rb fpv reports `Vacuity: 1/2 vacuous`.
+rtl-buddy-filetype: fpv_config
+
+verifications:
+  - name: "demo_abv_features_safety"
+    desc: "Inline-assertion DUT — exercises COI + dead-assume reporting"
+    tool: "sby"
+    model: "demo_abv_features"
+    model_path: "../../design/demo_abv_features/models.yaml"
+    top: "demo_abv_features"
+    # No external property files — assertions live inline in the DUT.
+    properties: []
+    mode: "bmc"
+    depth: 32
+    engines:
+      - "smtbmc yices"
+
+  - name: "demo_abv_features_vacuity"
+    desc: "Slang-fronted DUT with |-> properties — exercises vacuity covers (#134)"
+    tool: "sby"
+    model: "demo_abv_features"
+    model_path: "../../design/demo_abv_features/models.yaml"
+    top: "demo_abv_features"
+    properties:
+      - "demo_abv_features_props_slang.sv"
+    mode: "bmc"
+    depth: 32
+    engines:
+      - "smtbmc yices"
+    # Use slang for the SVA `|->` lowering (rejected by yosys's
+    # native verilog frontend). Requires plugin-path set in
+    # root_config.yaml's cfg-fpv-tools.
+    frontend: "slang"

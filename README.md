@@ -54,6 +54,7 @@ naming convention surfaces the category in the directory name:
 | `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the `rb pnr` Nangate45 flow | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 | `demo_fpv_counter`    | Saturating up-counter with a bound SVA checker for `rb fpv` (bmc-proves no-overflow, cover-reaches saturation) | [`design/demo_fpv_counter/`](design/demo_fpv_counter/), [`fpv/demo_fpv_counter/`](fpv/demo_fpv_counter/) |
+| `demo_abv_features`   | Assertion-Based Verification end-to-end — testbench-side SVA via `rb test` + `rb fpv` reporting **COI**, **dead-assume**, and slang-fronted **vacuity** (`1/2 vacuous`) on a tiny saturating counter | [`design/demo_abv_features/`](design/demo_abv_features/), [`verif/demo_abv_features/`](verif/demo_abv_features/), [`fpv/demo_abv_features/`](fpv/demo_abv_features/) |
 | `demo_axi_2x2`        | Minimal 2×2 AXI4 crossbar demo with directed traffic, waveform-friendly back-pressure, and profiler-ready AXI bundle metadata | [`design/demo_axi_2x2/`](design/demo_axi_2x2/), [`verif/demo_axi_2x2/`](verif/demo_axi_2x2/) |
 
 ### Third-party IP
@@ -85,7 +86,7 @@ template the supported flows are:
 - **Surfer** + WCP for live waveform viewing and headless capture
 - **Coverview** for browser-based coverage dashboards
 - **PeakRDL** for SystemRDL → SystemVerilog register block generation
-- **SymbiYosys (`sby`)** for `rb fpv` formal property verification — the `demo_fpv_counter` block + `fpv_regression.yaml` exercise the flow end-to-end
+- **SymbiYosys (`sby`)** for `rb fpv` formal property verification — `demo_fpv_counter` and `demo_abv_features` + `fpv_regression.yaml` exercise the flow end-to-end (vacuity / COI / dead-assume reporting via the slang-fronted variant)
 - **AXI profiler wiring** via the `demo_axi_2x2` manifest and view stub, ready for `rb axi-profile` once the dependency is added
 
 ## Setup
@@ -98,10 +99,10 @@ External prerequisites:
 - `coverview` (Antmicro) for the Coverview package path — see [`coverview.md`](coverview.md)
 - Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, for `rb verible …`)
 - Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`); macOS notes in [`tools/yosys/SETUP_OSX.md`](tools/yosys/SETUP_OSX.md)
-- yosys-slang — build the [yosys-slang plugin](https://github.com/povik/yosys-slang) (optional; only if any synth or CDC analysis sets `frontend: "slang"` for SV-2017 designs the built-in Yosys frontend rejects); macOS notes in [`tools/yosys-slang/SETUP_OSX.md`](tools/yosys-slang/SETUP_OSX.md)
+- yosys-slang — build the yosys-slang plugin (optional; required for any synth or FPV analysis that sets `frontend: "slang"`). Use povik's [yosys-slang](https://github.com/povik/yosys-slang) for synth-only; use the [rtl-buddy fork's `rtl-buddy` branch](https://github.com/rtl-buddy/yosys-slang/tree/rtl-buddy) for `rb fpv` with concurrent SVA (`|->`, `|=>`) until [povik/yosys-slang#317](https://github.com/povik/yosys-slang/pull/317) merges upstream. macOS notes in [`tools/yosys-slang/SETUP_OSX.md`](tools/yosys-slang/SETUP_OSX.md).
 - OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
 - Surfer — build from the [rtl-buddy fork](https://github.com/rtl-buddy/surfer) onto `PATH` (optional, for `rb wave` and headless waveform capture)
-- SymbiYosys (`sby`) plus a solver such as `yices`, `z3`, or `boolector` — required to run `demo_fpv_counter` and any `rb fpv …` suites; macOS: `brew install yices2` covers the solver, see [the FPV concept doc](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/fpv/) for sby install
+- SymbiYosys (`sby`) plus a solver such as `yices`, `z3`, or `boolector` — required to run `demo_fpv_counter`, `demo_abv_features`, and any `rb fpv …` suites; macOS: `brew install yices2` covers the solver, see [the FPV concept doc](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/fpv/) for sby install. The `demo_abv_features` slang-fronted vacuity variant additionally needs the rtl-buddy/yosys-slang fork built per [`tools/yosys-slang/SETUP_OSX.md`](tools/yosys-slang/SETUP_OSX.md)
 
 Sync the project environment after cloning:
 
@@ -146,6 +147,7 @@ uv run rb skill install --project
 │   ├── demo_tiny_alu_subsys/     # demo — PeakRDL CSR + multi-clock top + compute wrapper
 │   ├── demo_cdc_src_sync/  # demo — source-synchronous CDC reference (internal-pin clock forwarding)
 │   ├── demo_fpv_counter/   # demo — saturating counter exercised by `rb fpv`
+│   ├── demo_abv_features/  # demo — ABV end-to-end (SVA in `rb test` + slang-fronted `rb fpv` vacuity)
 │   └── demo_pulp_platform_axi/  # third-party — filelists + Verilator waivers for the vendored AXI IP
 ├── spec/
 │   ├── apb/  ip_cdc_sync/  ip_cdc_handshake/  ip_async_fifo/   # base IP specs
@@ -161,6 +163,7 @@ uv run rb skill install --project
 │   ├── demo_tiny_alu_sc/   # demo — SystemC peer suite for the same ALU DUT
 │   ├── demo_tiny_alu_subsys/     # demo — system-level multi-clock APB suite
 │   ├── demo_cdc_src_sync/  # demo — propagation test through the A→B→C chain
+│   ├── demo_abv_features/  # demo — testbench-side SVA for ABV (`rb test` --assert)
 │   ├── demo_pulp_platform_axi/  # third-party — pulp-platform AXI directed + elaboration tests
 │   └── demo_axi_2x2/       # demo — directed 2x2 AXI traffic testbench
 ├── synth/
@@ -170,7 +173,8 @@ uv run rb skill install --project
 ├── pnr/
 │   └── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
 ├── fpv/
-│   └── demo_fpv_counter/   # demo — `rb fpv` saturating counter (bmc + cover)
+│   ├── demo_fpv_counter/   # demo — `rb fpv` saturating counter (bmc + cover)
+│   └── demo_abv_features/  # demo — slang-fronted `|->` properties exercising vacuity / COI / dead-assume
 ├── lint/
 │   └── cdc/                # CDC lint configs (one entry per demo / base-IP analysis)
 ├── vendor/
