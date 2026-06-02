@@ -1,0 +1,68 @@
+name: Nightly Regression
+
+# The per-push Verilator CI (verilator.yml) runs only the must-run sanity
+# tier (`regression -l 0`) to stay fast. This nightly job runs the full
+# regression — including the deferred tier (`reglvl: 1000`: cocotb,
+# pulp-platform AXI, ABV, demo_tiny_alu_subsys) — via `-l 1000`, so those
+# heavier suites stay covered off the PR critical path.
+#
+# `schedule` only fires on the default branch. `workflow_dispatch` lets you
+# kick a full run by hand from the Actions tab on any branch.
+on:
+  schedule:
+    - cron: "0 18 * * *"   # 02:00 SGT (18:00 UTC) daily
+  workflow_dispatch:
+
+env:
+  SYSTEMC_VERSION: "3.0.2"
+
+jobs:
+  verilator-full:
+    runs-on: ubuntu-latest
+    container:
+      image: verilator/verilator:v5.048
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The full suite includes the vendored pulp-platform AXI demo,
+          # so its submodules must be present.
+          submodules: recursive
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked --python 3.11
+
+      # SystemC install (cached) — required by verif/demo_tiny_alu_sc/.
+      - name: Cache SystemC build
+        id: systemc-cache
+        uses: actions/cache@v4
+        with:
+          path: /opt/systemc
+          key: systemc-${{ env.SYSTEMC_VERSION }}-${{ runner.os }}-v1
+
+      - name: Build SystemC
+        if: steps.systemc-cache.outputs.cache-hit != 'true'
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends cmake build-essential ca-certificates curl
+          mkdir -p /tmp/sc-build && cd /tmp/sc-build
+          curl -fsSL "https://github.com/accellera-official/systemc/archive/refs/tags/${SYSTEMC_VERSION}.tar.gz" | tar xz
+          cd "systemc-${SYSTEMC_VERSION}"
+          cmake -B build -DCMAKE_INSTALL_PREFIX=/opt/systemc -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=17
+          cmake --build build -j"$(nproc)"
+          cmake --install build
+
+      - name: Export SYSTEMC_HOME
+        run: echo "SYSTEMC_HOME=/opt/systemc" >> "$GITHUB_ENV"
+
+      - name: Run full regression
+        # `-l 1000` includes the sanity tier (reglvl 0) plus the deferred
+        # tier (reglvl 1000). The VCS-targeted demo_cdc_src_sync test
+        # (reglvl default: 4000) stays skipped under Verilator, as on push.
+        # reg mode (no -M cov); full-project coverage is run on demand.
+        run: uv run rtl-buddy --machine -B verilator regression -c regression.yaml -l 1000

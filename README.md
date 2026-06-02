@@ -63,13 +63,15 @@ naming convention surfaces the category in the directory name:
 |---------------------|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `demo_pulp_platform_axi` | Vendoring third-party SV IP — pulp-platform AXI interconnect via git submodules, with a curated filelist, scoped Verilator lint waivers, a directed FIFO testbench, and an elaboration sweep across all adapter variants | [`design/demo_pulp_platform_axi/`](design/demo_pulp_platform_axi/), [`verif/demo_pulp_platform_axi/`](verif/demo_pulp_platform_axi/), [`vendor/pulp-platform/`](vendor/pulp-platform/) |
 
-Out of the box, `rb regression -c regression.yaml` exercises the base
-IP suites plus the SV, cocotb, SystemC, subsystem, CDC, third-party
-AXI, and 2×2 AXI demos from one top-level list. `rb synth-regression -c
-synth_regression.yaml` covers the alu leaf, the full subsystem, and the
-source-sync chain, while `rb fpv-regression` proves the counter demo's
-never-overflow invariant and reaches the saturated state via
-SymbiYosys + yices.
+Out of the box, `rb regression -c regression.yaml -l 1000` exercises the
+base IP suites plus the SV, cocotb, SystemC, subsystem, CDC, third-party
+AXI, and 2×2 AXI demos from one top-level list — the bare `rb regression
+-c regression.yaml` runs just the must-run **sanity tier** (`reglvl 0`,
+what per-push CI uses; the heavier suites and the VCS source-sync demo
+are reglvl-gated). `rb synth-regression -c synth_regression.yaml` covers
+the alu leaf, the full subsystem, and the source-sync chain, while `rb
+fpv-regression` proves the counter demo's never-overflow invariant and
+reaches the saturated state via SymbiYosys + yices.
 
 ## Tooling Scope
 
@@ -197,11 +199,11 @@ uv run rb spec check-coverage
 # Single test         — one named test in a suite
 (cd verif/demo_tiny_alu && uv run rb test basic)
 
-# Sim regression      — every test listed in regression.yaml
-uv run rb regression -c regression.yaml
+# Sim regression      — full suite (sanity tier + the reglvl-1000 deferred tier)
+uv run rb regression -c regression.yaml -l 1000
 
 # Coverage regression — same, with merged LCOV HTML and Coverview zip
-uv run rb -M cov regression -c regression.yaml \
+uv run rb -M cov regression -c regression.yaml -l 1000 \
     --coverage-merge --coverage-html --coverage-coverview
 
 # Waveform viewer     — open Surfer with the suite's signal layout
@@ -357,8 +359,8 @@ output for CI.
 ### Try it
 
 ```bash
-uv run rb regression -c regression.yaml             # everything in the top-level suite list
-uv run rb regression -c regression.yaml -l 0        # only reglvl 0 entries
+uv run rb regression -c regression.yaml             # sanity tier only (reglvl 0, the -l default) — per-push CI
+uv run rb regression -c regression.yaml -l 1000     # full suite (sanity + reglvl-1000 deferred tier) — nightly
 uv run rb --machine regression -c regression.yaml   # CI-style JSON output
 ```
 
@@ -434,7 +436,7 @@ into a Coverview zip for the browser dashboard.
 ### Try it
 
 ```bash
-uv run rb -M cov regression -c regression.yaml \
+uv run rb -M cov regression -c regression.yaml -l 1000 \
     --coverage-merge --coverage-html --coverage-coverview
 # Outputs land at the directory you run from. From repo root:
 open coverage_merge.html
@@ -603,8 +605,9 @@ The generated SV files are committed; CI runs the regen script and
 # Edit spec/demo_tiny_alu_subsys/demo_tiny_alu_subsys_csr.rdl, then:
 (cd design/demo_tiny_alu_subsys && ./gen_demo_tiny_alu_subsys_csr.sh)
 
-# Regression catches any RTL drift:
-uv run rb regression -c regression.yaml
+# Regression catches any RTL drift (demo_tiny_alu_subsys is in the
+# reglvl-1000 tier, so use -l 1000):
+uv run rb regression -c regression.yaml -l 1000
 ```
 
 ---

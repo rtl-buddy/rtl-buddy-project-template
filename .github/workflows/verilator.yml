@@ -31,11 +31,11 @@ jobs:
       image: verilator/verilator:v5.048
 
     steps:
+      # The reglvl-0 sanity tier (leaf IP + demo_tiny_alu + the SystemC
+      # cosim) is all in-repo, so no vendor submodules are needed here — a
+      # default checkout keeps it lean. The pulp-platform AXI + demo_axi_2x2
+      # suites (reglvl 1000, which need submodules) run in the nightly.
       - uses: actions/checkout@v4
-        with:
-          # Initialise vendor submodules (e.g. pulp-platform/axi) so the
-          # corresponding test suites can resolve their RTL filelists.
-          submodules: recursive
 
       # Install uv into the container. The package cache is keyed on
       # uv.lock so repeated runs with an unchanged lockfile skip downloads.
@@ -74,17 +74,19 @@ jobs:
       - name: Export SYSTEMC_HOME
         run: echo "SYSTEMC_HOME=/opt/systemc" >> "$GITHUB_ENV"
 
-      - name: Run regression
-        # Runs the full regression defined in regression.yaml.
+      - name: Run sanity regression
+        # `-l 0` runs only the must-run sanity tests (reglvl 0): leaf IP,
+        # the canonical demo_tiny_alu, and one SystemC cosim test — so the
+        # SystemC build/cosim path stays validated on every push without
+        # the multi-minute full suite. The deferred tier (reglvl 1000:
+        # cocotb, pulp-platform AXI, ABV, subsys) is skipped here and runs
+        # in the nightly (nightly.yml, `-l 1000`) and locally.
         #
-        # Useful options to add to the command below:
+        # Useful options:
         #   -c <path>           path to regression config
-        #                       (default: root_config.yaml reg-cfg-path)
-        #   -l <N>              stop after regression level N
-        #                       (default: run all levels)
-        #   -s <N>              start from level N, skipping earlier levels
+        #   -l <N>              run tests with reglvl <= N (default: 0)
         #   -M reg|debug|cov    builder mode override (default: reg)
-        run: uv run rtl-buddy --machine -B verilator regression -c regression.yaml
+        run: uv run rtl-buddy --machine -B verilator regression -c regression.yaml -l 0
 
   verilator-coverage:
     runs-on: ubuntu-latest
@@ -92,11 +94,10 @@ jobs:
       image: verilator/verilator:v5.048
 
     steps:
+      # regression_cov_ci.yaml exercises only demo_tiny_alu (pure
+      # Verilator), so this job needs no vendor submodules and no
+      # SystemC — a default checkout keeps it lean.
       - uses: actions/checkout@v4
-        with:
-          # Initialise vendor submodules (e.g. pulp-platform/axi) so the
-          # corresponding test suites can resolve their RTL filelists.
-          submodules: recursive
 
       - uses: astral-sh/setup-uv@v5
         with:
@@ -113,31 +114,15 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends lcov
 
-      - name: Cache SystemC build
-        id: systemc-cache
-        uses: actions/cache@v4
-        with:
-          path: /opt/systemc
-          key: systemc-${{ env.SYSTEMC_VERSION }}-${{ runner.os }}-v1
-
-      - name: Build SystemC
-        if: steps.systemc-cache.outputs.cache-hit != 'true'
-        run: |
-          apt-get install -y --no-install-recommends cmake build-essential ca-certificates curl
-          mkdir -p /tmp/sc-build && cd /tmp/sc-build
-          curl -fsSL "https://github.com/accellera-official/systemc/archive/refs/tags/${SYSTEMC_VERSION}.tar.gz" | tar xz
-          cd "systemc-${SYSTEMC_VERSION}"
-          cmake -B build -DCMAKE_INSTALL_PREFIX=/opt/systemc -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=17
-          cmake --build build -j"$(nproc)"
-          cmake --install build
-
-      - name: Export SYSTEMC_HOME
-        run: echo "SYSTEMC_HOME=/opt/systemc" >> "$GITHUB_ENV"
-
       - name: Run coverage regression
+        # Stripped-down coverage run: full instrumentation fidelity
+        # (expr/line/toggle/user, per root_config.yaml's `cov` mode) on a
+        # single multi-test DUT, to exercise the per-test -> merge -> lcov
+        # HTML flow without re-covering the whole project. verilator-test
+        # already runs the full regression.yaml on every push.
         run: |
           uv run rtl-buddy --machine -B verilator -M cov regression \
-            -c regression.yaml --coverage-merge --coverage-html
+            -c regression_cov_ci.yaml --coverage-merge --coverage-html
 
       - name: Upload merged LCOV HTML
         if: always()
