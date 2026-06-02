@@ -8,8 +8,8 @@ generated_at: "2026-05-22T00:00:00Z"
 # doesn't resolve verbatim, so relative paths work here.
 bundles:
   - name: in0
-    master_path: system.dut
-    slave_path: system.dut.in0
+    master_path: tb_axi_2x2
+    slave_path: tb_axi_2x2.dut
     protocol: AXI4
     data_width: 32
     id_width: 4
@@ -43,8 +43,8 @@ bundles:
       bresp:   s_axi_in0_bresp
 
   - name: in1
-    master_path: system.dut
-    slave_path: system.dut.in1
+    master_path: tb_axi_2x2
+    slave_path: tb_axi_2x2.dut
     protocol: AXI4
     data_width: 32
     id_width: 4
@@ -78,8 +78,8 @@ bundles:
       bresp:   s_axi_in1_bresp
 
   - name: out0
-    master_path: system.dut
-    slave_path: system.dut.out0
+    master_path: tb_axi_2x2.dut
+    slave_path: tb_axi_2x2
     protocol: AXI4
     data_width: 32
     id_width: 5
@@ -113,8 +113,8 @@ bundles:
       bresp:   m_axi_out0_bresp
 
   - name: out1
-    master_path: system.dut
-    slave_path: system.dut.out1
+    master_path: tb_axi_2x2.dut
+    slave_path: tb_axi_2x2
     protocol: AXI4
     data_width: 32
     id_width: 5
