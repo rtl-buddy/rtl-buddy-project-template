@@ -10,11 +10,10 @@ accelerator with PeakRDL-generated CSRs (`demo_tiny_alu_subsys`).
 
 Together they exercise the main day-to-day `rtl_buddy` workflows — spec
 traceability, test, regression, coverage, golden-model cosim (SV +
-cocotb), `rb wave` + headless Surfer captures, DV reports, PeakRDL
-register generation, Yosys synthesis, OpenROAD P&R, and CDC lint — so
-the mechanics stay in focus instead of the DUT. Formal property
-verification is supported by `rtl_buddy`, but this template does not yet
-ship a bundled `fpv/` example.
+cocotb + SystemC), `rb wave` + headless Surfer captures, DV reports,
+PeakRDL register generation, Yosys synthesis, OpenROAD P&R, CDC lint,
+formal property verification, and AXI traffic profiling — so the
+mechanics stay in focus instead of the DUT.
 
 ## Demonstrator at a Glance
 
@@ -51,9 +50,12 @@ naming convention surfaces the category in the directory name:
 |-----------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `demo_tiny_alu`        | Tiny 8-bit ALU leaf compute with Python golden model + SV/LVM cosim          | [`design/demo_tiny_alu/`](design/demo_tiny_alu/), [`spec/demo_tiny_alu/`](spec/demo_tiny_alu/), [`verif/demo_tiny_alu/`](verif/demo_tiny_alu/) |
 | `demo_tiny_alu_cocotb` | cocotb peer of `demo_tiny_alu` driving the same DUT against the same golden  | [`verif/demo_tiny_alu_cocotb/`](verif/demo_tiny_alu_cocotb/)                                                                       |
+| `demo_tiny_alu_sc`     | SystemC + Verilator cosim peer of `demo_tiny_alu`, showing the same DUT driven from `sc_main()` | [`verif/demo_tiny_alu_sc/`](verif/demo_tiny_alu_sc/) |
 | `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the `rb pnr` Nangate45 flow | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 | `demo_fpv_counter`    | Saturating up-counter with a bound SVA checker for `rb fpv` (bmc-proves no-overflow, cover-reaches saturation) | [`design/demo_fpv_counter/`](design/demo_fpv_counter/), [`fpv/demo_fpv_counter/`](fpv/demo_fpv_counter/) |
+| `demo_abv_features`   | Assertion-Based Verification end-to-end — testbench-side SVA via `rb test` + `rb fpv` reporting **COI**, **dead-assume**, and slang-fronted **vacuity** (`1/2 vacuous`) on a tiny saturating counter | [`design/demo_abv_features/`](design/demo_abv_features/), [`verif/demo_abv_features/`](verif/demo_abv_features/), [`fpv/demo_abv_features/`](fpv/demo_abv_features/) |
+| `demo_axi_2x2`        | Minimal 2×2 AXI4 crossbar demo with directed traffic, waveform-friendly back-pressure, and profiler-ready AXI bundle metadata | [`design/demo_axi_2x2/`](design/demo_axi_2x2/), [`verif/demo_axi_2x2/`](verif/demo_axi_2x2/) |
 
 ### Third-party IP
 
@@ -61,13 +63,13 @@ naming convention surfaces the category in the directory name:
 |---------------------|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `demo_pulp_platform_axi` | Vendoring third-party SV IP — pulp-platform AXI interconnect via git submodules, with a curated filelist, scoped Verilator lint waivers, a directed FIFO testbench, and an elaboration sweep across all adapter variants | [`design/demo_pulp_platform_axi/`](design/demo_pulp_platform_axi/), [`verif/demo_pulp_platform_axi/`](verif/demo_pulp_platform_axi/), [`vendor/pulp-platform/`](vendor/pulp-platform/) |
 
-Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
-across these blocks (plus one reglvl-gated SKIP for the source-sync
-demo); `rb synth-regression -c synth_regression.yaml` synthesizes
-the alu leaf (287 gates), the full system (1265 gates), and the
-source-sync chain (13 gates); `rb fpv-regression` proves the counter
-demo's never-overflow invariant and reaches the saturated state via
-SymbiYosys + yices in under two seconds.
+Out of the box, `rb regression -c regression.yaml` exercises the base
+IP suites plus the SV, cocotb, SystemC, subsystem, CDC, third-party
+AXI, and 2×2 AXI demos from one top-level list. `rb synth-regression -c
+synth_regression.yaml` covers the alu leaf, the full subsystem, and the
+source-sync chain, while `rb fpv-regression` proves the counter demo's
+never-overflow invariant and reaches the saturated state via
+SymbiYosys + yices.
 
 ## Tooling Scope
 
@@ -76,6 +78,7 @@ template the supported flows are:
 
 - **Verilator** for the open-source compile/sim/regression/coverage path
 - **VCS** for teams using Synopsys flows
+- **SystemC + Verilator cosim** for C++-driven harnesses through `rb test`
 - **Yosys** (rtl-buddy fork) for synthesis (generic + tech-mapped)
 - **rtl-buddy-cdc** for `rb cdc` clock-domain-crossing lint
 - **OpenROAD** for `rb pnr` (floorplan → P&R → optional GDSII streamout); KLayout for GDS rendering
@@ -83,7 +86,8 @@ template the supported flows are:
 - **Surfer** + WCP for live waveform viewing and headless capture
 - **Coverview** for browser-based coverage dashboards
 - **PeakRDL** for SystemRDL → SystemVerilog register block generation
-- **SymbiYosys (`sby`)** for `rb fpv` formal property verification — the `demo_fpv_counter` block + `fpv_regression.yaml` exercise the flow end-to-end
+- **SymbiYosys (`sby`)** for `rb fpv` formal property verification — `demo_fpv_counter` and `demo_abv_features` + `fpv_regression.yaml` exercise the flow end-to-end (vacuity / COI / dead-assume reporting via the slang-fronted variant)
+- **AXI profiler wiring** via the `demo_axi_2x2` manifest, attaching the `axi-perf` overlay to the real `tb_axi_2x2 → dut` hierarchy, ready for `rb axi-profile` once `rtl-buddy-axi-profiler` is installed
 
 ## Setup
 
@@ -98,7 +102,7 @@ External prerequisites:
 - yosys-slang — build the yosys-slang plugin (optional; required for any synth or FPV analysis that sets `frontend: "slang"`). Use povik's [yosys-slang](https://github.com/povik/yosys-slang) for synth-only; use the [rtl-buddy fork's `rtl-buddy` branch](https://github.com/rtl-buddy/yosys-slang/tree/rtl-buddy) for `rb fpv` with concurrent SVA (`|->`, `|=>`) until [povik/yosys-slang#317](https://github.com/povik/yosys-slang/pull/317) merges upstream. macOS notes in [`tools/yosys-slang/SETUP_OSX.md`](tools/yosys-slang/SETUP_OSX.md).
 - OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
 - Surfer — build from the [rtl-buddy fork](https://github.com/rtl-buddy/surfer) onto `PATH` (optional, for `rb wave` and headless waveform capture)
-- SymbiYosys (`sby`) plus a solver such as `yices`, `z3`, or `boolector` — required to run `demo_fpv_counter` and any `rb fpv …` suites; macOS: `brew install yices2` covers the solver, see [the FPV concept doc](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/fpv/) for sby install
+- SymbiYosys (`sby`) plus a solver such as `yices`, `z3`, or `boolector` — required to run `demo_fpv_counter`, `demo_abv_features`, and any `rb fpv …` suites; macOS: `brew install yices2` covers the solver, see [the FPV concept doc](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/fpv/) for sby install. The `demo_abv_features` slang-fronted vacuity variant additionally needs the rtl-buddy/yosys-slang fork built per [`tools/yosys-slang/SETUP_OSX.md`](tools/yosys-slang/SETUP_OSX.md)
 
 Sync the project environment after cloning:
 
@@ -139,9 +143,11 @@ uv run rb skill install --project
 │   ├── common/             # base IP — CDC primitives + ip_async_fifo
 │   ├── template/           # workflow template — starter design files for a new block
 │   ├── demo_tiny_alu/       # demo — tiny ALU leaf DUT
+│   ├── demo_axi_2x2/       # demo — 2x2 AXI4 wrapper + profiler manifest
 │   ├── demo_tiny_alu_subsys/     # demo — PeakRDL CSR + multi-clock top + compute wrapper
 │   ├── demo_cdc_src_sync/  # demo — source-synchronous CDC reference (internal-pin clock forwarding)
 │   ├── demo_fpv_counter/   # demo — saturating counter exercised by `rb fpv`
+│   ├── demo_abv_features/  # demo — ABV end-to-end (SVA in `rb test` + slang-fronted `rb fpv` vacuity)
 │   └── demo_pulp_platform_axi/  # third-party — filelists + Verilator waivers for the vendored AXI IP
 ├── spec/
 │   ├── apb/  ip_cdc_sync/  ip_cdc_handshake/  ip_async_fifo/   # base IP specs
@@ -154,9 +160,12 @@ uv run rb skill install --project
 │   ├── template/           # workflow template — starter verification files
 │   ├── demo_tiny_alu/       # demo — SV/LVM cosim suite + DV report + Surfer layout
 │   ├── demo_tiny_alu_cocotb/# demo — cocotb cosim against the shared Python golden
+│   ├── demo_tiny_alu_sc/   # demo — SystemC peer suite for the same ALU DUT
 │   ├── demo_tiny_alu_subsys/     # demo — system-level multi-clock APB suite
 │   ├── demo_cdc_src_sync/  # demo — propagation test through the A→B→C chain
-│   └── demo_pulp_platform_axi/  # third-party — pulp-platform AXI directed + elaboration tests
+│   ├── demo_abv_features/  # demo — testbench-side SVA for ABV (`rb test` --assert)
+│   ├── demo_pulp_platform_axi/  # third-party — pulp-platform AXI directed + elaboration tests
+│   └── demo_axi_2x2/       # demo — directed 2x2 AXI traffic testbench
 ├── synth/
 │   ├── demo_tiny_alu/       # demo — Yosys synth of the ALU leaf (generic + Nangate45)
 │   ├── demo_tiny_alu_subsys/     # demo — Yosys synth of the system block (generic + Nangate45)
@@ -164,7 +173,8 @@ uv run rb skill install --project
 ├── pnr/
 │   └── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
 ├── fpv/
-│   └── demo_fpv_counter/   # demo — `rb fpv` saturating counter (bmc + cover)
+│   ├── demo_fpv_counter/   # demo — `rb fpv` saturating counter (bmc + cover)
+│   └── demo_abv_features/  # demo — slang-fronted `|->` properties exercising vacuity / COI / dead-assume
 ├── lint/
 │   └── cdc/                # CDC lint configs (one entry per demo / base-IP analysis)
 ├── vendor/
@@ -187,7 +197,7 @@ uv run rb spec check-coverage
 # Single test         — one named test in a suite
 (cd verif/demo_tiny_alu && uv run rb test basic)
 
-# Sim regression      — every test listed in regression.yaml (12 PASS + 1 reglvl SKIP)
+# Sim regression      — every test listed in regression.yaml
 uv run rb regression -c regression.yaml
 
 # Coverage regression — same, with merged LCOV HTML and Coverview zip
@@ -196,6 +206,9 @@ uv run rb -M cov regression -c regression.yaml \
 
 # Waveform viewer     — open Surfer with the suite's signal layout
 (cd verif/demo_tiny_alu && uv run rb wave basic)
+
+# SystemC peer        — same ALU DUT driven from sc_main()
+(cd verif/demo_tiny_alu_sc && uv run rb test basic_sc)
 
 # DV report           — visualize PASS/FAIL + objective + waveform PNG per test
 (cd verif/demo_tiny_alu && uv run python build_report.py)
@@ -209,6 +222,9 @@ uv run rb -M cov regression -c regression.yaml \
 
 # CDC lint regression — clock-domain-crossing checks across all configured analyses
 uv run rb cdc-regression -c lint/cdc/cdc_regression.yaml
+
+# AXI traffic demo    — directed 2x2 crossbar traffic for waveform/profiler work
+(cd verif/demo_axi_2x2 && uv run rb test basic_traffic)
 
 # Synth regression    — generic synth runs (tech-mapped is gated by reglvl)
 uv run rb synth-regression -c synth_regression.yaml
@@ -297,8 +313,14 @@ work to a regression.
 # cocotb peer suite — same DUT, Python-driven, scoreboarded against shared golden
 (cd verif/demo_tiny_alu_cocotb && uv run rb test cocotb_random)
 
+# SystemC peer suite — same DUT, C++-driven through sc_main()
+(cd verif/demo_tiny_alu_sc && uv run rb test basic_sc)
+
 # system-level (multi-clock APB)
 (cd verif/demo_tiny_alu_subsys && uv run rb test csr_smoke)
+
+# AXI traffic demo — directed 2x2 crossbar traffic
+(cd verif/demo_axi_2x2 && uv run rb test basic_traffic)
 
 # regression-mode run for speed
 (cd verif/demo_tiny_alu && uv run rb -M reg test random)
@@ -319,9 +341,10 @@ output for CI.
 ### How it is wired
 
 - **Top-level config**: [`regression.yaml`](regression.yaml) lists
-  each suite's `tests.yaml` (8 suites today: 4 base-IP suites +
-  `demo_tiny_alu` + `demo_tiny_alu_cocotb` + `demo_tiny_alu_subsys` +
-  `demo_cdc_src_sync`).
+  each suite's `tests.yaml`, covering the 4 base-IP suites plus the
+  `demo_tiny_alu`, `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`,
+  `demo_tiny_alu_subsys`, `demo_cdc_src_sync`,
+  `demo_pulp_platform_axi`, and `demo_axi_2x2` demos.
 - **Reglvl gating**: each test in `tests.yaml` has a `reglvl`
   (0 = always run, larger = deferred tiers, 10000 = disabled).
   `--reg-level N` (alias `-l`) caps the run.
@@ -334,7 +357,7 @@ output for CI.
 ### Try it
 
 ```bash
-uv run rb regression -c regression.yaml             # everything (12 PASS + 1 reglvl SKIP)
+uv run rb regression -c regression.yaml             # everything in the top-level suite list
 uv run rb regression -c regression.yaml -l 0        # only reglvl 0 entries
 uv run rb --machine regression -c regression.yaml   # CI-style JSON output
 ```
