@@ -436,7 +436,7 @@ into a Coverview zip for the browser dashboard.
 ### Try it
 
 ```bash
-uv run rb -M cov regression -c regression.yaml \
+uv run rb -M cov regression -c regression.yaml -l 1000 \
     --coverage-merge --coverage-html --coverage-coverview
 # Outputs land at the directory you run from. From repo root:
 open coverage_merge.html
