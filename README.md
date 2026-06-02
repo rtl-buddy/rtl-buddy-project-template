@@ -605,8 +605,9 @@ The generated SV files are committed; CI runs the regen script and
 # Edit spec/demo_tiny_alu_subsys/demo_tiny_alu_subsys_csr.rdl, then:
 (cd design/demo_tiny_alu_subsys && ./gen_demo_tiny_alu_subsys_csr.sh)
 
-# Regression catches any RTL drift:
-uv run rb regression -c regression.yaml
+# Regression catches any RTL drift (demo_tiny_alu_subsys is in the
+# reglvl-1000 tier, so use -l 1000):
+uv run rb regression -c regression.yaml -l 1000
 ```
 
 ---
