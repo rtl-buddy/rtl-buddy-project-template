@@ -14,7 +14,6 @@ profiler-visible manifest.
 ```
 design/demo_axi_2x2/
   axi_2x2.sv                 — 2x2 axi_xbar wrapper with flat AXI_S/AXI_M ports
-  axi_2x2_system_view.sv     — view-only stub (consumed by rtl-buddy-view)
   axi_2x2.f                  — filelist (-F into demo_pulp_platform_axi)
   axi_2x2.axi-bundles.yaml   — 4-bundle manifest (in0/in1/out0/out1) for rb axi-profile
   models.yaml                — rb model entry
@@ -56,26 +55,25 @@ phases plus a drain window) and passes as long as no protocol violations fire.
 ## AXI profiler integration
 
 The `axi_2x2.axi-bundles.yaml` manifest models the wrapper as four bundles
-(`in0`, `in1`, `out0`, `out1`) with `master_path: system.dut` and
-`slave_path: system.dut.<bundle>`. This matches the hierarchy exposed by
-`axi_2x2_system_view.sv` — the view-only stub that `rb hier` / `rtl-buddy-view`
-walks to emit `view.json`. The dual-file split (real wrapper for simulation,
-stub for view consumption) sidesteps `+incdir+` directives that the
-rtl-buddy-view filelist parser can't currently traverse.
+(`in0`, `in1`, `out0`, `out1`) anchored on the **real testbench hierarchy**:
+the DUT-side endpoint is `tb_axi_2x2.dut`, and the master/slave on the other
+side is the procedural TB scope (`tb_axi_2x2`). The manifest's `signals:` block
+**describes the AXI ports** — `axi_2x2`'s ports are macro-generated
+(`` `AXI_S_PORT ``/`` `AXI_M_PORT ``) so Verible can't see them, but the manifest
+names every one. `rb axi-profile run` reads it to sample the FST, and
+rtl-buddy-view's `axi-perf` overlay reads it to **synthesize a bundle pin on the
+real `tb_axi_2x2.dut` node** — so the AXI overlay attaches to the ordinary
+tb_top test hierarchy with no profiler-specific view stub.
 
-Once `rtl-buddy-axi-profiler` is added to the template's dependency set (and
-the Python pin bumped to 3.12 to match it), AXI metrics can be produced via:
+End-to-end (with `rtl-buddy-axi-profiler` installed):
 
 ```bash
-# After running the test → FST is at artefacts/basic_traffic/dump.fst
-uv run rb axi-profile run \
-  -f design/demo_axi_2x2/axi_2x2.f \
-  -t axi_2x2 \
-  -i verif/demo_axi_2x2/artefacts/basic_traffic/dump.fst \
-  -m design/demo_axi_2x2/axi_2x2.axi-bundles.yaml \
-  -o axi-perf.json
+cd verif/demo_axi_2x2
+uv run rb -M debug test basic_traffic      # produce dump.fst (DUMP define)
+uv run rb axi-profile run basic_traffic    # → artefacts/axi/basic_traffic/axi-perf.json
+uv run rb hier axi_2x2 --overlay axi-perf=artefacts/axi/basic_traffic/axi-perf.json
 ```
 
-The resulting `axi-perf.json` overlays into rtl-buddy-view's AXI tab; per-bundle
-channel utilisation, throughput, and latency percentiles render against the
-view hierarchy.
+Per-bundle channel utilisation, throughput, and latency percentiles render as a
+decorated bundle pin on `dut` in both the hierarchy and block-flow views (and in
+the AXI tab), with a dashed boundary stub marking the procedural-TB peer.

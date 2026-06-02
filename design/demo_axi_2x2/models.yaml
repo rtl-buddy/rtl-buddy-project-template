@@ -4,7 +4,20 @@ models:
     desc: 2x2 AXI4 crossbar (pulp-platform) — demonstration target for rb axi-profile
     filelist:
       - -F axi_2x2.f
-    # NB: the `axi_bundles` field (rtl_buddy >= post-#164) will point at
-    # `axi_2x2.axi-bundles.yaml` once the template's rtl_buddy pin is
-    # bumped past the v4.2.0 line. The manifest file is already
-    # committed next to this model so the wiring is a one-line follow-up.
+    # The checked-in manifest describes the AXI ports (which the macro
+    # RTL hides from the CST) — `rb axi-profile run` reads it and the
+    # rtl-buddy-view axi-perf overlay attaches each bundle to the real
+    # tb_axi_2x2.dut node from it (no profiler-specific system_view.sv).
+    axi_bundles: axi_2x2.axi-bundles.yaml
+
+  # The testbench top (tb_top) is the natural view/profiling target for
+  # AXI perf — the overlay attaches to the real tb_axi_2x2.dut node.
+  # Listed as a model so `rb hub start --model tb_axi_2x2` serves it and
+  # it appears in the SPA model picker.
+  - name: tb_axi_2x2
+    desc: AXI 2x2 testbench top — AXI-perf view target (tb_axi_2x2 → dut)
+    filelist:
+      - -F axi_2x2.f
+      - +incdir+../../common
+      - ../../verif/demo_axi_2x2/tb_axi_2x2.sv
+    axi_bundles: axi_2x2.axi-bundles.yaml
