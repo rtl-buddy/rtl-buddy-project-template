@@ -1,0 +1,21 @@
+# RTL-Buddy Regression Configuration File
+rtl-buddy-filetype: reg_config
+
+# Stripped-down regression for the CI `verilator-coverage` job.
+#
+# Coverage in CI exists to prove the coverage *flow* works end-to-end —
+# instrument -> per-test .dat -> merge -> lcov HTML — not to re-measure the
+# whole project. `verilator-test` already runs the full `regression.yaml`
+# on every push, so correctness is gated there.
+#
+# `demo_tiny_alu` is the right exerciser: four tests (basic, ops_sweep,
+# flags, random) on one model/testbench, so a single DUT's per-test
+# coverage gets *merged* — the exact path the job validates — at full
+# instrumentation fidelity (expr/line/toggle/user, see root_config.yaml's
+# `cov` builder mode) while staying fast and dependency-light (pure
+# Verilator; no SystemC / cocotb / vendored AXI submodules).
+#
+# To cover more of the project, run `-M cov regression -c regression.yaml`
+# (the full suite) locally or in an out-of-band roll-up.
+test-configs:
+  - "verif/demo_tiny_alu/tests.yaml"

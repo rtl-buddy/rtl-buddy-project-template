@@ -92,11 +92,10 @@ jobs:
       image: verilator/verilator:v5.048
 
     steps:
+      # regression_cov_ci.yaml exercises only demo_tiny_alu (pure
+      # Verilator), so this job needs no vendor submodules and no
+      # SystemC — a default checkout keeps it lean.
       - uses: actions/checkout@v4
-        with:
-          # Initialise vendor submodules (e.g. pulp-platform/axi) so the
-          # corresponding test suites can resolve their RTL filelists.
-          submodules: recursive
 
       - uses: astral-sh/setup-uv@v5
         with:
@@ -113,31 +112,15 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends lcov
 
-      - name: Cache SystemC build
-        id: systemc-cache
-        uses: actions/cache@v4
-        with:
-          path: /opt/systemc
-          key: systemc-${{ env.SYSTEMC_VERSION }}-${{ runner.os }}-v1
-
-      - name: Build SystemC
-        if: steps.systemc-cache.outputs.cache-hit != 'true'
-        run: |
-          apt-get install -y --no-install-recommends cmake build-essential ca-certificates curl
-          mkdir -p /tmp/sc-build && cd /tmp/sc-build
-          curl -fsSL "https://github.com/accellera-official/systemc/archive/refs/tags/${SYSTEMC_VERSION}.tar.gz" | tar xz
-          cd "systemc-${SYSTEMC_VERSION}"
-          cmake -B build -DCMAKE_INSTALL_PREFIX=/opt/systemc -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=17
-          cmake --build build -j"$(nproc)"
-          cmake --install build
-
-      - name: Export SYSTEMC_HOME
-        run: echo "SYSTEMC_HOME=/opt/systemc" >> "$GITHUB_ENV"
-
       - name: Run coverage regression
+        # Stripped-down coverage run: full instrumentation fidelity
+        # (expr/line/toggle/user, per root_config.yaml's `cov` mode) on a
+        # single multi-test DUT, to exercise the per-test -> merge -> lcov
+        # HTML flow without re-covering the whole project. verilator-test
+        # already runs the full regression.yaml on every push.
         run: |
           uv run rtl-buddy --machine -B verilator -M cov regression \
-            -c regression.yaml --coverage-merge --coverage-html
+            -c regression_cov_ci.yaml --coverage-merge --coverage-html
 
       - name: Upload merged LCOV HTML
         if: always()
