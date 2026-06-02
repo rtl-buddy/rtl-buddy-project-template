@@ -1,17 +1,19 @@
 # RTL-Buddy Mutation Testing Configuration File
 rtl-buddy-filetype: mut_config
 
-# ─── PREREQUISITES (NOT runnable on this template's pinned toolchain) ───
-# `rb mut` is newer than the pinned `rtl_buddy==4.2.0` and the mutation
-# engine needs Python 3.13, so this campaign does not run out of the box.
-# To exercise it you need:
-#   - rtl_buddy >= 5.2            (provides the `rb mut` subcommand)
-#   - Python 3.13                 (rtl-buddy-xeno requires >= 3.13)
-#   - pip install "rtl-buddy-xeno[verible,slang]"   (the mutation engine)
+# ─── PREREQUISITES (mutation engine not yet installable from a clean checkout) ───
+# With this template's current pins, the only thing missing to run this
+# campaign is the mutation engine itself:
+#   - rtl_buddy >= 5.2            ✓ satisfied (template pins 5.3.0)
+#   - Python >= 3.11              ✓ satisfied (rtl-buddy-xeno relaxed its
+#                                  floor to >=3.11, so no 3.13 is needed)
+#   - rtl-buddy-xeno[verible,slang] — the mutation engine; NOT on PyPI yet,
+#                                  install from its git source until it is
+#                                  published (rtl-buddy/rtl-buddy-xeno#18)
 #   - a built yosys-slang plugin  (already required by this FPV demo;
 #                                  see tools/yosys-slang/SETUP_OSX.md)
-# Committed as a documented reference for when the template bumps its
-# rtl_buddy / Python pins. Tracked in rtl-buddy/rtl_buddy#206.
+# Declaring rtl-buddy-xeno as a proper `[mut]` optional dependency so this
+# runs from a clean `uv sync` is tracked in rtl-buddy/rtl_buddy#239.
 # ────────────────────────────────────────────────────────────────────────
 #
 # Mutation campaign for demo_fpv_counter. The mutation engine

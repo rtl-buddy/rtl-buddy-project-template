@@ -1,10 +1,11 @@
 # RTL-Buddy Mutation Testing Configuration File
 rtl-buddy-filetype: mut_config
 
-# ─── PREREQUISITES (NOT runnable on this template's pinned toolchain) ───
-# Same prerequisites as mut.yaml: rtl_buddy >= 5.2, Python 3.13,
-# pip install "rtl-buddy-xeno[verible,slang]", and a built yosys-slang
-# plugin. See mut.yaml and rtl-buddy/rtl_buddy#206.
+# ─── PREREQUISITES (mutation engine not yet installable from a clean checkout) ───
+# Same prerequisites as mut.yaml: rtl_buddy >= 5.2 (✓ pinned 5.3.0),
+# Python >= 3.11 (✓; rtl-buddy-xeno is now >=3.11, no 3.13 needed),
+# rtl-buddy-xeno[verible,slang] (not on PyPI yet — rtl-buddy/rtl-buddy-xeno#18),
+# and a built yosys-slang plugin. See mut.yaml and rtl-buddy/rtl_buddy#239.
 # ────────────────────────────────────────────────────────────────────────
 #
 # Companion to mut.yaml that uses the *cover* verification as the kill
