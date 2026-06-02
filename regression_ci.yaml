@@ -1,0 +1,25 @@
+# RTL-Buddy Regression Configuration File
+rtl-buddy-filetype: reg_config
+
+# Fast smoke regression for the CI `verilator-test` job.
+#
+# The full `regression.yaml` (run locally / out-of-band) also covers the
+# heavyweight suites — cocotb (demo_tiny_alu_cocotb), the vendored
+# pulp-platform AXI (demo_pulp_platform_axi), ABV (demo_abv_features), and
+# the demo_tiny_alu_subsys integration — which dominate CI wall-clock and
+# each pull in an extra toolchain (cocotb, vendor submodules) or a heavy
+# build.
+#
+# This list keeps the fast, dependency-light, pure-Verilator suites that
+# give broad smoke coverage on every push — the leaf IP (apb, the two CDC
+# primitives, the async FIFO) and the canonical demo_tiny_alu (4 tests) —
+# plus one SystemC cosim test (demo_tiny_alu_sc has a single test,
+# basic_sc) so the SystemC build + cosim path stays smoke-validated in CI
+# (the SystemC build is cached across runs; see verilator.yml).
+test-configs:
+  - "verif/apb/tests.yaml"
+  - "verif/ip_cdc_sync/tests.yaml"
+  - "verif/ip_cdc_handshake/tests.yaml"
+  - "verif/ip_async_fifo/tests.yaml"
+  - "verif/demo_tiny_alu/tests.yaml"
+  - "verif/demo_tiny_alu_sc/tests.yaml"

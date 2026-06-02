@@ -31,11 +31,11 @@ jobs:
       image: verilator/verilator:v5.048
 
     steps:
+      # regression_ci.yaml's suites are all in-repo (leaf IP + tiny_alu +
+      # the SystemC cosim), so no vendor submodules are needed here — a
+      # default checkout keeps it lean. The full pulp-platform AXI suite
+      # (which does need submodules) runs via regression.yaml out-of-band.
       - uses: actions/checkout@v4
-        with:
-          # Initialise vendor submodules (e.g. pulp-platform/axi) so the
-          # corresponding test suites can resolve their RTL filelists.
-          submodules: recursive
 
       # Install uv into the container. The package cache is keyed on
       # uv.lock so repeated runs with an unchanged lockfile skip downloads.
@@ -75,16 +75,17 @@ jobs:
         run: echo "SYSTEMC_HOME=/opt/systemc" >> "$GITHUB_ENV"
 
       - name: Run regression
-        # Runs the full regression defined in regression.yaml.
+        # Fast smoke regression (regression_ci.yaml): leaf IP + the
+        # canonical demo_tiny_alu + one SystemC cosim test, so the
+        # SystemC build/cosim path stays validated on every push without
+        # the multi-minute full suite. The full regression.yaml (cocotb,
+        # pulp-platform AXI, ABV, subsys) runs locally / out-of-band.
         #
-        # Useful options to add to the command below:
+        # Useful options:
         #   -c <path>           path to regression config
-        #                       (default: root_config.yaml reg-cfg-path)
         #   -l <N>              stop after regression level N
-        #                       (default: run all levels)
-        #   -s <N>              start from level N, skipping earlier levels
         #   -M reg|debug|cov    builder mode override (default: reg)
-        run: uv run rtl-buddy --machine -B verilator regression -c regression.yaml
+        run: uv run rtl-buddy --machine -B verilator regression -c regression_ci.yaml
 
   verilator-coverage:
     runs-on: ubuntu-latest
