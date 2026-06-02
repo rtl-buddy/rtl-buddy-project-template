@@ -87,7 +87,7 @@ template the supported flows are:
 - **Coverview** for browser-based coverage dashboards
 - **PeakRDL** for SystemRDL → SystemVerilog register block generation
 - **SymbiYosys (`sby`)** for `rb fpv` formal property verification — `demo_fpv_counter` and `demo_abv_features` + `fpv_regression.yaml` exercise the flow end-to-end (vacuity / COI / dead-assume reporting via the slang-fronted variant)
-- **AXI profiler wiring** via the `demo_axi_2x2` manifest and view stub, ready for `rb axi-profile` once the dependency is added
+- **AXI profiler wiring** via the `demo_axi_2x2` manifest, attaching the `axi-perf` overlay to the real `tb_axi_2x2 → dut` hierarchy, ready for `rb axi-profile` once `rtl-buddy-axi-profiler` is installed
 
 ## Setup
 
