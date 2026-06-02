@@ -11,7 +11,7 @@ testbenches:
 tests:
   - name: "basic_traffic"
     desc: "Two AXI masters issue interleaved writes + reads across both endpoints"
-    reglvl: 0
+    reglvl: 1000  # deferred to the full/nightly regression (-l 1000) — needs the pulp-platform AXI submodules
     model: "axi_2x2"
     model_path: "../../design/demo_axi_2x2/models.yaml"
     testbench: "tb_axi_2x2"

@@ -61,9 +61,11 @@ naming convention surfaces the category in the directory name:
 |---------------------|-----------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | `demo_pulp_platform_axi` | Vendoring third-party SV IP — pulp-platform AXI interconnect via git submodules, with a curated filelist, scoped Verilator lint waivers, a directed FIFO testbench, and an elaboration sweep across all adapter variants | [`design/demo_pulp_platform_axi/`](design/demo_pulp_platform_axi/), [`verif/demo_pulp_platform_axi/`](verif/demo_pulp_platform_axi/), [`vendor/pulp-platform/`](vendor/pulp-platform/) |
 
-Out-of-box `rb regression -c regression.yaml` passes **12/12** tests
-across these blocks (plus one reglvl-gated SKIP for the source-sync
-demo); `rb synth-regression -c synth_regression.yaml` synthesizes
+Out-of-box `rb regression -c regression.yaml -l 1000` runs the full sim
+suite across these blocks (the bare `rb regression -c regression.yaml`
+runs just the must-run **sanity tier** — `reglvl 0`, what per-push CI
+uses; the source-sync demo stays a reglvl-gated SKIP under Verilator);
+`rb synth-regression -c synth_regression.yaml` synthesizes
 the alu leaf (287 gates), the full system (1265 gates), and the
 source-sync chain (13 gates); `rb fpv-regression` proves the counter
 demo's never-overflow invariant and reaches the saturated state via
@@ -187,8 +189,8 @@ uv run rb spec check-coverage
 # Single test         — one named test in a suite
 (cd verif/demo_tiny_alu && uv run rb test basic)
 
-# Sim regression      — every test listed in regression.yaml (12 PASS + 1 reglvl SKIP)
-uv run rb regression -c regression.yaml
+# Sim regression      — full suite (sanity tier + the reglvl-1000 deferred tier)
+uv run rb regression -c regression.yaml -l 1000
 
 # Coverage regression — same, with merged LCOV HTML and Coverview zip
 uv run rb -M cov regression -c regression.yaml \
@@ -334,8 +336,8 @@ output for CI.
 ### Try it
 
 ```bash
-uv run rb regression -c regression.yaml             # everything (12 PASS + 1 reglvl SKIP)
-uv run rb regression -c regression.yaml -l 0        # only reglvl 0 entries
+uv run rb regression -c regression.yaml             # sanity tier only (reglvl 0, the -l default) — per-push CI
+uv run rb regression -c regression.yaml -l 1000     # full suite (sanity + reglvl-1000 deferred tier) — nightly
 uv run rb --machine regression -c regression.yaml   # CI-style JSON output
 ```
 

@@ -22,14 +22,14 @@ testbenches:
 tests:
   - name: "axi_fifo_simple"
     desc: "FIFO-01..04: single write/read, back-to-back writes, reads after fills"
-    reglvl: 0
+    reglvl: 1000  # deferred to the full/nightly regression (-l 1000)
     model: "pp_axi"
     model_path: "../../design/demo_pulp_platform_axi/models.yaml"
     testbench: "tb_axi_fifo_simple"
 
   - name: "synth_bench"
     desc: "Instantiate axi_synth_bench to verify all adapter variants elaborate cleanly"
-    reglvl: 0
+    reglvl: 1000  # deferred to the full/nightly regression (-l 1000)
     model: "pp_axi"
     model_path: "../../design/demo_pulp_platform_axi/models.yaml"
     testbench: "tb_top"

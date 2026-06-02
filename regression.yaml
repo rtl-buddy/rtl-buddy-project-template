@@ -4,6 +4,16 @@ rtl-buddy-filetype: reg_config
 # Discoverable list of suites. Leaf-IP suites (apb, ip_cdc_sync,
 # ip_cdc_handshake, ip_async_fifo) prove each component on its own;
 # demo_tiny_alu_subsys is the system-level demonstrator that integrates them.
+#
+# Regression-level tiers (per-test `reglvl` in each tests.yaml; `-l N` runs
+# reglvl <= N, default 0):
+#   reglvl 0     — must-run sanity tier. Pure-Verilator, dependency-light
+#                  (leaf IP, demo_tiny_alu, one SystemC cosim test). Run on
+#                  every push by .github/workflows/verilator.yml (`-l 0`).
+#   reglvl 1000  — deferred tier: heavier / extra-toolchain suites (cocotb,
+#                  pulp-platform AXI, ABV, demo_tiny_alu_subsys, demo_axi_2x2).
+#                  Run nightly via .github/workflows/nightly.yml (`-l 1000`).
+#   reglvl 4000  — VCS-targeted (demo_cdc_src_sync); skipped under Verilator.
 test-configs:
   - "verif/apb/tests.yaml"
   - "verif/ip_cdc_sync/tests.yaml"
