@@ -89,12 +89,16 @@ which is 1-inductive and proves regardless of depth.
 ## How this stays in `fpv_regression.yaml` despite an expected failure
 
 `demo_abv_induction_noninductive_prove` is **expected to FAIL** — that
-failure *is* the lesson. It is marked `xfail: true` in `fpv.yaml`, so
-`rb fpv` reports it as **XFAIL**, which counts as a pass. That lets the
-suite live in `fpv_regression.yaml` (it is listed there) without turning
-`rb fpv-regression` red. If the property ever *starts* proving, xfail
-turns it into an **XPASS**, which counts as a failure — a deliberate
-signal that the demo (or the tool) changed and the marker is now stale.
+failure *is* the lesson. It is marked `xfail_strict: true` in `fpv.yaml`,
+so `rb fpv` reports it as **XFAIL**, which counts as a pass. That lets
+the suite live in `fpv_regression.yaml` (it is listed there) without
+turning `rb fpv-regression` red. The *strict* variant also means that if
+the property ever *starts* proving (e.g. someone raises the depth past
+the induction boundary), it becomes an **XPASS** that counts as a
+**failure** — a deliberate red flag that the demo no longer demonstrates
+the lesson and the marker is now stale. (Plain `xfail: true` would
+instead let such an XPASS pass silently; strict is the right choice for a
+regression guard.)
 
 **Version requirement:** FPV `xfail` support landed in `rtl_buddy` via
 [rtl-buddy/rtl_buddy#256](https://github.com/rtl-buddy/rtl_buddy/pull/256).

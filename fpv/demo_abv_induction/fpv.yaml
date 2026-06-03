@@ -23,15 +23,17 @@
 # explanation.
 #
 # NOTE: demo_abv_induction_noninductive_prove is *expected to FAIL* —
-# that failure IS the lesson. It carries `xfail: true` so `rb fpv`
+# that failure IS the lesson. It carries `xfail_strict: true` so `rb fpv`
 # reports it as XFAIL (counts as a pass), which lets the suite live in
-# fpv_regression.yaml without turning `rb fpv-regression` red.
+# fpv_regression.yaml without turning `rb fpv-regression` red — while a
+# future unexpected pass becomes an XPASS *failure* that flags the stale
+# demo.
 #
 # REQUIRES an rtl_buddy with FPV xfail support (rtl-buddy/rtl_buddy#256).
-# Older rtl_buddy silently ignores the `xfail:` key and reports a plain
-# FAIL — so until this project's pinned rtl_buddy is bumped to a release
-# that includes xfail, `rb fpv-regression` will show this verification as
-# FAIL. See design/demo_abv_induction/README.md.
+# Older rtl_buddy silently ignores the `xfail_strict:` key and reports a
+# plain FAIL — so until this project's pinned rtl_buddy is bumped to a
+# release that includes xfail, `rb fpv-regression` will show this
+# verification as FAIL. See design/demo_abv_induction/README.md.
 rtl-buddy-filetype: fpv_config
 
 verifications:
@@ -58,9 +60,12 @@ verifications:
       - "demo_abv_induction_props.sv"
     mode: "prove"
     depth: 20
-    # Expected to fail induction — see the suite-header NOTE. xfail makes
-    # it XFAIL (a pass) so the suite can live in fpv_regression.yaml.
-    xfail: true
+    # Expected to fail induction — see the suite-header NOTE. xfail_strict
+    # makes it XFAIL (a pass) so the suite can live in fpv_regression.yaml,
+    # AND turns a future unexpected pass into an XPASS *failure* — so if
+    # this property ever starts proving (e.g. the depth is raised past the
+    # induction boundary), the regression goes red to flag the stale demo.
+    xfail_strict: true
     engines:
       - "smtbmc yices"
 
