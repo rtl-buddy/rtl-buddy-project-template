@@ -56,20 +56,24 @@ different modes — that side-by-side is the whole demo:
 - **BMC** explores only the bounded reachable space starting from
   `cnt == 0`, never climbs past `5`, so it never witnesses `26`: **PASS**.
 - **prove** adds the induction step, which starts from an *arbitrary*
-  state. `cnt == 25 → 26` is a valid one-step counterexample-to-
-  induction, so the property is not provable by induction: **FAIL**
-  (sby reports `UNKNOWN` — the property is neither proved nor disproved;
-  there is no *reachable* counterexample, it simply is not inductive).
+  state. `cnt == 25 → 26` is a valid one-step counterexample-to-induction,
+  so the property is not provable by induction: sby reports **`UNKNOWN`**
+  (not a disproof) and writes the counterexample-to-induction trace.
+  `UNKNOWN` is ambiguous — the CTI may start from an *unreachable* state
+  (true-but-not-inductive, the case here) or a *reachable* one (a real
+  bug, or a too-weak `assume`); the engineer opens the trace and decides.
+  Here `25` is unreachable, so it is the non-inductive case.
 
 Verification 3 shows the fix: rewrite the intent as the inductive
-invariant `cnt <= 5`, which proves cleanly at any depth.
+invariant `cnt <= 5`. It is closed under this counter's transition
+relation, so it proves without depending on `depth`.
 
 ## A subtlety worth knowing: why raising `depth` makes `cnt != 26` pass
 
 SymbiYosys `mode prove` does **temporal k-induction up to the BMC
-depth** (`k = depth`), not 1-induction. Raising the depth can flip
-`cnt != 26` from FAIL to PASS — and understanding *why* is the deepest
-lesson in this demo.
+depth** (`k = depth`), not just single-step induction. Raising the depth
+can flip `cnt != 26` from FAIL to PASS — and understanding *why* is the
+deepest lesson in this demo.
 
 ### What induction is checking
 
@@ -115,25 +119,32 @@ A CTI at depth `k` needs `k + 1` states ending at `26`:
 This demo pins **`depth: 20`** so `cnt != 26` lands on the *failing*
 side — `26` against depth `20` is the exact boundary.
 
-### Why this is a trap, not a fix
+### Sound, but fragile — and still the wrong lever
 
-Bumping the depth to `32` and watching `cnt != 26` pass is **k-induction
-getting lucky on the geometry**, not the property becoming inductive. It
-still is not 1-inductive — the induction step can still sit on the
-unreachable state `25` and step to `26`. The wider window only helps
-because the wrap chops the unreachable ramp at a fixed length. It does
-not generalise:
+Bumping the depth to `32` and watching `cnt != 26` pass is a **sound**
+result, not a trick: k-induction is sound for every `k`, so at
+`depth >= 21` the property genuinely *is* k-inductive. (A larger `k` is
+sometimes even the intended fix — a design that needs N cycles to settle
+from an arbitrary state is legitimately only k-inductive for `k >= N`, and
+a smaller depth would fight that design intent.)
+
+The problem is that the proof is **fragile**: it works only because the
+wrap chops the unreachable ramp at a fixed length of 21, so it hangs on
+the exact geometry of *this* design. It does not generalise —
 
 - a bigger gap (`cnt != 1000`) would need `depth >= ~996` before it
   passes;
 - remove the wrap (a free-running counter) and the ramp into the bad
   value can be arbitrarily long, so **no finite depth** ever closes it.
 
-The robust answer is the bottom-row rewrite, `cnt <= 5`. Its hypothesis
-("`cnt <= 5` in the prior state") directly excludes `25` as a start
-state, so it proves at **`k = 1`**, at any depth, regardless of
-geometry. "Raise the depth until it goes green" is exactly the
-anti-pattern this demo is teaching you to avoid.
+The robust answer is the bottom-row rewrite, `cnt <= 5`: it is **closed
+under the transition relation**, so its hypothesis (`cnt <= 5` in the
+prior state) directly excludes `25` as a start state and it proves
+without leaning on `depth` at all. (That is a property of *this* design,
+not of `<=` in general — whether any invariant is inductive is always
+design-specific.) "Raise the depth until it goes green" is the
+anti-pattern this demo is teaching you to avoid: prefer an inductive
+invariant when one exists.
 
 ## How this stays in `fpv_regression.yaml` despite an expected failure
 
