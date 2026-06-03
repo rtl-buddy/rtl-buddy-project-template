@@ -5,6 +5,7 @@ requires-python = ">=3.11,<3.12"
 dependencies = [
   "rtl_buddy==6.1.0",
   "rtl-buddy-cdc",
+  "rtl-buddy-xeno[verible,slang]",
   "cocotb==2.0.1",
   "pytest==8.4.2",
   "info-process",
@@ -22,3 +23,8 @@ peakrdl-regblock = { git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" }
 # Pinned CDC linter consumed via subprocess by `rb cdc`. No PyPI release
 # yet; pin to the git repo so `which rtl-buddy-cdc` works after `uv sync`.
 rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git" }
+# Mutation engine driven by `rb mut`. Not on PyPI yet
+# (rtl-buddy/rtl-buddy-xeno#18), so pin the git repo; the [verible,slang]
+# extras (declared on the dependency above) pull the Verible CST + pyslang
+# toolchain the structural mutation operators need.
+rtl-buddy-xeno = { git = "https://github.com/rtl-buddy/rtl-buddy-xeno.git" }

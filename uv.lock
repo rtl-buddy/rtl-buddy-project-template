@@ -413,6 +413,19 @@ yaml = [
 ]
 
 [[package]]
+name = "pyslang"
+version = "10.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0a/a5/96406aa35358e479dc82a219cb43cf8da6f93c9b86ce15eb5d9051aac13c/pyslang-10.0.0.tar.gz", hash = "sha256:59ca9c53f0fa1c44bea6cd424014bf1e5e28beda0df0372951a70e44b6d84045", size = 1736690, upload-time = "2026-01-16T14:23:03.102Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1f/d7/985fe181892d747e27ca10a1dc220823eb55653812e827f12f0127b95433/pyslang-10.0.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:9980a3f4f2d8a18fa46ebad96c98877a846986a74e210ed12fe2f392e0cae7da", size = 3894902, upload-time = "2026-01-16T14:22:28.8Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/5f/5d7d8f4f309471eeeb3e5b04f2762d30ce8c77da473350555d5c238703e8/pyslang-10.0.0-cp311-cp311-macosx_11_0_universal2.whl", hash = "sha256:cf5c877a28440ad5d6e89b43e2305c007b73ff3cef14110df3861f1dea55915c", size = 7917827, upload-time = "2026-01-16T14:22:30.339Z" },
+    { url = "https://files.pythonhosted.org/packages/53/01/486bda96e51e24e2e5f1631eb42f4fca6f3a6d71419fd8349d899bee5707/pyslang-10.0.0-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c6b06cadf7ab5f2b7efb472cfd3c7100c957cfbb72b7adee8230ea398fedd193", size = 4979254, upload-time = "2026-01-16T14:22:32.085Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/19/8fa3c4acc5c4962d0f6905f5cc8a2a5e4e2ae7f0537ce5ba136b77bb7721/pyslang-10.0.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6673b1a3c1a9ae7551ee02581eebdc94cea81bc578f6a6f50abefaf23e4860f0", size = 5702076, upload-time = "2026-01-16T14:22:33.469Z" },
+    { url = "https://files.pythonhosted.org/packages/88/eb/a6ec2c87a117ff5518c9d0104282556ec98698c2bd73b7f82820d3513755/pyslang-10.0.0-cp311-cp311-win_amd64.whl", hash = "sha256:a7f6b52d777bcd716f800baa38d69b95e26feb4d4e6947e0b57e39a210854f0c", size = 3042777, upload-time = "2026-01-16T14:22:35.117Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "8.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -572,6 +585,7 @@ dependencies = [
     { name = "pytest" },
     { name = "rtl-buddy" },
     { name = "rtl-buddy-cdc" },
+    { name = "rtl-buddy-xeno", extra = ["slang", "verible"] },
 ]
 
 [package.metadata]
@@ -583,6 +597,29 @@ requires-dist = [
     { name = "pytest", specifier = "==8.4.2" },
     { name = "rtl-buddy", specifier = "==6.1.0" },
     { name = "rtl-buddy-cdc", git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git" },
+    { name = "rtl-buddy-xeno", extras = ["verible", "slang"], git = "https://github.com/rtl-buddy/rtl-buddy-xeno.git" },
+]
+
+[[package]]
+name = "rtl-buddy-view"
+version = "0.2.0"
+source = { git = "https://github.com/rtl-buddy/rtl-buddy-view.git?tag=v0.2.0#1bef422ae73d49ab48201fa0cd80420c6c27016e" }
+dependencies = [
+    { name = "jsonschema" },
+    { name = "typer" },
+]
+
+[[package]]
+name = "rtl-buddy-xeno"
+version = "0.0.2"
+source = { git = "https://github.com/rtl-buddy/rtl-buddy-xeno.git#67f251f6d719f79f49f67aecab93093c85541ee7" }
+
+[package.optional-dependencies]
+slang = [
+    { name = "pyslang" },
+]
+verible = [
+    { name = "rtl-buddy-view" },
 ]
 
 [[package]]

@@ -47,11 +47,46 @@ rb fpv demo_abv_basic_reaches_max
 
 ## Mutation testing
 
-This block is also the `rb mut` reference. `fpv/demo_abv/demo_abv_basic/mut.yaml`
-(and `mut_cover.yaml`) mutate `demo_abv_basic.sv` and check that the
-property set *kills* the mutants — i.e. that the proofs are actually
-sensitive to the logic, not vacuously passing. The reset property is the
-one that makes dropping the design's reset assignment observable.
+This block is also the `rb mut` reference. Mutation testing perturbs the
+design — flip a `+` to `-`, negate a condition, drop an assignment — and
+re-runs a proof as the **kill oracle**. A mutant is **killed** when the
+proof flips PASS → FAIL (the property noticed the change) and **survives**
+when the proof still passes (a hole: the property set is too weak to see
+that mutation). The score is `killed / (killed + survived)`.
+
+### Two oracles, two failure modes
+
+The point of this demo is that **one property is not a sufficient oracle.**
+It ships two campaigns over the same mutants, each using a different
+verification as the kill oracle:
+
+| Campaign | Kill oracle | Catches | Blind to |
+|---|---|---|---|
+| `mut.yaml` | `demo_abv_basic_safety` (bmc: `cnt <= MAX`) | mutants that push `cnt` **above** `MAX` | mutants that leave `cnt` stuck low |
+| `mut_cover.yaml` | `demo_abv_basic_reaches_max` (cover: `cnt == MAX` reachable) | mutants that leave the counter **stuck low** so it never reaches `MAX` | mutants that overflow |
+
+For example, an `assign_drop` mutant that removes the increment leaves
+`cnt` stuck at 0 — the **safety** proof still passes (0 never exceeds
+`MAX`, so it *survives*), but the **cover** proof fails (`MAX` is no longer
+reachable, so it's *killed*). Each property is the other's blind spot;
+running both is what shows the property set actually constrains the design.
+
+### Running it
+
+```bash
+cd fpv/demo_abv/demo_abv_basic
+
+rb mut list                    # enumerate mutation sites (no proof run)
+rb mut run  -c mut.yaml        # safety-oracle campaign
+rb mut run  -c mut_cover.yaml  # cover-oracle campaign
+rb mut score -c mut.yaml       # kill/survive report
+```
+
+`rb mut list` works straight from a clean `uv sync` — this template pins
+the `rtl-buddy-xeno` engine as a git source (it isn't on PyPI yet). A full
+`rb mut run` additionally needs the built `yosys-slang` plugin, since the
+oracle verifications are slang-fronted — the same plugin the rest of this
+FPV demo already requires.
 
 ## Relationship to the other `demo_abv` blocks
 

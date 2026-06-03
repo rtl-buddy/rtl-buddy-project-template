@@ -1,19 +1,17 @@
 # RTL-Buddy Mutation Testing Configuration File
 rtl-buddy-filetype: mut_config
 
-# ─── PREREQUISITES (mutation engine not yet installable from a clean checkout) ───
-# With this template's current pins, the only thing missing to run this
-# campaign is the mutation engine itself:
-#   - rtl_buddy >= 5.2            ✓ satisfied (template pins 5.3.0)
-#   - Python >= 3.11              ✓ satisfied (rtl-buddy-xeno relaxed its
-#                                  floor to >=3.11, so no 3.13 is needed)
-#   - rtl-buddy-xeno[verible,slang] — the mutation engine; NOT on PyPI yet,
-#                                  install from its git source until it is
-#                                  published (rtl-buddy/rtl-buddy-xeno#18)
-#   - a built yosys-slang plugin  (already required by this FPV demo;
-#                                  see tools/yosys-slang/SETUP_OSX.md)
-# Declaring rtl-buddy-xeno as a proper `[mut]` optional dependency so this
-# runs from a clean `uv sync` is tracked in rtl-buddy/rtl_buddy#239.
+# ─── PREREQUISITES ───
+# `rb mut` ships in rtl_buddy (this template pins 6.1.0) and drives the
+# rtl-buddy-xeno mutation engine. xeno isn't on PyPI yet
+# (rtl-buddy/rtl-buddy-xeno#18), so this template pins it as a git source
+# in pyproject.toml (with the [verible,slang] extras that pull the Verible
+# CST + pyslang toolchain the operators need) — the same pattern used for
+# rtl-buddy-cdc. So a clean `uv sync` installs everything `rb mut list`
+# needs; no manual step.
+# Running a campaign (`rb mut run`) additionally needs a built yosys-slang
+# plugin, because the kill oracle below is the slang-fronted proof — but
+# that's already required by this FPV demo (see tools/yosys-slang/SETUP_OSX.md).
 # ────────────────────────────────────────────────────────────────────────
 #
 # Mutation campaign for demo_abv_basic. The mutation engine

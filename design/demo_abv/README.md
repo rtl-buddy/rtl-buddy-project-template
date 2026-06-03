@@ -19,11 +19,23 @@ testbench, and run configs under `fpv/<name>/` and `verif/<name>/`.
 `demo_abv_induction` is a separate wrapping counter built purely to teach
 the induction lesson.
 
+`demo_abv_basic` additionally ships the `rb mut` mutation-testing
+reference: two campaigns (`mut.yaml` and `mut_cover.yaml`) mutate the same
+design but score against **different kill oracles** — the safety proof vs
+the cover proof — to show that one property alone is not a sufficient
+oracle (each is the other's blind spot). The engine (`rtl-buddy-xeno`) is
+pinned as a git source in `pyproject.toml`, so `rb mut` runs from a clean
+`uv sync`. Full detail in [demo_abv_basic.md](demo_abv_basic.md#mutation-testing).
+
 ## Quick start
 
 ```bash
 # basics: safety + cover (slang frontend — see tools/yosys-slang/)
 cd fpv/demo_abv/demo_abv_basic && rb fpv demo_abv_basic_safety
+
+# mutation testing: the same mutants scored against two different oracles
+cd fpv/demo_abv/demo_abv_basic && rb mut run -c mut.yaml
+                                  rb mut run -c mut_cover.yaml
 
 # ABV reporting: COI + dead-assume, then slang-fronted vacuity
 cd fpv/demo_abv/demo_abv_features && rb fpv demo_abv_features_safety
