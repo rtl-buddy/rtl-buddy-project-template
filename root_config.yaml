@@ -262,7 +262,7 @@ cfg-fpv-tools:
       timeout: 600
       extra-args: ""
       # Path to the built yosys-slang plugin, required by any
-      # verification with `frontend: slang` (e.g. demo_fpv_counter,
+      # verification with `frontend: slang` (e.g. demo_abv_basic,
       # whose bound checker only elaborates under slang; demo_abv_features
       # vacuity variant). Sibling-checkout convention matches
       # synth/demo_slang_pkg/synth.yaml; resolved relative to this file.

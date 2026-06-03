@@ -1,0 +1,82 @@
+# rb fpv configuration for the BMC-vs-induction teaching demo.
+#
+# Three verifications, all over the same wrapping mod-5 counter, all
+# asserting properties that are *true* of the design — yet they do not
+# all hold up under induction:
+#
+#   - demo_abv_induction_noninductive_bmc   (cnt != 26, mode bmc)   PASS
+#   - demo_abv_induction_noninductive_prove (cnt != 26, mode prove) FAIL
+#   - demo_abv_induction_inductive_prove    (cnt <= 5,  mode prove) PASS
+#
+# The first two run the *same* property (`cnt != 26`) under different
+# modes: BMC reaches only the bounded state space (cnt never climbs past
+# 5, so 26 is never hit within `depth`), so it passes; prove adds the
+# induction step, which starts from an arbitrary state — cnt==25 steps
+# to 26 — so it fails. The third shows the fix: writing the intent as
+# the inductive invariant `cnt <= 5` proves cleanly.
+#
+# `depth: 20` is DELIBERATE. SymbiYosys `mode prove` does k-induction up
+# to the BMC depth, and the longest counterexample-to-induction ramp
+# into 26 is `6..26` (21 states). With depth >= 21 the induction window
+# spans it and `cnt != 26` would *pass*; depth 20 keeps it on the
+# failing side. See design/demo_abv/demo_abv_induction.md for the full
+# explanation.
+#
+# NOTE: demo_abv_induction_noninductive_prove is *expected to FAIL* —
+# that failure IS the lesson. It carries `xfail_strict: true` so `rb fpv`
+# reports it as XFAIL (counts as a pass), which lets the suite live in
+# fpv_regression.yaml without turning `rb fpv-regression` red — while a
+# future unexpected pass becomes an XPASS *failure* that flags the stale
+# demo.
+#
+# Requires rtl_buddy >= 6.1.0 for FPV xfail support (this project pins a
+# compatible version, so `rb fpv-regression` stays green). On an older
+# rtl_buddy the `xfail_strict:` key is silently ignored and this
+# verification reports a plain FAIL. See design/demo_abv/demo_abv_induction.md.
+rtl-buddy-filetype: fpv_config
+
+verifications:
+  - name: "demo_abv_induction_noninductive_bmc"
+    desc: "cnt != 26 under BMC — bounded reachability never hits 26: PASS"
+    tool: "sby"
+    model: "demo_abv_induction"
+    model_path: "../../../design/demo_abv/models.yaml"
+    top: "demo_abv_induction_chk_noninductive"
+    properties:
+      - "demo_abv_induction_props.sv"
+    mode: "bmc"
+    depth: 20
+    engines:
+      - "smtbmc yices"
+
+  - name: "demo_abv_induction_noninductive_prove"
+    desc: "cnt != 26 under prove — true but not inductive (25->26): XFAIL (expected fail)"
+    tool: "sby"
+    model: "demo_abv_induction"
+    model_path: "../../../design/demo_abv/models.yaml"
+    top: "demo_abv_induction_chk_noninductive"
+    properties:
+      - "demo_abv_induction_props.sv"
+    mode: "prove"
+    depth: 20
+    # Expected to fail induction — see the suite-header NOTE. xfail_strict
+    # makes it XFAIL (a pass) so the suite can live in fpv_regression.yaml,
+    # AND turns a future unexpected pass into an XPASS *failure* — so if
+    # this property ever starts proving (e.g. the depth is raised past the
+    # induction boundary), the regression goes red to flag the stale demo.
+    xfail_strict: true
+    engines:
+      - "smtbmc yices"
+
+  - name: "demo_abv_induction_inductive_prove"
+    desc: "cnt <= 5 under prove — inductive invariant over {0..5}: PASS"
+    tool: "sby"
+    model: "demo_abv_induction"
+    model_path: "../../../design/demo_abv/models.yaml"
+    top: "demo_abv_induction_chk_inductive"
+    properties:
+      - "demo_abv_induction_props.sv"
+    mode: "prove"
+    depth: 20
+    engines:
+      - "smtbmc yices"

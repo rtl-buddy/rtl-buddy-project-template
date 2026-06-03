@@ -22,7 +22,7 @@ naming convention surfaces the category in the directory name:
 - **Demo blocks** — `demo_*` end-to-end examples that exercise
   specific rtl_buddy capabilities (`demo_tiny_alu`,
   `demo_tiny_alu_cocotb`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`,
-  `demo_fpv_counter`). Safe to delete when starting a new project.
+  `demo_abv_basic`). Safe to delete when starting a new project.
 
 Preserve this categorisation in new work — name new leaf IP without a
 prefix, new demos with `demo_*`, and don't touch `template/` unless
@@ -56,7 +56,7 @@ design/demo_tiny_alu/
 design/template/
 spec/template/                  # spec traceability example
 verif/template/
-fpv/demo_fpv_counter/
+fpv/demo_abv/demo_abv_basic/
 pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
 uv.lock                        # committed lockfile for reproducible project setup
 .python-version                # pinned Python version for uv
@@ -131,7 +131,7 @@ cd ../demo_tiny_alu_sc       # requires $SYSTEMC_HOME or cfg-systemc.home set
 uv run rb --machine test basic_sc
 
 # from an FPV suite dir
-cd fpv/demo_fpv_counter
+cd fpv/demo_abv/demo_abv_basic
 uv run rb --machine fpv          # runs every verification in fpv.yaml
 uv run rb --machine fpv --list   # dry-list verification names
 ```

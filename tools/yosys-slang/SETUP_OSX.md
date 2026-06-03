@@ -156,7 +156,7 @@ End-to-end smoke through `rb fpv` (requires the rtl-buddy fork's
 `rtl-buddy` branch — see "Which repo / branch to build" above):
 
 ```bash
-cd fpv/demo_abv_features
+cd fpv/demo_abv/demo_abv_features
 uv run rb fpv demo_abv_features_vacuity
 # Expected: PASS, COI: 100% (13/13), Vacuity: 1/2 vacuous.
 # The 1/2-vacuous signal comes from the deliberately-vacuous `1'b0 |-> …`

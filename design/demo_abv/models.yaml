@@ -1,0 +1,20 @@
+rtl-buddy-filetype: model_config
+
+# Design models for the demo_abv family — three small counters that
+# together exercise rtl_buddy's assertion-based / formal verification
+# surface. Each is a single-file leaf block; the per-model property
+# files, testbenches, and run configs live under fpv/<name>/ and
+# verif/<name>/. See README.md for the overview and the demo_*.md pages
+# for per-block detail.
+models:
+  - name: "demo_abv_basic"
+    desc: "Saturating up-counter with FPV-checked invariants"
+    filelist: ["-v demo_abv_basic.sv"]
+
+  - name: "demo_abv_features"
+    desc: "Saturating counter with inline SVA — demos ABV across rb test + rb fpv"
+    filelist: ["-v demo_abv_features.sv"]
+
+  - name: "demo_abv_induction"
+    desc: "Wrapping counter — demos how a true property can pass BMC yet fail induction"
+    filelist: ["-v demo_abv_induction.sv"]

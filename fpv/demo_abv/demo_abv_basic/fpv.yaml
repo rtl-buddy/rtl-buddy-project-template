@@ -11,29 +11,29 @@ rtl-buddy-filetype: fpv_config
 # verilog frontend silently drops it). Point cfg-fpv-tools.opts.
 # plugin-path at your built slang.so (see root_config.yaml).
 verifications:
-  - name: "demo_fpv_counter_safety"
+  - name: "demo_abv_basic_safety"
     desc: "Bounded proof: counter never overflows past MAX"
     tool: "sby"
     frontend: "slang"
-    model: "demo_fpv_counter"
-    model_path: "../../design/demo_fpv_counter/models.yaml"
-    top: "demo_fpv_counter"
+    model: "demo_abv_basic"
+    model_path: "../../../design/demo_abv/models.yaml"
+    top: "demo_abv_basic"
     properties:
-      - "demo_fpv_counter_props.sv"
+      - "demo_abv_basic_props.sv"
     mode: "bmc"
     depth: 32
     engines:
       - "smtbmc yices"
 
-  - name: "demo_fpv_counter_reaches_max"
+  - name: "demo_abv_basic_reaches_max"
     desc: "Cover: a trace exists where counter == MAX"
     tool: "sby"
     frontend: "slang"
-    model: "demo_fpv_counter"
-    model_path: "../../design/demo_fpv_counter/models.yaml"
-    top: "demo_fpv_counter"
+    model: "demo_abv_basic"
+    model_path: "../../../design/demo_abv/models.yaml"
+    top: "demo_abv_basic"
     properties:
-      - "demo_fpv_counter_props.sv"
+      - "demo_abv_basic_props.sv"
     mode: "cover"
     depth: 32
     engines:

@@ -1,33 +1,31 @@
 # RTL-Buddy Mutation Testing Configuration File
 rtl-buddy-filetype: mut_config
 
-# ─── PREREQUISITES (mutation engine not yet installable from a clean checkout) ───
-# With this template's current pins, the only thing missing to run this
-# campaign is the mutation engine itself:
-#   - rtl_buddy >= 5.2            ✓ satisfied (template pins 5.3.0)
-#   - Python >= 3.11              ✓ satisfied (rtl-buddy-xeno relaxed its
-#                                  floor to >=3.11, so no 3.13 is needed)
-#   - rtl-buddy-xeno[verible,slang] — the mutation engine; NOT on PyPI yet,
-#                                  install from its git source until it is
-#                                  published (rtl-buddy/rtl-buddy-xeno#18)
-#   - a built yosys-slang plugin  (already required by this FPV demo;
-#                                  see tools/yosys-slang/SETUP_OSX.md)
-# Declaring rtl-buddy-xeno as a proper `[mut]` optional dependency so this
-# runs from a clean `uv sync` is tracked in rtl-buddy/rtl_buddy#239.
+# ─── PREREQUISITES ───
+# `rb mut` ships in rtl_buddy (this template pins 6.1.0) and drives the
+# rtl-buddy-xeno mutation engine. xeno isn't on PyPI yet
+# (rtl-buddy/rtl-buddy-xeno#18), so this template pins it as a git source
+# in pyproject.toml (with the [verible,slang] extras that pull the Verible
+# CST + pyslang toolchain the operators need) — the same pattern used for
+# rtl-buddy-cdc. So a clean `uv sync` installs everything `rb mut list`
+# needs; no manual step.
+# Running a campaign (`rb mut run`) additionally needs a built yosys-slang
+# plugin, because the kill oracle below is the slang-fronted proof — but
+# that's already required by this FPV demo (see tools/yosys-slang/SETUP_OSX.md).
 # ────────────────────────────────────────────────────────────────────────
 #
-# Mutation campaign for demo_fpv_counter. The mutation engine
+# Mutation campaign for demo_abv_basic. The mutation engine
 # (rtl-buddy-xeno) rewrites the design file; each mutant is re-proved
 # against the `verify` FPV verification below. A mutant is "killed" when
 # the proof flips from PASS to FAIL, "survived" when it still passes
 # (a signal that the property set is too weak to notice that change).
-name: "demo_fpv_counter"
-model: "demo_fpv_counter"
-model_path: "../../design/demo_fpv_counter/models.yaml"
+name: "demo_abv_basic"
+model: "demo_abv_basic"
+model_path: "../../../design/demo_abv/models.yaml"
 
 # The single design file to mutate (must live within the model dir so
 # each mutant can be materialised into an isolated copy of the tree).
-design_file: "../../design/demo_fpv_counter/demo_fpv_counter.sv"
+design_file: "../../../design/demo_abv/demo_abv_basic.sv"
 
 # Which xeno MutationKinds to apply. These are the operators that have
 # candidate sites in this counter: the saturating `+`, the enable/bound
@@ -42,7 +40,7 @@ operators:
 # makes this verification FAIL.
 verify:
   fpv_config: "fpv.yaml"
-  verification: "demo_fpv_counter_safety"
+  verification: "demo_abv_basic_safety"
 
 budget:
   max_mutants: 20
