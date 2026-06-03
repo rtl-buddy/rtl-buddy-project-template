@@ -64,27 +64,76 @@ different modes — that side-by-side is the whole demo:
 Verification 3 shows the fix: rewrite the intent as the inductive
 invariant `cnt <= 5`, which proves cleanly at any depth.
 
-## A subtlety worth knowing: `prove` depth is `k` in k-induction
+## A subtlety worth knowing: why raising `depth` makes `cnt != 26` pass
 
 SymbiYosys `mode prove` does **temporal k-induction up to the BMC
-depth**, not 1-induction. The induction window length is `depth`, and a
-wider window is a *stronger* hypothesis. That interacts with this demo:
+depth** (`k = depth`), not 1-induction. Raising the depth can flip
+`cnt != 26` from FAIL to PASS — and understanding *why* is the deepest
+lesson in this demo.
 
-- The longest counterexample-to-induction ramp into `26` is
-  `6 → 7 → … → 26` (21 states — it cannot start below `6`, because `5`
-  wraps to `0` instead of advancing to `6`).
-- So with `depth ≥ 21`, the `k`-induction window is wider than any
-  such ramp and the wrap-at-5 discontinuity lets induction **succeed** —
-  `cnt != 26` proves!
-- With `depth < 21` the window is too short to span the ramp, a
-  counterexample-to-induction fits inside it, and induction **fails**.
+### What induction is checking
 
-This demo pins `depth: 20` precisely so `cnt != 26` lands on the
-*failing* side — the value `26` against depth `20` is the exact boundary.
-Bump the depth to `32` and watch the same property start passing; that
-is not a fix, it is k-induction getting lucky on a property that still
-isn't inductive. The robust answer is the bottom-row rewrite (`cnt <= 5`),
-which is 1-inductive and proves regardless of depth.
+At depth `k`, `prove` searches for a **counterexample-to-induction
+(CTI)**: a legal sequence of `k+1` states
+
+```
+s0 → s1 → … → s(k-1) → sk
+```
+
+where the first `k` states satisfy `cnt != 26` and the last one
+**violates** it (`cnt == 26`). Reachability is *not* required — these
+states may be entirely unreachable. If such a CTI exists, induction
+**fails** at that depth; if none exists, it **succeeds**. So the only
+question is: *how long can a legal path ending in `cnt == 26` be?*
+
+### The wrap-at-5 caps that path at 21 states
+
+Walk backwards from `26`. The transition is
+`next(x) = (x == 5) ? 0 : x + 1`, so the only predecessor of `26` is
+`25`, of `25` is `24`, … giving the ramp
+
+```
+6 → 7 → 8 → … → 24 → 25 → 26      (21 states)
+```
+
+Now ask for the predecessor of `6`: it would have to be `5` (since
+`5 + 1 = 6`) — **but `5` wraps to `0`, not `6`**, and no other value maps
+to `6` either. So **`6` has no predecessor at all**; the wrap-at-5 makes
+it a *source*. Every legal path ending at `26` therefore starts no
+earlier than `6`, and its maximum length is fixed at **21 states**.
+
+### So the depth decides the verdict
+
+A CTI at depth `k` needs `k + 1` states ending at `26`:
+
+| depth | states needed ending at 26 | exists? | result |
+|---|---|---|---|
+| **20** | 21 (`6..26`, exactly the ramp) | yes | **FAIL** |
+| **21** | 22 (longer than the ramp) | no | PASS |
+| **32** | 33 | no | PASS |
+
+This demo pins **`depth: 20`** so `cnt != 26` lands on the *failing*
+side — `26` against depth `20` is the exact boundary.
+
+### Why this is a trap, not a fix
+
+Bumping the depth to `32` and watching `cnt != 26` pass is **k-induction
+getting lucky on the geometry**, not the property becoming inductive. It
+still is not 1-inductive — the induction step can still sit on the
+unreachable state `25` and step to `26`. The wider window only helps
+because the wrap chops the unreachable ramp at a fixed length. It does
+not generalise:
+
+- a bigger gap (`cnt != 1000`) would need `depth >= ~996` before it
+  passes;
+- remove the wrap (a free-running counter) and the ramp into the bad
+  value can be arbitrarily long, so **no finite depth** ever closes it.
+
+The robust answer is the bottom-row rewrite, `cnt <= 5`. Its hypothesis
+("`cnt <= 5` in the prior state") directly excludes `25` as a start
+state, so it proves at **`k = 1`**, at any depth, regardless of
+geometry. "Raise the depth until it goes green" is exactly the
+anti-pattern this demo is teaching you to avoid.
 
 ## How this stays in `fpv_regression.yaml` despite an expected failure
 
