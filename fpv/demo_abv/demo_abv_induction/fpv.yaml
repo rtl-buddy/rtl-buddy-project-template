@@ -40,7 +40,7 @@ verifications:
     desc: "cnt != 26 under BMC — bounded reachability never hits 26: PASS"
     tool: "sby"
     model: "demo_abv_induction"
-    model_path: "../../design/demo_abv/models.yaml"
+    model_path: "../../../design/demo_abv/models.yaml"
     top: "demo_abv_induction_chk_noninductive"
     properties:
       - "demo_abv_induction_props.sv"
@@ -53,7 +53,7 @@ verifications:
     desc: "cnt != 26 under prove — true but not inductive (25->26): XFAIL (expected fail)"
     tool: "sby"
     model: "demo_abv_induction"
-    model_path: "../../design/demo_abv/models.yaml"
+    model_path: "../../../design/demo_abv/models.yaml"
     top: "demo_abv_induction_chk_noninductive"
     properties:
       - "demo_abv_induction_props.sv"
@@ -72,7 +72,7 @@ verifications:
     desc: "cnt <= 5 under prove — inductive invariant over {0..5}: PASS"
     tool: "sby"
     model: "demo_abv_induction"
-    model_path: "../../design/demo_abv/models.yaml"
+    model_path: "../../../design/demo_abv/models.yaml"
     top: "demo_abv_induction_chk_inductive"
     properties:
       - "demo_abv_induction_props.sv"

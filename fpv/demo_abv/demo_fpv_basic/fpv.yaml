@@ -16,7 +16,7 @@ verifications:
     tool: "sby"
     frontend: "slang"
     model: "demo_fpv_basic"
-    model_path: "../../design/demo_abv/models.yaml"
+    model_path: "../../../design/demo_abv/models.yaml"
     top: "demo_fpv_basic"
     properties:
       - "demo_fpv_basic_props.sv"
@@ -30,7 +30,7 @@ verifications:
     tool: "sby"
     frontend: "slang"
     model: "demo_fpv_basic"
-    model_path: "../../design/demo_abv/models.yaml"
+    model_path: "../../../design/demo_abv/models.yaml"
     top: "demo_fpv_basic"
     properties:
       - "demo_fpv_basic_props.sv"

@@ -1,7 +1,7 @@
 // demo_fpv_basic — Saturating up-counter.
 //
 // Reference block for `rb fpv`. The accompanying property file under
-// fpv/demo_fpv_basic/demo_fpv_basic_props.sv proves three things:
+// fpv/demo_abv/demo_fpv_basic/demo_fpv_basic_props.sv proves three things:
 //   1. The counter never exceeds MAX (a safety property).
 //   2. After reset, the counter is exactly 0 (reset property).
 //   3. The counter can reach MAX (a cover property — sby with

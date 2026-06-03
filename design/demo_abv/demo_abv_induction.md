@@ -19,7 +19,7 @@ exactly `{0..5}`; every value `> 5` is unreachable.
 ## The three properties
 
 All three are *true* of the counter. They live in
-`../../fpv/demo_abv_induction/demo_abv_induction_props.sv`, one per
+`../../fpv/demo_abv/demo_abv_induction/demo_abv_induction_props.sv`, one per
 checker module so each `rb fpv` verification can target exactly one via
 `top:`.
 
@@ -38,7 +38,7 @@ neighbouring unreachable state and break.
 ## Running it
 
 ```bash
-cd fpv/demo_abv_induction
+cd fpv/demo_abv/demo_abv_induction
 
 # 1) cnt != 26 under BMC — bounded search never reaches 26:      PASS
 rb fpv demo_abv_induction_noninductive_bmc

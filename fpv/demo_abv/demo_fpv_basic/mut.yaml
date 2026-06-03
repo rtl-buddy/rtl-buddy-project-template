@@ -23,11 +23,11 @@ rtl-buddy-filetype: mut_config
 # (a signal that the property set is too weak to notice that change).
 name: "demo_fpv_basic"
 model: "demo_fpv_basic"
-model_path: "../../design/demo_abv/models.yaml"
+model_path: "../../../design/demo_abv/models.yaml"
 
 # The single design file to mutate (must live within the model dir so
 # each mutant can be materialised into an isolated copy of the tree).
-design_file: "../../design/demo_abv/demo_fpv_basic.sv"
+design_file: "../../../design/demo_abv/demo_fpv_basic.sv"
 
 # Which xeno MutationKinds to apply. These are the operators that have
 # candidate sites in this counter: the saturating `+`, the enable/bound

@@ -2,10 +2,10 @@
 // rtl_buddy's Assertion-Based Verification surface end-to-end:
 //
 //   * #129 — SVA in `rb test` via Verilator `--assert` (testbench-side
-//     SVA — see verif/demo_abv_features/tb_top.sv)
+//     SVA — see verif/demo_abv/demo_abv_features/tb_top.sv)
 //   * #134 — auto-derived vacuity covers for `|->` properties
 //     (via the slang-fronted `rb fpv` path — see
-//     fpv/demo_abv_features/demo_abv_features_props_slang.sv)
+//     fpv/demo_abv/demo_abv_features/demo_abv_features_props_slang.sv)
 //   * #135 — dead-assume detection (structural)
 //   * #136 — cone-of-influence (COI) coverage
 //

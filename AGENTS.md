@@ -56,7 +56,7 @@ design/demo_tiny_alu/
 design/template/
 spec/template/                  # spec traceability example
 verif/template/
-fpv/demo_fpv_basic/
+fpv/demo_abv/demo_fpv_basic/
 pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
 uv.lock                        # committed lockfile for reproducible project setup
 .python-version                # pinned Python version for uv
@@ -131,7 +131,7 @@ cd ../demo_tiny_alu_sc       # requires $SYSTEMC_HOME or cfg-systemc.home set
 uv run rb --machine test basic_sc
 
 # from an FPV suite dir
-cd fpv/demo_fpv_basic
+cd fpv/demo_abv/demo_fpv_basic
 uv run rb --machine fpv          # runs every verification in fpv.yaml
 uv run rb --machine fpv --list   # dry-list verification names
 ```

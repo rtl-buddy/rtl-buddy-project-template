@@ -6,7 +6,7 @@
 // the formal base case. The companion checkers in
 // `demo_abv_induction_props.sv` assert three properties that behave
 // differently under `mode: bmc` vs `mode: prove` — see this block's
-// README and `fpv/demo_abv_induction/fpv.yaml`.
+// README and `fpv/demo_abv/demo_abv_induction/fpv.yaml`.
 //
 // The counter walks 0,1,2,3,4,5,0,1,... so its reachable state set is
 // exactly {0..5}. Every value above 5 is unreachable — but, as the

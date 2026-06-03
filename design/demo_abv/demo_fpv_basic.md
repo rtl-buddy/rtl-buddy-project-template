@@ -18,7 +18,7 @@ nothing — not a bug, not a mutation — could falsify it.
 
 ## The properties
 
-The checker `fpv/demo_fpv_basic/demo_fpv_basic_props.sv` is bound
+The checker `fpv/demo_abv/demo_fpv_basic/demo_fpv_basic_props.sv` is bound
 into the DUT (so the design RTL stays free of formal-only constructs) and
 proves three things:
 
@@ -36,7 +36,7 @@ the plugin that `cfg-fpv-tools[].opts.plugin-path` points at.
 ## Running it
 
 ```bash
-cd fpv/demo_fpv_basic
+cd fpv/demo_abv/demo_fpv_basic
 
 # Safety proof (bounded): counter never overflows past MAX
 rb fpv demo_fpv_basic_safety
@@ -47,7 +47,7 @@ rb fpv demo_fpv_basic_reaches_max
 
 ## Mutation testing
 
-This block is also the `rb mut` reference. `fpv/demo_fpv_basic/mut.yaml`
+This block is also the `rb mut` reference. `fpv/demo_abv/demo_fpv_basic/mut.yaml`
 (and `mut_cover.yaml`) mutate `demo_fpv_basic.sv` and check that the
 property set *kills* the mutants — i.e. that the proofs are actually
 sensitive to the logic, not vacuously passing. The reset property is the
