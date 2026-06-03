@@ -5,7 +5,7 @@ rtl-buddy-filetype: fpv_reg_config
 # entry, running every verification within at or below the active
 # --reg-level.
 fpv-configs:
-  - "fpv/demo_abv/demo_fpv_basic/fpv.yaml"
+  - "fpv/demo_abv/demo_abv_basic/fpv.yaml"
   - "fpv/demo_abv/demo_abv_features/fpv.yaml"
   # The BMC-vs-induction teaching demo. Its noninductive_prove
   # verification is expected to fail and carries `xfail_strict: true`, so

@@ -10,11 +10,11 @@ testbench, and run configs under `fpv/<name>/` and `verif/<name>/`.
 
 | Model | Teaches | Run from | Detail |
 |---|---|---|---|
-| `demo_fpv_basic` | The basics of `rb fpv` — safety (`bmc`), reset, and cover properties on a bound checker; also the `rb mut` reference block | `fpv/demo_abv/demo_fpv_basic/` | [demo_fpv_basic.md](demo_fpv_basic.md) |
+| `demo_abv_basic` | The basics of `rb fpv` — safety (`bmc`), reset, and cover properties on a bound checker; also the `rb mut` reference block | `fpv/demo_abv/demo_abv_basic/` | [demo_abv_basic.md](demo_abv_basic.md) |
 | `demo_abv_features` | ABV end to end — testbench-side SVA via `rb test`, plus `rb fpv` reporting **COI**, **dead-assume**, and slang-fronted **vacuity** | `fpv/demo_abv/demo_abv_features/`, `verif/demo_abv/demo_abv_features/` | [demo_abv_features.md](demo_abv_features.md) |
 | `demo_abv_induction` | BMC vs induction — a true-but-not-inductive property (`cnt != 26`) that passes `bmc` yet fails `prove`, and the inductive-invariant fix (`cnt <= 5`); rides in regression via `xfail_strict` | `fpv/demo_abv/demo_abv_induction/` | [demo_abv_induction.md](demo_abv_induction.md) |
 
-`demo_abv_features` is the inline-assertion variant of `demo_fpv_basic`
+`demo_abv_features` is the inline-assertion variant of `demo_abv_basic`
 (same counter, assertions in the DUT instead of a bound checker).
 `demo_abv_induction` is a separate wrapping counter built purely to teach
 the induction lesson.
@@ -23,7 +23,7 @@ the induction lesson.
 
 ```bash
 # basics: safety + cover (slang frontend — see tools/yosys-slang/)
-cd fpv/demo_abv/demo_fpv_basic && rb fpv demo_fpv_basic_safety
+cd fpv/demo_abv/demo_abv_basic && rb fpv demo_abv_basic_safety
 
 # ABV reporting: COI + dead-assume, then slang-fronted vacuity
 cd fpv/demo_abv/demo_abv_features && rb fpv demo_abv_features_safety
@@ -41,7 +41,7 @@ cd fpv/demo_abv/demo_abv_induction && rb fpv
 design/demo_abv/
 ├── README.md                 # this overview
 ├── models.yaml               # shared config: the three models below
-├── demo_fpv_basic.sv       # + demo_fpv_basic.md
+├── demo_abv_basic.sv       # + demo_abv_basic.md
 ├── demo_abv_features.sv      # + demo_abv_features.md
 └── demo_abv_induction.sv     # + demo_abv_induction.md
 ```

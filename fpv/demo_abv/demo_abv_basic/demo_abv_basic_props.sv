@@ -1,4 +1,4 @@
-// SVA-style properties for demo_fpv_basic, used by `rb fpv`.
+// SVA-style properties for demo_abv_basic, used by `rb fpv`.
 //
 // We bind the checker into the DUT so the design RTL stays free of
 // formal-only constructs. The bind is what makes this checker reach
@@ -8,8 +8,8 @@
 // with no assertions at all). See tools/yosys-slang/SETUP_OSX.md for
 // building the plugin that `cfg-fpv-tools.opts.plugin-path` points at.
 
-module demo_fpv_basic_props #(
-  // Defaults mirror the DUT (see demo_fpv_basic.sv on why MAX != 2**WIDTH-1);
+module demo_abv_basic_props #(
+  // Defaults mirror the DUT (see demo_abv_basic.sv on why MAX != 2**WIDTH-1);
   // the bind below overrides both with the DUT's actual parameters.
   parameter int unsigned MAX   = 5,
   parameter int unsigned WIDTH = $clog2(MAX + 1)
@@ -20,7 +20,7 @@ module demo_fpv_basic_props #(
 );
 
   // The defined initial state comes from the DUT's `cnt = '0` power-up
-  // value (see demo_fpv_basic.sv), so no reset assumption is needed
+  // value (see demo_abv_basic.sv), so no reset assumption is needed
   // here — the BMC trace starts from cnt==0 and the property must hold
   // for every reachable state thereafter.
 
@@ -52,7 +52,7 @@ module demo_fpv_basic_props #(
 endmodule
 
 // Bind the property module into the design hierarchy.
-bind demo_fpv_basic demo_fpv_basic_props #(
+bind demo_abv_basic demo_abv_basic_props #(
   .MAX  (MAX),
   .WIDTH(WIDTH)
 ) u_props (
