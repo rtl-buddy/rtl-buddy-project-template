@@ -100,10 +100,8 @@ the lesson and the marker is now stale. (Plain `xfail: true` would
 instead let such an XPASS pass silently; strict is the right choice for a
 regression guard.)
 
-**Version requirement:** FPV `xfail` support landed in `rtl_buddy` via
-[rtl-buddy/rtl_buddy#256](https://github.com/rtl-buddy/rtl_buddy/pull/256).
-An older `rtl_buddy` silently ignores the `xfail:` key and reports a
-plain **FAIL** — so until this project's pinned `rtl_buddy` is bumped to
-a release that includes xfail, running `rb fpv-regression` will report
-this verification as FAIL. Either bump the pin, or run the rest of the
-suite with `rb fpv <name>` until then.
+**Version requirement:** FPV `xfail` support landed in `rtl_buddy`
+v6.1.0 ([PR rtl-buddy/rtl_buddy#256](https://github.com/rtl-buddy/rtl_buddy/pull/256)),
+and this project pins a compatible `rtl_buddy`, so `rb fpv-regression`
+stays green here. On an older `rtl_buddy` the `xfail_strict:` key is
+silently ignored and this verification reports a plain **FAIL**.

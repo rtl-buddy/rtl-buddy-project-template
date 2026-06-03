@@ -29,11 +29,10 @@
 # future unexpected pass becomes an XPASS *failure* that flags the stale
 # demo.
 #
-# REQUIRES an rtl_buddy with FPV xfail support (rtl-buddy/rtl_buddy#256).
-# Older rtl_buddy silently ignores the `xfail_strict:` key and reports a
-# plain FAIL — so until this project's pinned rtl_buddy is bumped to a
-# release that includes xfail, `rb fpv-regression` will show this
-# verification as FAIL. See design/demo_abv_induction/README.md.
+# Requires rtl_buddy >= 6.1.0 for FPV xfail support (this project pins a
+# compatible version, so `rb fpv-regression` stays green). On an older
+# rtl_buddy the `xfail_strict:` key is silently ignored and this
+# verification reports a plain FAIL. See design/demo_abv_induction/README.md.
 rtl-buddy-filetype: fpv_config
 
 verifications:
