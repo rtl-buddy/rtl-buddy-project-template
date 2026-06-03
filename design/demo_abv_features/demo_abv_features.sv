@@ -36,17 +36,22 @@ module demo_abv_features #(
   // Visible to yosys (under `read -formal`) but invisible to Verilator
   // simulation. Keeps the rb test SVA demo (#129) decoupled from the
   // rb fpv coverage demos (#134/#135/#136).
-  //
-  // The `lint_off SYNCASYNCNET` waiver mirrors the convention used in
-  // the CDC-aware demos in this template: the DUT uses rst_n as an
-  // async reset, and sampling it synchronously inside an assertion
-  // block is intentional for property writing — not a real CDC issue.
-  /* verilator lint_off SYNCASYNCNET */
   `ifdef FORMAL
   // Safety: while reset is asserted the counter is held at zero.
+  //
+  // The DUT drives rst_n as an *asynchronous* reset (see the
+  // `always_ff @(posedge clk or negedge rst_n)` above), so the
+  // property is written combinationally (`always @(*)`) rather than
+  // sampled on the clock. It must hold the instant rst_n falls —
+  // matching the RTL's reset semantics rather than a clocked
+  // approximation that only checks at the next posedge. Authoring the
+  // assertion combinationally also means rst_n is no longer sampled
+  // synchronously, so the SYNCASYNCNET waiver the clocked form needed
+  // is gone.
+  //
   // Cheapest non-trivial property — gives the COI walk something
   // non-vacuous to land on.
-  always @(posedge clk) begin
+  always @(*) begin
     if (!rst_n) begin
       assert (cnt == '0);
     end
@@ -60,6 +65,5 @@ module demo_abv_features #(
     assume (en || !en);
   end
   `endif
-  /* verilator lint_on SYNCASYNCNET */
 
 endmodule
