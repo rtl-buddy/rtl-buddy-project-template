@@ -22,7 +22,7 @@ verifications:
     desc: "Inline-assertion DUT — exercises COI + dead-assume reporting"
     tool: "sby"
     model: "demo_abv_features"
-    model_path: "../../design/demo_abv_features/models.yaml"
+    model_path: "../../design/demo_abv/models.yaml"
     top: "demo_abv_features"
     # No external property files — assertions live inline in the DUT.
     properties: []
@@ -35,7 +35,7 @@ verifications:
     desc: "Slang-fronted DUT with |-> properties — exercises vacuity covers (#134)"
     tool: "sby"
     model: "demo_abv_features"
-    model_path: "../../design/demo_abv_features/models.yaml"
+    model_path: "../../design/demo_abv/models.yaml"
     top: "demo_abv_features"
     properties:
       - "demo_abv_features_props_slang.sv"

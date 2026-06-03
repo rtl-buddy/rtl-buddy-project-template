@@ -1,9 +1,0 @@
-rtl-buddy-filetype: model_config
-
-# Saturating counter used to demonstrate `rb fpv`. Single-file leaf
-# block; the property file lives alongside fpv.yaml so the design and
-# verification artefacts stay separated.
-models:
-  - name: "demo_fpv_counter"
-    desc: "Saturating up-counter with FPV-checked invariants"
-    filelist: ["-v demo_fpv_counter.sv"]

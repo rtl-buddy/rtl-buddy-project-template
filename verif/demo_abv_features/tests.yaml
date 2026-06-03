@@ -17,7 +17,7 @@ tests:
     desc: "Smoke test with SVA compiled in (#129 demo)"
     reglvl: 1000  # deferred to the full/nightly regression (-l 1000)
     model: "demo_abv_features"
-    model_path: "../../design/demo_abv_features/models.yaml"
+    model_path: "../../design/demo_abv/models.yaml"
     testbench: "tb_top"
     sim_timeout: 30
     # The new knob — when true and the builder is Verilator, rtl_buddy

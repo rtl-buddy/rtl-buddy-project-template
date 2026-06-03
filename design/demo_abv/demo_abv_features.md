@@ -19,7 +19,8 @@ correctly in your environment.
 - `demo_abv_features.sv` — DUT with both the design logic and the
   formal-only `assert` / `assume` properties (wrapped in
   `` `ifdef FORMAL `` so only `rb fpv` sees them).
-- `models.yaml` — single-file leaf model.
+- `models.yaml` — shared `demo_abv` family model config; this block is
+  the `demo_abv_features` entry.
 - `../../fpv/demo_abv_features/fpv.yaml` — FPV configuration.
 - `../../verif/demo_abv_features/` — Verilator test bench with a
   testbench-side SVA assertion for the `rb test` demo.
