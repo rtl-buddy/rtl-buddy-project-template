@@ -23,9 +23,15 @@
 # explanation.
 #
 # NOTE: demo_abv_induction_noninductive_prove is *expected to FAIL* —
-# that failure IS the lesson. This suite is therefore deliberately kept
-# out of fpv_regression.yaml so `rb fpv-regression` stays green; run it
-# directly with `rb fpv` from this directory to see the contrast.
+# that failure IS the lesson. It carries `xfail: true` so `rb fpv`
+# reports it as XFAIL (counts as a pass), which lets the suite live in
+# fpv_regression.yaml without turning `rb fpv-regression` red.
+#
+# REQUIRES an rtl_buddy with FPV xfail support (rtl-buddy/rtl_buddy#256).
+# Older rtl_buddy silently ignores the `xfail:` key and reports a plain
+# FAIL — so until this project's pinned rtl_buddy is bumped to a release
+# that includes xfail, `rb fpv-regression` will show this verification as
+# FAIL. See design/demo_abv_induction/README.md.
 rtl-buddy-filetype: fpv_config
 
 verifications:
@@ -43,7 +49,7 @@ verifications:
       - "smtbmc yices"
 
   - name: "demo_abv_induction_noninductive_prove"
-    desc: "cnt != 26 under prove — true but not inductive (25->26): FAIL (expected)"
+    desc: "cnt != 26 under prove — true but not inductive (25->26): XFAIL (expected fail)"
     tool: "sby"
     model: "demo_abv_induction"
     model_path: "../../design/demo_abv_induction/models.yaml"
@@ -52,6 +58,9 @@ verifications:
       - "demo_abv_induction_props.sv"
     mode: "prove"
     depth: 20
+    # Expected to fail induction — see the suite-header NOTE. xfail makes
+    # it XFAIL (a pass) so the suite can live in fpv_regression.yaml.
+    xfail: true
     engines:
       - "smtbmc yices"
 

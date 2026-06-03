@@ -86,13 +86,20 @@ is not a fix, it is k-induction getting lucky on a property that still
 isn't inductive. The robust answer is the bottom-row rewrite (`cnt <= 5`),
 which is 1-inductive and proves regardless of depth.
 
-## Why this suite is not in `fpv_regression.yaml`
+## How this stays in `fpv_regression.yaml` despite an expected failure
 
 `demo_abv_induction_noninductive_prove` is **expected to FAIL** — that
-failure *is* the lesson. `rb fpv-regression` treats any non-PASS as a
-regression failure (there is no expected-fail / xfail marker in the FPV
-schema today), so wiring this suite into `fpv_regression.yaml` would
-turn the regression red. It is therefore kept as a standalone,
-run-it-yourself teaching exhibit. If an `xfail:` marker is added to the
-FPV config in a future `rtl_buddy`, the non-inductive verification can
-be marked expected-fail and folded back into regression.
+failure *is* the lesson. It is marked `xfail: true` in `fpv.yaml`, so
+`rb fpv` reports it as **XFAIL**, which counts as a pass. That lets the
+suite live in `fpv_regression.yaml` (it is listed there) without turning
+`rb fpv-regression` red. If the property ever *starts* proving, xfail
+turns it into an **XPASS**, which counts as a failure — a deliberate
+signal that the demo (or the tool) changed and the marker is now stale.
+
+**Version requirement:** FPV `xfail` support landed in `rtl_buddy` via
+[rtl-buddy/rtl_buddy#256](https://github.com/rtl-buddy/rtl_buddy/pull/256).
+An older `rtl_buddy` silently ignores the `xfail:` key and reports a
+plain **FAIL** — so until this project's pinned `rtl_buddy` is bumped to
+a release that includes xfail, running `rb fpv-regression` will report
+this verification as FAIL. Either bump the pin, or run the rest of the
+suite with `rb fpv <name>` until then.
