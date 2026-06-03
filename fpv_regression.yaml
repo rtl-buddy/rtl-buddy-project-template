@@ -5,11 +5,11 @@ rtl-buddy-filetype: fpv_reg_config
 # entry, running every verification within at or below the active
 # --reg-level.
 fpv-configs:
-  - "fpv/demo_fpv_counter/fpv.yaml"
+  - "fpv/demo_fpv_basic/fpv.yaml"
   - "fpv/demo_abv_features/fpv.yaml"
   # The BMC-vs-induction teaching demo. Its noninductive_prove
-  # verification is expected to fail and carries `xfail: true`, so it
-  # reports XFAIL (a pass) and keeps this regression green — provided the
-  # pinned rtl_buddy supports FPV xfail (rtl-buddy/rtl_buddy#256). On an
-  # older rtl_buddy the `xfail:` key is ignored and it reports FAIL.
+  # verification is expected to fail and carries `xfail_strict: true`, so
+  # it reports XFAIL (a pass) and keeps this regression green — provided
+  # the pinned rtl_buddy supports FPV xfail (>= v6.1.0). On an older
+  # rtl_buddy the `xfail_strict:` key is ignored and it reports FAIL.
   - "fpv/demo_abv_induction/fpv.yaml"

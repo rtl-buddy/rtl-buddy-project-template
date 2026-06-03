@@ -1,4 +1,4 @@
-# demo_fpv_counter — the basic `rb fpv` (and `rb mut`) reference block
+# demo_fpv_basic — the basic `rb fpv` (and `rb mut`) reference block
 
 A small saturating up-counter. It's the entry-point formal demo: a clean
 DUT with a bound SVA checker that exercises the three core property
@@ -6,7 +6,7 @@ kinds, and it doubles as the `rb mut` (mutation-testing) reference.
 
 ## The design
 
-`demo_fpv_counter.sv` increments `cnt` when `en` is high, saturating at
+`demo_fpv_basic.sv` increments `cnt` when `en` is high, saturating at
 `MAX` (default 5), with an async `rst_n` to 0 and a power-on value of 0.
 
 One subtlety worth knowing (called out in the source): **`MAX` is
@@ -18,7 +18,7 @@ nothing — not a bug, not a mutation — could falsify it.
 
 ## The properties
 
-The checker `fpv/demo_fpv_counter/demo_fpv_counter_props.sv` is bound
+The checker `fpv/demo_fpv_basic/demo_fpv_basic_props.sv` is bound
 into the DUT (so the design RTL stays free of formal-only constructs) and
 proves three things:
 
@@ -36,19 +36,19 @@ the plugin that `cfg-fpv-tools[].opts.plugin-path` points at.
 ## Running it
 
 ```bash
-cd fpv/demo_fpv_counter
+cd fpv/demo_fpv_basic
 
 # Safety proof (bounded): counter never overflows past MAX
-rb fpv demo_fpv_counter_safety
+rb fpv demo_fpv_basic_safety
 
 # Cover: a trace exists where counter == MAX
-rb fpv demo_fpv_counter_reaches_max
+rb fpv demo_fpv_basic_reaches_max
 ```
 
 ## Mutation testing
 
-This block is also the `rb mut` reference. `fpv/demo_fpv_counter/mut.yaml`
-(and `mut_cover.yaml`) mutate `demo_fpv_counter.sv` and check that the
+This block is also the `rb mut` reference. `fpv/demo_fpv_basic/mut.yaml`
+(and `mut_cover.yaml`) mutate `demo_fpv_basic.sv` and check that the
 property set *kills* the mutants — i.e. that the proofs are actually
 sensitive to the logic, not vacuously passing. The reset property is the
 one that makes dropping the design's reset assignment observable.

@@ -7,9 +7,9 @@ rtl-buddy-filetype: model_config
 # verif/<name>/. See README.md for the overview and the demo_*.md pages
 # for per-block detail.
 models:
-  - name: "demo_fpv_counter"
+  - name: "demo_fpv_basic"
     desc: "Saturating up-counter with FPV-checked invariants"
-    filelist: ["-v demo_fpv_counter.sv"]
+    filelist: ["-v demo_fpv_basic.sv"]
 
   - name: "demo_abv_features"
     desc: "Saturating counter with inline SVA — demos ABV across rb test + rb fpv"
