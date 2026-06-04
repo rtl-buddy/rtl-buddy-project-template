@@ -548,7 +548,7 @@ wheels = [
 
 [[package]]
 name = "rtl-buddy"
-version = "6.1.0"
+version = "6.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -560,9 +560,9 @@ dependencies = [
     { name = "typer" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a9/b7/048a1879a9648188efec0aa5cdf2de4e58898e3380acba22fb2007b1a207/rtl_buddy-6.1.0.tar.gz", hash = "sha256:dfd8b28fd4b30bc5fcba6a6b0d4420fb7c5c649c0e1dcb947329f1f7a89664d4", size = 394184, upload-time = "2026-06-03T02:52:41.574Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5c/e6/aba39bfce14541c3618d88d1f6dd69e251b6d58478504699d99b173c0dfa/rtl_buddy-6.1.1.tar.gz", hash = "sha256:b6c05948ede4acdaffa646aebb0e8896c0e6e3a14b955e8ba550af4aecbe5370", size = 395250, upload-time = "2026-06-03T12:38:39.444Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/5c/86bdd2716bc788431a6cc7a735c25cdef68c164feec45d8eff8f7006f0dc/rtl_buddy-6.1.0-py3-none-any.whl", hash = "sha256:c30f477260547f88a7a0324d27935cd0a142672a9281dd27892d5f0a05182b3f", size = 478914, upload-time = "2026-06-03T02:52:40.119Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/ba/75935e4ad9babab7c14cd2eecf363bfc96fd1be6f15da3b0307a6d792a74/rtl_buddy-6.1.1-py3-none-any.whl", hash = "sha256:3ceb530c309f87f102f8c7ef9cbcdab3981692c193658e9661b5863df89118bf", size = 479915, upload-time = "2026-06-03T12:38:37.772Z" },
 ]
 
 [[package]]
@@ -595,7 +595,7 @@ requires-dist = [
     { name = "peakrdl", git = "https://github.com/rtl-buddy/PeakRDL.git?subdirectory=peakrdl" },
     { name = "peakrdl-regblock", git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "rtl-buddy", specifier = "==6.1.0" },
+    { name = "rtl-buddy", specifier = "==6.1.1" },
     { name = "rtl-buddy-cdc", git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git" },
     { name = "rtl-buddy-xeno", extras = ["verible", "slang"], git = "https://github.com/rtl-buddy/rtl-buddy-xeno.git" },
 ]
