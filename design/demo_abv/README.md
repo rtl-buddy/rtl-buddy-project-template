@@ -12,7 +12,7 @@ testbench, and run configs under `fpv/<name>/` and `verif/<name>/`.
 |---|---|---|---|
 | `demo_abv_basic` | The basics of `rb fpv` — safety (`bmc`), reset, and cover properties on a bound checker; also the `rb mut` reference block | `fpv/demo_abv/demo_abv_basic/` | [demo_abv_basic.md](demo_abv_basic.md) |
 | `demo_abv_features` | ABV end to end — testbench-side SVA via `rb test`, plus `rb fpv` reporting **COI**, **dead-assume**, and slang-fronted **vacuity** | `fpv/demo_abv/demo_abv_features/`, `verif/demo_abv/demo_abv_features/` | [demo_abv_features.md](demo_abv_features.md) |
-| `demo_abv_induction` | BMC vs induction — a true-but-not-inductive property (`cnt != 26`) that passes `bmc` yet fails `prove`, and the inductive-invariant fix (`cnt <= 5`); rides in regression via `xfail_strict` | `fpv/demo_abv/demo_abv_induction/` | [demo_abv_induction.md](demo_abv_induction.md) |
+| `demo_abv_induction` | BMC vs induction — a true-but-not-inductive property (`cnt != 26`) that passes `bmc` yet fails `prove`, plus both fixes (the inductive invariant `cnt <= 5`, and a companion assertion `cnt != 6` that makes the pair prove together); rides in regression via `xfail_strict` | `fpv/demo_abv/demo_abv_induction/` | [demo_abv_induction.md](demo_abv_induction.md) |
 
 `demo_abv_features` is the inline-assertion variant of `demo_abv_basic`
 (same counter, assertions in the DUT instead of a bound checker).

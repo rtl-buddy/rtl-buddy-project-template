@@ -26,8 +26,15 @@
 //
 // `demo_abv_induction_chk_unreachable` covers the `cnt != 6` case and is
 // kept for reference / README discussion; the shipped fpv.yaml drives
-// the noninductive and inductive checkers (the ones that make the
-// "passes BMC, fails prove" boundary visible).
+// the noninductive, inductive, and companion checkers (the ones that
+// make the "passes BMC, fails prove" boundary — and the way to push it
+// back — visible).
+//
+// `demo_abv_induction_chk_companion` shows a fourth lesson: two
+// assertions can be inductive *together* even when one is not inductive
+// alone. Asserting `cnt != 6` alongside `cnt != 26` makes the pair prove
+// at the same `depth: 20` where `cnt != 26` alone fails — the companion
+// `cnt != 6` prunes the one CTI ramp into 26 (which must pass through 6).
 
 module demo_abv_induction_chk_unreachable (input logic clk);
   logic [9:0] cnt;
@@ -59,5 +66,22 @@ module demo_abv_induction_chk_inductive (input logic clk);
   // style: it constrains the inductive step instead of poking at a
   // single unreachable value.
   always @(*) assert (cnt <= 10'd5);
+  `endif
+endmodule
+
+module demo_abv_induction_chk_companion (input logic clk);
+  logic [9:0] cnt;
+  demo_abv_induction dut (.clk, .cnt);
+  `ifdef FORMAL
+  // Two assertions that are inductive *together* though one is not
+  // inductive alone. `cnt != 26` by itself fails prove at depth 20
+  // (the CTI ramp 6->...->26 fits in the window). But every such ramp
+  // must pass through cnt==6, and asserting `cnt != 6` makes that value
+  // part of the induction hypothesis at every prior state — so no CTI
+  // into 26 survives, and BOTH properties prove at the same depth 20.
+  // `cnt != 6` is inductive on its own (6 has no predecessor); here it
+  // doubles as the companion that prunes the bad predecessor of 26.
+  always @(*) assert (cnt != 10'd6);
+  always @(*) assert (cnt != 10'd26);
   `endif
 endmodule
