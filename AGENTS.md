@@ -91,13 +91,20 @@ Re-run after upgrading `rtl_buddy`. Use `--project` to install into this repo in
 
 ## rtl_buddy Development Overrides
 
-Normal project work should stay on the pinned dependency in `pyproject.toml` / `uv.lock`.
+Normal project work should stay on the pinned dependencies in `pyproject.toml` / `uv.lock`.
 
-For validating unreleased `rtl_buddy` changes against this project, a standing branch exists:
+For validating unreleased `rtl_buddy` and/or `rtl-buddy-cdc` changes against this project, a standing branch exists:
 
-- **`dev/local-rtl-buddy`** — identical to `main` except `[tool.uv.sources]` in `pyproject.toml` points `rtl_buddy` at `../../../rtl_buddy` in editable mode. Check it out in a worktree (e.g. `.worktrees/dev-local/`) and test against whichever branch is checked out in the sibling `rtl_buddy/` repo. Not meant to be merged.
+- **`dev/local-rtl-buddy`** — identical to `main` except for editable `[tool.uv.sources]` overrides in `pyproject.toml` that point the toolchain at sibling local checkouts:
 
-This branch is the standard place to validate rtl_buddy feature branches end-to-end before publishing a release. Keep `main` on the pinned PyPI dependency so day-to-day clones stay reproducible.
+  ```toml
+  rtl_buddy     = { path = "../../../rtl_buddy",     editable = true }
+  rtl-buddy-cdc = { path = "../../../rtl-buddy-cdc", editable = true }
+  ```
+
+  The `rtl_buddy` version pin is relaxed so the editable checkout (a dynamic dev version) satisfies it. Check the branch out in a worktree (e.g. `.worktrees/dev-local/`) and test against whichever branches are checked out in the sibling `rtl_buddy/` and `rtl-buddy-cdc/` repos. **Keep only the override(s) you actually need** — if you're testing just `rtl_buddy`, drop the `rtl-buddy-cdc` line (and vice versa) and re-run `uv lock`. Not meant to be merged.
+
+This branch is the standard place to validate `rtl_buddy` / `rtl-buddy-cdc` feature branches end-to-end before publishing a release. Keep `main` on the pinned PyPI/git dependencies so day-to-day clones stay reproducible.
 
 ## Validation Commands
 
