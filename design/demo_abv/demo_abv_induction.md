@@ -1,10 +1,11 @@
 # demo_abv_induction — BMC vs induction, made observable
 
-A deliberately tiny teaching block: a wrapping counter plus three
+A deliberately tiny teaching block: a wrapping counter plus a handful of
 property checkers that show how a property can be **true** of a design
-yet still **fail an inductive proof**. The point is to build the
-instinct to write *inductive invariants* rather than properties that
-only happen to be true.
+yet still **fail an inductive proof** — and the three levers that fix it
+(an inductive invariant, a companion assertion, or a larger depth). The
+point is to build the instinct to write *inductive invariants* rather
+than properties that only happen to be true.
 
 This block is **formal-only** — it is never simulated, carries no reset
 port, and relies on a power-on `initial` value to pin the formal base
@@ -48,6 +49,9 @@ rb fpv demo_abv_induction_noninductive_prove
 
 # 3) cnt <= 5 under prove — inductive invariant:                 PASS
 rb fpv demo_abv_induction_inductive_prove
+
+# 4) cnt != 6 AND cnt != 26 under prove — inductive together:    PASS
+rb fpv demo_abv_induction_companion_prove
 ```
 
 Verifications 1 and 2 run the **same property** (`cnt != 26`) under
@@ -145,6 +149,45 @@ not of `<=` in general — whether any invariant is inductive is always
 design-specific.) "Raise the depth until it goes green" is the
 anti-pattern this demo is teaching you to avoid: prefer an inductive
 invariant when one exists.
+
+## A second lever: two assertions inductive *together*
+
+Raising `depth` is one way to push `cnt != 26` onto the passing side, and
+the bottom-row rewrite `cnt <= 5` is the robust way. There is a third,
+and it is the most counter-intuitive: assert `cnt != 26` **alongside**
+`cnt != 6`, and the pair proves at the *same* `depth: 20` where
+`cnt != 26` fails alone. Verification 4
+(`demo_abv_induction_companion_prove`, top
+`demo_abv_induction_chk_companion`) runs exactly this:
+
+```systemverilog
+always @(*) assert (cnt != 10'd6);
+always @(*) assert (cnt != 10'd26);
+```
+
+The mechanism is the dual role of `assert` under k-induction. At step `k`
+an assertion is the **proof obligation** (the solver hunts for a state
+that violates it); at the prior `k` states it rides along as part of the
+**induction hypothesis** (the solver may only consider traces in which it
+held). So the inductive step for the pair may only walk traces in which
+*both* `cnt != 6` and `cnt != 26` held at every prior state.
+
+Recall the only CTI ramp into `26` is `6 → 7 → … → 26`, and it **must
+start at `6`** (the wrap-at-5 leaves `6` with no predecessor). The
+companion `cnt != 6` forbids `6` at every prior state — so that one ramp
+is no longer a legal trace, no CTI into `26` exists at depth 20, and the
+verdict flips to PASS. `cnt != 6` is inductive on its own (nothing
+transitions to `6`); here it doubles as the assertion that prunes the bad
+predecessor of `26`.
+
+The generalisation: an **inductive invariant need not be a single
+property**. A set of mutually-strengthening assertions can be inductive
+together when none is inductive alone, because each one's hypothesis
+tightens every other one's prior-state constraints. When you are fighting
+an `UNKNOWN`, strengthening the property itself (`cnt <= 5`) is one lever;
+adding a companion assertion that marks an unreachable predecessor bad is
+another. (This is the [YosysHQ SBY FAQ](https://yosyshq.readthedocs.io/projects/ap011/en/latest/faq_sby.html)
+"companion assertion" guidance, made runnable.)
 
 ## How this stays in `fpv_regression.yaml` despite an expected failure
 

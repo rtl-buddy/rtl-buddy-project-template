@@ -1,19 +1,23 @@
 # rb fpv configuration for the BMC-vs-induction teaching demo.
 #
-# Three verifications, all over the same wrapping mod-5 counter, all
+# Four verifications, all over the same wrapping mod-5 counter, all
 # asserting properties that are *true* of the design — yet they do not
 # all hold up under induction:
 #
-#   - demo_abv_induction_noninductive_bmc   (cnt != 26, mode bmc)   PASS
-#   - demo_abv_induction_noninductive_prove (cnt != 26, mode prove) FAIL
-#   - demo_abv_induction_inductive_prove    (cnt <= 5,  mode prove) PASS
+#   - demo_abv_induction_noninductive_bmc   (cnt != 26, mode bmc)         PASS
+#   - demo_abv_induction_noninductive_prove (cnt != 26, mode prove)       FAIL
+#   - demo_abv_induction_inductive_prove    (cnt <= 5,  mode prove)       PASS
+#   - demo_abv_induction_companion_prove    (cnt != 6 & cnt != 26, prove) PASS
 #
 # The first two run the *same* property (`cnt != 26`) under different
 # modes: BMC reaches only the bounded state space (cnt never climbs past
 # 5, so 26 is never hit within `depth`), so it passes; prove adds the
 # induction step, which starts from an arbitrary state — cnt==25 steps
-# to 26 — so it fails. The third shows the fix: writing the intent as
-# the inductive invariant `cnt <= 5` proves cleanly.
+# to 26 — so it fails. The third shows one fix: writing the intent as
+# the inductive invariant `cnt <= 5` proves cleanly. The fourth shows a
+# *second* lever — the same `cnt != 26` proves at the same `depth: 20`
+# once a companion assertion (`cnt != 6`) prunes the only CTI ramp into
+# 26: two properties inductive together though `cnt != 26` is not alone.
 #
 # `depth: 20` is DELIBERATE. SymbiYosys `mode prove` does k-induction up
 # to the BMC depth, and the longest counterexample-to-induction ramp
@@ -76,6 +80,27 @@ verifications:
     top: "demo_abv_induction_chk_inductive"
     properties:
       - "demo_abv_induction_props.sv"
+    mode: "prove"
+    depth: 20
+    engines:
+      - "smtbmc yices"
+
+  - name: "demo_abv_induction_companion_prove"
+    desc: "cnt != 6 AND cnt != 26 under prove — inductive together at depth 20: PASS"
+    tool: "sby"
+    model: "demo_abv_induction"
+    model_path: "../../../design/demo_abv/models.yaml"
+    top: "demo_abv_induction_chk_companion"
+    properties:
+      - "demo_abv_induction_props.sv"
+    # Same property and the same `depth: 20` as noninductive_prove above,
+    # which FAILS — but here `cnt != 26` is asserted alongside `cnt != 6`.
+    # Every counterexample-to-induction ramp into 26 must pass through
+    # cnt==6, and the companion assertion makes `cnt != 6` part of the
+    # induction hypothesis at every prior state, so no CTI survives and
+    # both properties prove. The dual role of `assert` (proof obligation
+    # at step k, hypothesis on the prior k states) is what makes a set of
+    # mutually-strengthening assertions inductive together. PASS.
     mode: "prove"
     depth: 20
     engines:
