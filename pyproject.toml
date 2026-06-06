@@ -15,6 +15,13 @@ dependencies = [
 
 [tool.uv]
 package = false
+# Aggregator-level floor: force rtl-buddy-view >=0.2.1 across every transitive
+# path, regardless of what each consumer (rtl_buddy, rtl-buddy-cdc, ...)
+# declares. 0.2.1 is the first PyPI release and clears the 0.2.0 filelist
+# IsADirectoryError bug plus the SPA-less git build. The consumers carry a
+# floor + runtime guard of their own; this constraint is belt-and-suspenders so
+# no transitive path can ever drag the resolution below 0.2.1.
+constraint-dependencies = ["rtl-buddy-view>=0.2.1"]
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
