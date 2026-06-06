@@ -1,6 +1,6 @@
 -F axi_common_cells.f
 +incdir+../../vendor/pulp-platform/axi/include
--v ../../vendor/pulp-platform/axi/src/axi_pkg.sv
+../../vendor/pulp-platform/axi/src/axi_pkg.sv
 -v ../../vendor/pulp-platform/axi/src/axi_demux_id_counters.sv
 -v ../../vendor/pulp-platform/axi/src/axi_intf.sv
 -v ../../vendor/pulp-platform/axi/src/axi_atop_filter.sv
