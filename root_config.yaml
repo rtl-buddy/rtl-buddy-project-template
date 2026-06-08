@@ -289,7 +289,10 @@ cfg-fpv-tools:
 cfg-systemc:
   home: "${SYSTEMC_HOME}"
   # cxx: "/opt/homebrew/bin/g++-15"
-  cflags: ["-std=c++17"]
+  # Match the C++ standard used to build libsystemc. SystemC 3.0.0 is
+  # commonly built as C++20 (libsystemc exports sc_api_version_3_0_0_cxx202002L);
+  # set this to the std your local SystemC was compiled with.
+  cflags: ["-std=c++20"]
   ldflags: []
 # End SystemC configuration
 
