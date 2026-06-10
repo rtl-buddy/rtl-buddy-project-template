@@ -9,6 +9,15 @@
 // Throughput: 1 transfer per ~4×max(src_period, dst_period). Use a
 // proper async FIFO if you need higher rate.
 //
+// The `(* cdc_handshake *)` attributes mark the three participating
+// registers (source req toggle, held payload, destination capture) so
+// a structure-only CDC linter doesn't flag the protocol-safe paths as
+// false positives. rtl-buddy-cdc recognises the attribute and suppresses
+// CDC-013 on the backpressured toggle, CDC-020 on the held payload,
+// CDC-001 on the single-register capture, and CDC-014 on post-capture
+// decode comb (rtl-buddy-cdc#247). Older analyzers ignore the unknown
+// attribute, so it's safe to carry unconditionally.
+//
 // See spec/ip_cdc_handshake/README.md.
 
 module ip_cdc_handshake #(
@@ -25,12 +34,13 @@ module ip_cdc_handshake #(
   input  logic              dst_clk,
   input  logic              dst_rst_n,
   output logic              dst_valid,    // 1-cycle pulse on dst_clk per transfer
-  output logic [WIDTH-1:0]  dst_data
+  (* cdc_handshake *)
+  output logic [WIDTH-1:0]  dst_data      // single-register capture (CDC-001/014 safe)
 );
 
   // Source-side req level toggles each accepted transfer
-  logic              src_req;
-  logic [WIDTH-1:0]  src_payload;
+  (* cdc_handshake *) logic              src_req;     // backpressured toggle (CDC-013 safe)
+  (* cdc_handshake *) logic [WIDTH-1:0]  src_payload; // held stable across req/ack (CDC-020 safe)
   logic              ack_in_src;          // ack synced into src domain
 
   // Destination-side
