@@ -6,6 +6,7 @@ dependencies = [
   "rtl_buddy==6.3.4",
   "rtl-buddy-cdc",
   "rtl-buddy-xeno[verible,slang]",
+  "rtl-buddy-axi-profiler[notebook]",
   "cocotb==2.0.1",
   "pytest==8.4.2",
   "info-process",
@@ -35,3 +36,13 @@ rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git" }
 # extras (declared on the dependency above) pull the Verible CST + pyslang
 # toolchain the structural mutation operators need.
 rtl-buddy-xeno = { git = "https://github.com/rtl-buddy/rtl-buddy-xeno.git" }
+# AXI interconnect profiler driven by `rb axi-profile`. Not on PyPI yet
+# (no release workflow), so pin the git repo so the `axi-profiler` binary
+# resolves into the venv after `uv sync`. The [notebook] extra (declared on
+# the dependency above) pulls marimo + altair/polars/pandas/pyarrow so
+# `rb axi-profile notebook` / the rtl-buddy-view "Open in marimo" button work
+# in-venv — the notebook launcher imports rtl_buddy_axi_profiler in the rb
+# interpreter, so it must live here, not as an out-of-band tool. Self-bounds
+# pywellen<0.25 (matches rtl_buddy's own bound; the 0.25 trace-reader API
+# break is unported here).
+rtl-buddy-axi-profiler = { git = "https://github.com/rtl-buddy/rtl-buddy-axi-profiler.git" }
