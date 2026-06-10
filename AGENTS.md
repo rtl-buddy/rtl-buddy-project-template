@@ -87,6 +87,14 @@ uv run rb skill install
 
 Re-run after upgrading `rtl_buddy`. Use `--project` to install into this repo instead of your user home; `uv run rb skill --help` shows all options.
 
+Optionally, wire up the Neovim editor integration — one command installs the unified [`rtl-buddy-nvim`](https://github.com/rtl-buddy/rtl-buddy-nvim) plugin (hub auto-connect plus `rb wave` inline signal-value annotations), with no manual plugin clone or `init.lua` edits:
+
+```bash
+uv run rb nvim-install
+```
+
+Re-run with `--update` after upgrading `rtl_buddy`. See the [wave / nvim docs](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/wave/#nvim-setup).
+
 ## rtl_buddy Development Overrides
 
 Normal project work should stay on the pinned dependency in `pyproject.toml` / `uv.lock`.
