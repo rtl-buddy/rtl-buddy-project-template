@@ -44,3 +44,6 @@ tags
 **/sandbox/report/
 **/lint/cdc/reports/
 pdk/
+
+# rtl_buddy project-local env defaults (machine-specific; never commit)
+.rtl-buddy/.env
