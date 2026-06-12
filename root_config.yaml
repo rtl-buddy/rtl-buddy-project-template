@@ -264,11 +264,13 @@ cfg-fpv-tools:
       # Path to the built yosys-slang plugin, required by any
       # verification with `frontend: slang` (e.g. demo_abv_basic,
       # whose bound checker only elaborates under slang; demo_abv_features
-      # vacuity variant). Sibling-checkout convention matches
-      # synth/demo_slang_pkg/synth.yaml; resolved relative to this file.
-      # Build per tools/yosys-slang/SETUP_OSX.md and EDIT to your
-      # slang.so location (absolute paths also work).
-      plugin-path: "../yosys-slang/build/slang.so"
+      # vacuity variant). Build per tools/yosys-slang/SETUP_OSX.md.
+      # Left unset so the machine-local location comes from the
+      # RTL_BUDDY_SLANG_PLUGIN environment variable — export it from a
+      # toolchain env script, or put it in the gitignored
+      # `.rtl-buddy/.env` next to this file (KEY=VALUE; rb loads it
+      # automatically). Setting an explicit path here overrides both.
+      plugin-path: ""
 # End formal configuration
 
 # SystemC cosim — required when a testbench in tests.yaml declares a
