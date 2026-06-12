@@ -3,7 +3,9 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy==6.11.0",
+  # Relaxed from the ==6.11.0 pin on main so the editable sibling
+  # checkout (a dynamic dev version) satisfies it (dev/local-rtl-buddy).
+  "rtl_buddy>=6.11.0",
   "rtl-buddy-cdc",
   "rtl-buddy-xeno[verible,slang]",
   "rtl-buddy-axi-profiler[notebook]",
@@ -25,6 +27,13 @@ package = false
 constraint-dependencies = ["rtl-buddy-view>=0.2.1"]
 
 [tool.uv.sources]
+# Dev-only override (dev/local-rtl-buddy, NOT merged to main): point
+# rtl_buddy at the sibling local checkout so unreleased changes are
+# exercised end-to-end. Path is relative to this pyproject.toml
+# (rtl-buddy-project-template/.worktrees/dev-local/). Add an editable
+# rtl-buddy-cdc line the same way only when actually testing local CDC
+# changes (AGENTS.md: keep only the overrides you need).
+rtl_buddy = { path = "../../../rtl_buddy", editable = true }
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
 peakrdl = { git = "https://github.com/rtl-buddy/PeakRDL.git", subdirectory = "peakrdl" }
 peakrdl-regblock = { git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" }

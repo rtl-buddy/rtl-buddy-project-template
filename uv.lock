@@ -938,8 +938,7 @@ wheels = [
 
 [[package]]
 name = "rtl-buddy"
-version = "6.11.0"
-source = { registry = "https://pypi.org/simple" }
+source = { editable = "../../../rtl_buddy" }
 dependencies = [
     { name = "click" },
     { name = "jsonschema" },
@@ -950,9 +949,41 @@ dependencies = [
     { name = "typer" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d3/f5/f805c266f76348a09ff076e24f8341f68ba46d4c616d2f7552f3cb445af4/rtl_buddy-6.11.0.tar.gz", hash = "sha256:9d91b95b9408bba01587ad75d48b7bdbe47bdcc6627bb41d9dae63753f05c4e8", size = 481656, upload-time = "2026-06-12T10:01:19.846Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/58/5cf65f7c413046d11901f7013f2dd996a46b3ed90c378f42b0226d2ecb98/rtl_buddy-6.11.0-py3-none-any.whl", hash = "sha256:910ec2968e02ef0033b1a34fe8bd7f8ba7ed2fa840d795987ee5433d92408b93", size = 576290, upload-time = "2026-06-12T10:01:18.544Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "click", specifier = ">=8.3.0" },
+    { name = "jsonschema", specifier = ">=4.21.0" },
+    { name = "pyserde", extras = ["yaml"], specifier = ">=0.27.0" },
+    { name = "pywellen", specifier = ">=0.20.0,<0.25" },
+    { name = "rich", specifier = ">=14.0.0" },
+    { name = "rtl-buddy-xeno", extras = ["slang", "verible"], marker = "extra == 'mut'", specifier = ">=0.1.0" },
+    { name = "ruamel-yaml", specifier = ">=0.18.15" },
+    { name = "typer", specifier = ">=0.19.2" },
+    { name = "websockets", specifier = ">=12.0" },
+]
+provides-extras = ["mut"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mike", specifier = ">=2.1.0" },
+    { name = "mkdocs", specifier = ">=1.6.0" },
+    { name = "mkdocs-material", specifier = ">=9.5.0" },
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest-asyncio", specifier = ">=0.24.0" },
+    { name = "pytest-cov", specifier = ">=6.0.0" },
+    { name = "ruff", specifier = ">=0.11.0" },
+]
+docs = [
+    { name = "mike", specifier = ">=2.1.0" },
+    { name = "mkdocs", specifier = ">=1.6.0" },
+    { name = "mkdocs-material", specifier = ">=9.5.0" },
+]
+lint = [{ name = "ruff", specifier = ">=0.11.0" }]
+test = [
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest-asyncio", specifier = ">=0.24.0" },
+    { name = "pytest-cov", specifier = ">=6.0.0" },
 ]
 
 [[package]]
@@ -1008,7 +1039,7 @@ requires-dist = [
     { name = "peakrdl", git = "https://github.com/rtl-buddy/PeakRDL.git?subdirectory=peakrdl" },
     { name = "peakrdl-regblock", git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "rtl-buddy", specifier = "==6.11.0" },
+    { name = "rtl-buddy", editable = "../../../rtl_buddy" },
     { name = "rtl-buddy-axi-profiler", extras = ["notebook"], git = "https://github.com/rtl-buddy/rtl-buddy-axi-profiler.git" },
     { name = "rtl-buddy-cdc", git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git" },
     { name = "rtl-buddy-xeno", extras = ["verible", "slang"], git = "https://github.com/rtl-buddy/rtl-buddy-xeno.git" },
