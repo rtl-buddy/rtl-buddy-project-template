@@ -1,0 +1,11 @@
+# RTL-Buddy RTL Model Configuration File
+rtl-buddy-filetype: model_config
+
+models:
+  - name: "demo_cdc_open_top"
+    desc: >-
+      Portable CDC block (single-bit 2FF, Gray-coded bus, req/ack
+      handshake, per-domain reset sync) carrying only vendor-neutral
+      ASYNC_REG/keep attributes. Reference for the open FPGA flow:
+      ``rb cdc`` recognition + ``rb fpga tool: openxc7``.
+    filelist: ["-F demo_cdc_open_top.f"]

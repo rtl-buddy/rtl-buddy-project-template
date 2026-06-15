@@ -1,0 +1,5 @@
+-v cdc_open_sync.sv
+-v cdc_open_reset_sync.sv
+-v cdc_open_gray_bus.sv
+-v cdc_open_handshake.sv
+-v demo_cdc_open_top.sv

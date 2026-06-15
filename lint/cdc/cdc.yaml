@@ -33,3 +33,14 @@ analyses:
     model_path: "../../design/demo_cdc_src_sync/models.yaml"
     tool: "rtl-buddy-cdc"
     constraints: "demo_cdc_src_sync.sdc"
+
+  - name: "demo_cdc_open_lint"
+    desc: >-
+      Portable CDC block (2FF, Gray bus, req/ack handshake, reset sync)
+      carrying only vendor-neutral ASYNC_REG/keep. Recognition half of
+      the open FPGA demo — reports the crossings safe before
+      `rb fpga tool: openxc7` implements it (see ../../fpga/demo_cdc_open/).
+    model: "demo_cdc_open_top"
+    model_path: "../../design/demo_cdc_open/models.yaml"
+    tool: "rtl-buddy-cdc"
+    constraints: "demo_cdc_open.sdc"

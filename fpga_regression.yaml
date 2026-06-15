@@ -1,0 +1,12 @@
+# RTL-Buddy FPGA Implementation Regression Configuration File
+#
+# Aggregates the `fpga.yaml` suites run by `rb fpga-regression`. Every run
+# is reglvl-gated and uses an optional backend (openXC7 / Vivado), so on a
+# checkout without the FPGA toolchain the runs report SKIP and the
+# regression stays green. Run explicitly with a raised level, e.g.:
+#
+#   uv run rb --machine fpga-regression -c fpga_regression.yaml -l 1000
+rtl-buddy-filetype: fpga_reg_config
+
+fpga-configs:
+  - "fpga/demo_cdc_open/fpga.yaml"
