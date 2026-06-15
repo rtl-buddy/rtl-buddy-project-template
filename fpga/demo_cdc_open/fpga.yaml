@@ -1,0 +1,28 @@
+# RTL-Buddy FPGA Implementation Configuration File
+#
+# Open, license-free implementation of the portable demo_cdc_open block on
+# a free Artix-7 part via the openXC7 backend (Yosys -> nextpnr-xilinx ->
+# prjxray). See README.md for the full walkthrough and ../../docs pointers.
+#
+# Toolchain: needs `yosys` + `nextpnr-xilinx` on PATH and a per-part
+# nextpnr chipdb. The chipdb is located via `$CHIPDB/<part>.bin` (set
+# CHIPDB to the directory holding xc7a35tcsg324-1.bin) or pinned per run
+# with `tool_overrides.openxc7.chipdb`. With the toolchain absent the run
+# reports SKIP (not FAIL), so this config is safe on a fresh checkout.
+rtl-buddy-filetype: fpga_config
+
+runs:
+  - name: "demo_cdc_open_a35t"
+    desc: >-
+      Portable CDC block through the open FPGA flow on an Artix-7
+      xc7a35t (Arty A7-35). Recognised safe by `rb cdc`; implemented here
+      with tool: openxc7 for structured utilisation/timing.
+    tool: "openxc7"
+    model: "demo_cdc_open_top"
+    model_path: "../../design/demo_cdc_open/models.yaml"
+    part: "xc7a35tcsg324-1"
+    xdc:
+      - "demo_cdc_open.xdc"
+    # reglvl-gated: this is an extra-toolchain (open FPGA) run, kept out of
+    # the every-push sanity tier. Run with `-l 1000` (nightly) or higher.
+    reglvl: 1000
