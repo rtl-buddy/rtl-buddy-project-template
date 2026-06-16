@@ -24,6 +24,12 @@ analyses:
     tool: "rtl-buddy-cdc"
     constraints: "demo_tiny_alu_subsys.sdc"
     waivers: "demo_tiny_alu_subsys.waivers"
+    # This top has a SystemVerilog interface port (apb_intf.subordinate
+    # apb). The yosys read paths can't elaborate it cleanly — read_verilog
+    # turns the interface into phantom nets, read_slang can't represent a
+    # top-level interface port at all — so this analysis uses the pyslang
+    # frontend, which elaborates the interface hierarchy natively.
+    frontend: "slang"
 
   - name: "demo_cdc_src_sync_lint"
     desc: >-
