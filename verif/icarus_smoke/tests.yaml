@@ -1,0 +1,21 @@
+rtl-buddy-filetype: test_config
+
+# Suite-wide simulator selection: this suite exercises the Icarus Verilog
+# backend via the `builder:` field (resolves a cfg-rtl-builder entry by
+# name; requires an rtl_buddy with per-suite/per-test builder selection).
+# A `--builder <name>` CLI override still wins over this, so a Verilator-only
+# CI run (`-B verilator`) forces Verilator and the same suite passes there too.
+builder: icarus
+
+testbenches:
+  - name: "tb_counter"
+    filelist:
+      - "tb_counter.sv"
+
+tests:
+  - name: "basic"
+    desc: "Counter reset + count + hold; runs on both Verilator and Icarus"
+    reglvl: 0
+    model: "counter"
+    model_path: "../../design/icarus_smoke/models.yaml"
+    testbench: "tb_counter"
