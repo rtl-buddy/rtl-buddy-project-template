@@ -148,7 +148,6 @@ uv run rb --machine verible syntax design/demo_tiny_alu/demo_tiny_alu.sv
 uv run rb --machine spec list
 uv run rb --machine spec check-design
 uv run rb --machine spec check-coverage
-uv run rb --machine axi-profile discover -c verif/demo_axi_2x2/axi_profile.yaml
 
 # from suite dir
 cd verif/demo_tiny_alu
@@ -163,6 +162,10 @@ uv run rb --machine test cocotb_random
 
 cd ../demo_tiny_alu_sc       # requires $SYSTEMC_HOME or cfg-systemc.home set
 uv run rb --machine test basic_sc
+
+cd ../demo_axi_2x2
+uv run rb --machine test basic_traffic
+uv run rb --machine axi-profile run basic
 
 # from an FPV suite dir
 cd fpv/demo_abv/demo_abv_basic
