@@ -37,13 +37,7 @@ waive CDC-003 .*u_sync_empty\..*  fifo_rd_empty comparator → u_sync_empty cros
 # but not CDC-012 — it arguably should.)
 waive CDC-012 .*u_hs_cmd\..*  (* cdc_handshake *) req/ack primitive holds payload via src_ready backpressure; see waiver header
 
-# RDC-008 on u_afifo: the FIFO's read-side reset crst_n is a top-level
-# primary input driving the cclk-domain flops directly. RDC-008 flags
-# the un-synchronised deassertion edge — but crst_n is a *primary port*
-# of the block, so reset-synchroniser insertion is the integrator's
-# responsibility at the SoC level, not this leaf IP's. The block
-# deliberately samples crst_n as an asynchronous reset; a downstream
-# integration that needs recovery-timing closure adds the 2FF reset
-# synchroniser in its own clock-distribution. Waived as an integration-
-# boundary finding rather than a block defect.
-waive RDC-008 .*u_afifo\..*  primary-reset port crst_n; reset-sync is the integrator's responsibility; see waiver header
+# (RDC-008 on u_afifo's crst_n is no longer waived — fixed in RTL: the
+# subsys now synchronises crst_n's deassertion to cclk via the
+# crst_n_sync 2FF reset synchroniser and routes every cclk consumer
+# through it. See demo_tiny_alu_subsys_top.sv "cclk reset synchroniser".)
