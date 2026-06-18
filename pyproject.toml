@@ -30,9 +30,9 @@ peakrdl = { git = "https://github.com/rtl-buddy/PeakRDL.git", subdirectory = "pe
 peakrdl-regblock = { git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" }
 # Pinned CDC linter consumed via subprocess by `rb cdc`. No PyPI release
 # yet; pin to the git repo so `which rtl-buddy-cdc` works after `uv sync`.
-# Pinned to the v0.3.1 release tag for reproducibility — bump the tag
+# Pinned to the v0.3.3 release tag for reproducibility — bump the tag
 # (and re-lock) when consuming a newer rtl-buddy-cdc release.
-rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git", tag = "v0.3.1" }
+rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git", tag = "v0.3.3" }
 # Mutation engine driven by `rb mut`. Not on PyPI yet
 # (rtl-buddy/rtl-buddy-xeno#18), so pin the git repo; the [verible,slang]
 # extras (declared on the dependency above) pull the Verible CST + pyslang
