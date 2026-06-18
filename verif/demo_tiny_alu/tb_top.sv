@@ -23,11 +23,16 @@
 
 `include "lvm_core.sv"
 
+// EndHook uses LVM's interface-class hook framework, unsupported by
+// Icarus 12 — gate it (and the cov_alu cover-property bind below) out
+// under SIM_ICARUS so the demo still runs on Icarus.
+`ifndef SIM_ICARUS
 class EndHook implements LvmPkg::TestEndHook;
   virtual function void end_of_test(LvmPkg::TestCore c);
     $display("end_of_test: nerr=%0d", c.nerr);
   endfunction
 endclass
+`endif
 
 module tb_top;
   `LVM_INIT("demo_tiny_alu")
@@ -41,7 +46,9 @@ module tb_top;
   logic [W-1:0] y;
   logic         zf, cf, nf, vf;
 
+`ifndef SIM_ICARUS
   EndHook eh;
+`endif
 
   demo_tiny_alu #(.W(W)) i_dut (
     .clk, .rst, .op, .a, .b, .y, .zf, .cf, .nf, .vf
@@ -59,42 +66,45 @@ module tb_top;
   bit           v_vf  [MAX_VECTORS];
   int          n_vectors;
 
-  // Reads vectors.txt produced by preproc.py. CSV; lines starting with
-  // `#` are comments. One row per cycle: op,a,b,y,zf,cf,nf,vf.
+  // Reads vectors.txt produced by preproc.py: pure CSV, one row per cycle
+  // (op,a,b,y,zf,cf,nf,vf), no header. Parsed with $fscanf rather than
+  // $fgets/$sscanf so the same TB runs on both Verilator and Icarus 12 —
+  // Icarus's $fgets/$sscanf cannot consume a SystemVerilog `string`, and
+  // $fscanf needs no intermediate line buffer.
   task automatic load_vectors(input string path);
     int           fd;
-    string        line;
     int           code;
     int           tmp_op, tmp_a, tmp_b, tmp_y, tmp_zf, tmp_cf, tmp_nf, tmp_vf;
     fd = $fopen(path, "r");
+    // No early `return` (Icarus 12 rejects `return` from a task): the
+    // success path is nested under `else` instead.
     if (fd == 0) begin
       `lvm_rpt_err(("failed to open VECTORS=%s", path));
-      return;
-    end
-    n_vectors = 0;
-    while (!$feof(fd)) begin
-      code = $fgets(line, fd);
-      if (code == 0) break;
-      if (line.len() == 0 || line[0] == "#" || line[0] == "\n") continue;
-      code = $sscanf(line, "%d,%d,%d,%d,%d,%d,%d,%d",
+    end else begin
+      n_vectors = 0;
+      // %d skips leading whitespace (incl. the row's trailing newline), so
+      // one $fscanf reads one CSV row. Loop while a full 8-field row parses
+      // and we are under the cap (no break/continue: unsupported by Icarus).
+      code = $fscanf(fd, "%d,%d,%d,%d,%d,%d,%d,%d",
                      tmp_op, tmp_a, tmp_b, tmp_y, tmp_zf, tmp_cf, tmp_nf, tmp_vf);
-      if (code != 8) continue;
-      if (n_vectors >= MAX_VECTORS) begin
-        `lvm_rpt_err(("vectors exceed MAX_VECTORS=%0d", MAX_VECTORS));
-        break;
+      while (code == 8 && n_vectors < MAX_VECTORS) begin
+        v_op [n_vectors] = tmp_op[2:0];
+        v_a  [n_vectors] = tmp_a[W-1:0];
+        v_b  [n_vectors] = tmp_b[W-1:0];
+        v_y  [n_vectors] = tmp_y[W-1:0];
+        v_zf [n_vectors] = tmp_zf[0];
+        v_cf [n_vectors] = tmp_cf[0];
+        v_nf [n_vectors] = tmp_nf[0];
+        v_vf [n_vectors] = tmp_vf[0];
+        n_vectors++;
+        code = $fscanf(fd, "%d,%d,%d,%d,%d,%d,%d,%d",
+                       tmp_op, tmp_a, tmp_b, tmp_y, tmp_zf, tmp_cf, tmp_nf, tmp_vf);
       end
-      v_op [n_vectors] = tmp_op[2:0];
-      v_a  [n_vectors] = tmp_a[W-1:0];
-      v_b  [n_vectors] = tmp_b[W-1:0];
-      v_y  [n_vectors] = tmp_y[W-1:0];
-      v_zf [n_vectors] = tmp_zf[0];
-      v_cf [n_vectors] = tmp_cf[0];
-      v_nf [n_vectors] = tmp_nf[0];
-      v_vf [n_vectors] = tmp_vf[0];
-      n_vectors++;
+      if (code == 8)
+        `lvm_rpt_err(("vectors exceed MAX_VECTORS=%0d", MAX_VECTORS));
+      $fclose(fd);
+      `lvm_rpt_inf(("loaded %0d vectors from %s", n_vectors, path));
     end
-    $fclose(fd);
-    `lvm_rpt_inf(("loaded %0d vectors from %s", n_vectors, path));
   endtask
 
   // ────────── Scoreboard + transaction log ──────────
@@ -117,8 +127,13 @@ module tb_top;
       a  = v_a[i];
       b  = v_b[i];
       @(posedge clk);
-      // After this edge, y holds the registered result of inputs (op,a,b)
-      // sampled at this same edge.
+      // Settle past the clocked outputs' nonblocking update before
+      // sampling: reading y in the active region right after the edge
+      // catches its pre-update value on Icarus (Verilator schedules it
+      // the other way). #100ps is well inside the 500ps half-period.
+      #100ps;
+      // y now holds the registered result of inputs (op,a,b) sampled at
+      // the edge above.
       compare(i);
       if (txn_fd != 0)
         $fdisplay(txn_fd, "%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d",
@@ -141,8 +156,10 @@ module tb_top;
   initial begin
     string vectors_path;
 
+`ifndef SIM_ICARUS
     eh = new();
     tc.add_test_end_hook(eh);
+`endif
 
     clk = 1'b0;
     rst = 1'b1;
@@ -171,12 +188,23 @@ module tb_top;
     repeat (4) @(posedge clk);
     if (txn_fd != 0) $fclose(txn_fd);
     `lvm_rpt_inf(("sandbox tb done: vectors=%0d mismatches=%0d", n_vectors, mismatches));
+`ifdef SIM_ICARUS
+    // Icarus 12 silently skips a `final` block that calls a class method,
+    // so LVM_INIT's `final tc.end_of_test()` never fires here. Emit the
+    // PASS/FAIL report explicitly before $finish (Verilator still reports
+    // once via the final block).
+    tc.end_of_test();
+`endif
     $finish(0);
   end
 
   always #500ps clk = ~clk;
 
-  // bind covergroups (cov_alu module is in cov_alu.sv)
+  // bind covergroups (cov_alu module is in cov_alu.sv). cov_alu uses
+  // cover-property SVA, unsupported by Icarus 12 — gate the bind out
+  // under SIM_ICARUS (cov_alu.sv compiles to an empty module there).
+`ifndef SIM_ICARUS
   bind demo_tiny_alu cov_alu u_cov (.*);
+`endif
 
 endmodule

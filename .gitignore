@@ -16,6 +16,7 @@ venv
 **/artefacts/
 **run.f
 **.fst
+**.vcd
 **.DS_Store
 **ns_seed.txt
 **design/techlib/t12/lc/**

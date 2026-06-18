@@ -5,6 +5,13 @@
 // 8-bit operands, 3-bit opcode. Result and flags are registered.
 // See spec/demo_tiny_alu/README.md for the authoritative specification.
 
+// Explicit timescale so the cocotb-on-Icarus flow has a fine time
+// precision: with no `timescale and no SV testbench to supply one (cocotb
+// drives the DUT directly), iverilog falls back to 1s precision and cocotb
+// cannot represent a sub-second clock. Verilator ignores this (it uses
+// --timing with explicit-unit delays); the SV/LVM flow keeps its own.
+`timescale 1ns/1ps
+
 module demo_tiny_alu #(
   parameter int W = 8
 ) (

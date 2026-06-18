@@ -1,0 +1,67 @@
+name: Icarus Regression
+
+# Runs the Icarus Verilog (iverilog 12) backend on every push. The
+# icarus_smoke suite is deliberately kept out of regression.yaml — the
+# Verilator-only container in verilator.yml ships no iverilog — so this
+# dedicated job is what keeps the Icarus backend, and the SIM_ICARUS gating
+# in demo_tiny_alu, from regressing silently.
+#
+# Runs on a plain ubuntu-latest runner (Ubuntu 24.04 ships Icarus 12 via
+# apt), not the Verilator container: no SystemC and no vendor submodules are
+# needed for the Icarus tier.
+on: [push]
+
+jobs:
+  icarus-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install uv; the package cache is keyed on uv.lock so unchanged
+      # lockfiles skip downloads.
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked --python 3.11
+
+      # Icarus Verilog 12 provides `iverilog` (compile) and `vvp` (run),
+      # both required by the `icarus` builder in root_config.yaml. Ubuntu
+      # 24.04's apt package is 12.0 — the version the SIM_ICARUS gating
+      # targets.
+      - name: Install Icarus Verilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends iverilog
+          iverilog -V | head -1
+
+      - name: Icarus smoke suite
+        # icarus_smoke uses `builder: icarus` as its suite default — a plain
+        # procedural SV-2012 counter that runs on Icarus and Verilator alike.
+        working-directory: verif/icarus_smoke
+        run: uv run rtl-buddy --machine test basic
+
+      - name: demo_tiny_alu on Icarus
+        # Exercises the SIM_ICARUS gating end to end: cover-property SVA and
+        # the interface-class LVM hooks are skipped, while functional checking
+        # against the Python golden still runs and reports PASS/FAIL.
+        # `-B icarus` forces the builder over the Verilator platform default.
+        working-directory: verif/demo_tiny_alu
+        run: |
+          for t in basic ops_sweep flags random; do
+            uv run rtl-buddy --machine -B icarus test "$t"
+          done
+
+      - name: cocotb on Icarus
+        # The same cocotb tests the nightly runs on Verilator, driven here on
+        # Icarus via `-B icarus` — exercising CocotbSim's Icarus VPI dispatch
+        # (vvp -M <cocotb-libs> -m libcocotbvpi_icarus). cocotb is already a
+        # pinned project dependency, so `uv sync` above installed it.
+        working-directory: verif/demo_tiny_alu_cocotb
+        run: |
+          for t in cocotb_flags cocotb_random; do
+            uv run rtl-buddy --machine -B icarus test "$t"
+          done
