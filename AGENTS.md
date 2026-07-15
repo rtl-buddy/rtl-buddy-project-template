@@ -11,22 +11,14 @@ The project should stay runnable. `design/demo_tiny_alu/` is the primary working
 
 ## Block Categories
 
-Blocks shipped with this template fall into three categories. The
-naming convention surfaces the category in the directory name:
+Blocks shipped with this template fall into four categories. The naming convention surfaces the category in the directory name:
 
-- **Base IP** — leaf, reusable components (`apb`, `ip_cdc_sync`,
-  `ip_cdc_handshake`, `ip_async_fifo`). No prefix.
-- **Workflow templates** — `template/` skeletons that show the
-  expected spec/design/verif/test shape for a new block. Copy these
-  when starting fresh.
-- **Demo blocks** — `demo_*` end-to-end examples that exercise
-  specific rtl_buddy capabilities (`demo_tiny_alu`,
-  `demo_tiny_alu_cocotb`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`,
-  `demo_abv_basic`). Safe to delete when starting a new project.
+- **Base IP** — leaf, reusable components (`apb`, `ip_cdc_sync`, `ip_cdc_handshake`, `ip_async_fifo`). No prefix.
+- **Workflow templates** — `template/` skeletons that show the expected spec/design/verif/test shape for a new block. Copy these when starting fresh.
+- **Focused workflow smoke suites** — small examples that exist to exercise one integration point, such as `icarus_smoke` for suite-level `builder: icarus` selection.
+- **Demo blocks** — end-to-end examples that exercise specific rtl_buddy capabilities, including `demo_tiny_alu`, `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, `demo_cdc_open`, `demo_cdc_mem_macro`, `demo_abv`, `demo_axi_2x2`, and `demo_pulp_platform_axi`. Safe to delete when starting a new project.
 
-Preserve this categorisation in new work — name new leaf IP without a
-prefix, new demos with `demo_*`, and don't touch `template/` unless
-you're updating the starter skeleton itself.
+Preserve this categorisation in new work — name new leaf IP without a prefix, new demos with `demo_*`, and don't touch `template/` unless you're updating the starter skeleton itself. Keep smoke suites small and isolated so they remain useful as targeted examples rather than becoming another full demo subsystem.
 
 ## This Is A Template Repo
 
@@ -49,17 +41,23 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 ## Important Paths
 
 ```text
-root_config.yaml
-regression.yaml
-fpv_regression.yaml
-design/demo_tiny_alu/
-design/template/
-spec/template/                  # spec traceability example
-verif/template/
-fpv/demo_abv/demo_abv_basic/
-pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
-uv.lock                        # committed lockfile for reproducible project setup
-.python-version                # pinned Python version for uv
+root_config.yaml                         # builders, platforms, tools, defaults
+regression.yaml                          # top-level sim regression list
+synth_regression.yaml                    # top-level synth regression list
+fpv_regression.yaml                      # top-level formal regression list
+fpga_regression.yaml                     # top-level FPGA implementation regression list
+design/template/                         # starter RTL skeleton
+spec/template/                           # starter spec traceability skeleton
+verif/template/                          # starter verification skeleton
+design/demo_tiny_alu/                    # primary leaf demo design
+verif/demo_tiny_alu*/                    # SV, cocotb, and SystemC peer suites
+verif/icarus_smoke/                      # minimal Icarus builder-selection example
+lint/cdc/cdc.yaml                        # CDC analyses, including slang and blackbox examples
+fpga/demo_cdc_open/                      # openXC7 FPGA flow example
+fpv/demo_abv/                            # FPV and ABV examples
+pyproject.toml                           # uv-managed project environment and rtl_buddy dependency pin
+uv.lock                                  # committed lockfile for reproducible project setup
+.python-version                          # pinned Python version for uv
 ```
 
 The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.
@@ -72,6 +70,7 @@ The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and material
 - **Python 3.11** — standard interpreter for this repo.
 - **Verilator** — e.g. `brew install verilator` on macOS, or build from source.
 - **Verible** — e.g. `brew tap chipsalliance/verible && brew install verible` on macOS, or see the [Verible releases](https://github.com/chipsalliance/verible/releases) for other platforms.
+- **Optional flow tools** — install only for the examples you plan to run: Icarus (`iverilog`/`vvp`), VCS, SystemC, Yosys/yosys-slang, OpenROAD, rtl-buddy-cdc, SymbiYosys plus a solver, openXC7/Vivado FPGA tooling, Surfer, and PeakRDL.
 
 ### Setup steps
 
@@ -121,7 +120,9 @@ Use this repo to validate the project setup and `rtl_buddy` integration.
 ```bash
 # from repo root
 uv run rb --machine regression -c regression.yaml
+uv run rb --machine cdc-regression -c lint/cdc/cdc_regression.yaml
 uv run rb --machine fpv-regression -c fpv_regression.yaml
+uv run rb --machine fpga-regression -c fpga_regression.yaml -l 1000
 uv run rb --machine filelist demo_tiny_alu -c design/demo_tiny_alu/models.yaml
 uv run rb --machine verible syntax design/demo_tiny_alu/demo_tiny_alu.sv
 uv run rb --machine spec list
@@ -131,6 +132,10 @@ uv run rb --machine spec check-coverage
 # from suite dir
 cd verif/demo_tiny_alu
 uv run rb --machine test basic
+
+cd ../icarus_smoke
+uv run rb --machine test counter_smoke
+uv run rb --machine test counter_smoke --builder verilator
 
 # Hierarchy rendering (rtl-buddy-view #99). `--view dut` (default)
 # renders the model's module tree rooted at its DUT; `--view tb`
@@ -153,15 +158,11 @@ uv run rb --machine fpv --list   # dry-list verification names
 
 `test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly. Likewise, run `fpv` from the suite directory that contains the relevant `fpv.yaml`, and run `fpv-regression` from the repo root.
 
-`hier --view tb` requires the test's testbench entry in `tests.yaml`
-to carry a `toplevel:` field (the SV module name at the testbench's
-root). All shipped templates include this; new suites copied from
-`verif/template/` inherit it. Without `toplevel:`, `--view tb`
-silently degrades to the DUT-rooted view.
+`hier --view tb` requires the test's testbench entry in `tests.yaml` to carry a `toplevel:` field (the SV module name at the testbench's root). All shipped templates include this; new suites copied from `verif/template/` inherit it. Without `toplevel:`, `--view tb` silently degrades to the DUT-rooted view.
 
 ## When rtl_buddy Changes
 
-- Add or adjust examples in `design/`, `verif/`, `spec/`, and `fpv/` if the feature needs visible coverage.
+- Add or adjust examples in `design/`, `verif/`, `spec/`, `lint/`, `synth/`, `pnr/`, `fpga/`, and `fpv/` if the feature needs visible coverage.
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
 - Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Commit only the dependency pin (`pyproject.toml` / `uv.lock`) — skill files are gitignored.
