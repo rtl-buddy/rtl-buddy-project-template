@@ -135,14 +135,14 @@ uv run rb --machine test basic
 
 cd ../icarus_smoke
 uv run rb --machine test basic
-uv run rb --machine test basic --builder verilator
+uv run rb --machine --builder verilator test basic
 
 # Hierarchy rendering (rtl-buddy-view #99). `--view dut` (default)
 # renders the model's module tree rooted at its DUT; `--view tb`
 # renders the testbench tree with the DUT called out as a subtree,
 # using the test's tb.toplevel to anchor the new --tb-top flag.
-uv run rb hier demo_tiny_alu                   --format tree            # DUT view
-uv run rb hier basic --view tb --format tree                            # TB view
+uv run rb --machine hier demo_tiny_alu                   --format tree   # DUT view
+uv run rb --machine hier basic --view tb --format tree                   # TB view
 
 cd ../demo_tiny_alu_cocotb
 uv run rb --machine test cocotb_random
