@@ -3,12 +3,8 @@ rtl-buddy-filetype: cdc_config
 
 # Each entry runs the configured CDC tool against the named model.
 # `constraints:` is the SDC; `waivers:` is optional. Paths are resolved
-# relative to this file.
-#
-# Slang-required SV examples are tracked in issue #21 and will land
-# once rtl-buddy-cdc#5 (slang frontend) and rtl_buddy#88 are released.
-# The new analyses will exercise `rb cdc` with the slang frontend
-# alongside the Yosys-backed analyses below.
+# relative to this file. The analyses below intentionally cover both the
+# default Yosys-backed path and newer slang / blackbox flows.
 analyses:
   - name: "ip_cdc_handshake_lint"
     desc: "CDC lint of the request/ack handshake IP"
@@ -51,12 +47,11 @@ analyses:
     tool: "rtl-buddy-cdc"
     constraints: "demo_cdc_open.sdc"
 
-  # Slang-required (issue #21). Blackboxes a single-clock SRAM macro for CDC
-  # scaling — the `blackbox:` key is forwarded as `--blackbox sram_sp`, which
-  # needs rtl-buddy-cdc >= 0.3.0 (rtl-buddy-cdc#259) + rtl_buddy with the
-  # blackbox key (rtl_buddy#318), run with the yosys-slang plugin
-  # (RTL_BUDDY_SLANG_PLUGIN). Abstracting the macro is result-preserving:
-  # identical crossings/violations vs the flat run, with its internals removed.
+  # Blackboxes a single-clock SRAM macro for CDC scaling. The `blackbox:` key
+  # is forwarded as `--blackbox sram_sp`, which needs rtl-buddy-cdc >= 0.3.0
+  # (rtl-buddy-cdc#259) and an rtl_buddy release with the blackbox key
+  # (rtl_buddy#318). Abstracting the macro is result-preserving: identical
+  # crossings/violations vs the flat run, with its internals removed.
   - name: "demo_cdc_mem_macro_lint"
     desc: >-
       Blackbox a single-clock SRAM macro for CDC scaling: the clk_h -> clk_m
