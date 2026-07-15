@@ -134,8 +134,8 @@ cd verif/demo_tiny_alu
 uv run rb --machine test basic
 
 cd ../icarus_smoke
-uv run rb --machine test counter_smoke
-uv run rb --machine test counter_smoke --builder verilator
+uv run rb --machine test basic
+uv run rb --machine test basic --builder verilator
 
 # Hierarchy rendering (rtl-buddy-view #99). `--view dut` (default)
 # renders the model's module tree rooted at its DUT; `--view tb`
