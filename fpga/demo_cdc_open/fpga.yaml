@@ -22,7 +22,12 @@ runs:
     model_path: "../../design/demo_cdc_open/models.yaml"
     part: "xc7a35tcsg324-1"
     xdc:
+      # Hand-written top XDC: clock defs, async clock group, IOSTANDARDs.
       - "demo_cdc_open.xdc"
+      # Scoped per-synchronizer CDC exceptions, generated from the verified
+      # crossing set by `rb cdc --emit-constraints --scoped` (see
+      # ../../lint/cdc/check_cdc_xdc.sh). Regenerate — do not hand-edit.
+      - "demo_cdc_open_cdc_scoped.xdc"
     # reglvl-gated: this is an extra-toolchain (open FPGA) run, kept out of
     # the every-push sanity tier. Run with `-l 1000` (nightly) or higher.
     reglvl: 1000
