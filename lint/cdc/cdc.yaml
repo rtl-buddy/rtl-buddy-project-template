@@ -45,11 +45,20 @@ analyses:
       Portable CDC block (2FF, Gray bus, req/ack handshake, reset sync)
       carrying only vendor-neutral ASYNC_REG/keep. Recognition half of
       the open FPGA demo — reports the crossings safe before
-      `rb fpga tool: openxc7` implements it (see ../../fpga/demo_cdc_open/).
+      `rb fpga tool: openxc7` implements it (see ../../fpga/demo_cdc_open/),
+      and feeds the scoped generate→audit loop (see check_cdc_xdc.sh).
     model: "demo_cdc_open_top"
     model_path: "../../design/demo_cdc_open/models.yaml"
     tool: "rtl-buddy-cdc"
     constraints: "demo_cdc_open.sdc"
+    # slang preserves the synchronizer instance hierarchy, which
+    # `rb cdc --emit-constraints --scoped` needs to address IP-relative
+    # cells (SCOPED_TO_REF). The default yosys frontend `flatten`s that
+    # hierarchy away — scoped emit then errors rather than emitting
+    # over-broad `<top>/*` wildcards. slang also elaborates the
+    # `(* cdc_handshake *)`-annotated held-payload bus without a CDC-012
+    # false positive (rtl-buddy-cdc >= 0.3.3).
+    frontend: "slang"
 
   # Slang-required (issue #21). Blackboxes a single-clock SRAM macro for CDC
   # scaling — the `blackbox:` key is forwarded as `--blackbox sram_sp`, which
