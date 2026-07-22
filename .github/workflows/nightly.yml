@@ -76,3 +76,11 @@ jobs:
         # fresh checkout without the FPGA toolchain pass. Install the
         # openXC7 toolchain (or set CHIPDB) to actually implement here.
         run: uv run rtl-buddy --machine fpga-regression -c fpga_regression.yaml -l 1000
+
+      - name: Check demo_cdc_open scoped CDC constraint loop
+        # generate -> freshness -> audit for fpga/demo_cdc_open's scoped XDC
+        # (rb cdc --emit-constraints --scoped / --check-xdc). Needs only the
+        # open rtl-buddy-cdc[slang] engine (in the locked env), not the FPGA
+        # toolchain, so it runs for real here. The script self-SKIPs (exit 0)
+        # if the installed rtl_buddy predates --emit-constraints.
+        run: RB="uv run rtl-buddy" bash lint/cdc/check_cdc_xdc.sh
