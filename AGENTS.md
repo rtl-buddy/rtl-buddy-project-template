@@ -20,13 +20,17 @@ naming convention surfaces the category in the directory name:
   expected spec/design/verif/test shape for a new block. Copy these
   when starting fresh.
 - **Demo blocks** — `demo_*` end-to-end examples that exercise
-  specific rtl_buddy capabilities (`demo_tiny_alu`,
-  `demo_tiny_alu_cocotb`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`,
-  `demo_abv_basic`). Safe to delete when starting a new project.
+  specific rtl_buddy capabilities, including SV, cocotb, SystemC,
+  subsystem, CDC, ABV/FPV, mutation, AXI profiling, and third-party IP
+  flows. Safe to delete when starting a new project.
+- **Focused smoke suites** — small backend or tool smoke tests such as
+  `icarus_smoke`, which are intentionally minimal and may not follow
+  the `demo_*` naming pattern.
 
 Preserve this categorisation in new work — name new leaf IP without a
-prefix, new demos with `demo_*`, and don't touch `template/` unless
-you're updating the starter skeleton itself.
+prefix, new demos with `demo_*`, keep backend/tool smoke suites small
+and clearly named, and don't touch `template/` unless you're updating
+the starter skeleton itself.
 
 ## This Is A Template Repo
 
@@ -53,13 +57,16 @@ root_config.yaml
 regression.yaml
 fpv_regression.yaml
 design/demo_tiny_alu/
+design/icarus_smoke/
 design/template/
 spec/template/                  # spec traceability example
 verif/template/
+verif/icarus_smoke/             # minimal Icarus backend smoke suite
 fpv/demo_abv/demo_abv_basic/
-pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
-uv.lock                        # committed lockfile for reproducible project setup
-.python-version                # pinned Python version for uv
+.github/workflows/icarus.yml    # dedicated Icarus CI coverage
+pyproject.toml                  # uv-managed project environment and rtl_buddy dependency pin
+uv.lock                         # committed lockfile for reproducible project setup
+.python-version                 # pinned Python version for uv
 ```
 
 The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.
@@ -71,6 +78,7 @@ The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and material
 - **uv** — install from Astral and make sure it is on `PATH`.
 - **Python 3.11** — standard interpreter for this repo.
 - **Verilator** — e.g. `brew install verilator` on macOS, or build from source.
+- **Icarus Verilog** — optional for the default regression, required for `verif/icarus_smoke/` and the dedicated Icarus CI path (`brew install icarus-verilog` on macOS, `apt install iverilog` on Debian/Ubuntu).
 - **Verible** — e.g. `brew tap chipsalliance/verible && brew install verible` on macOS, or see the [Verible releases](https://github.com/chipsalliance/verible/releases) for other platforms.
 
 ### Setup steps
@@ -131,6 +139,11 @@ uv run rb --machine spec check-coverage
 # from suite dir
 cd verif/demo_tiny_alu
 uv run rb --machine test basic
+
+# Icarus backend smoke suite; requires iverilog + vvp on PATH
+cd ../icarus_smoke
+uv run rb --machine test basic
+uv run rb --machine -B verilator test basic
 
 # Hierarchy rendering (rtl-buddy-view #99). `--view dut` (default)
 # renders the model's module tree rooted at its DUT; `--view tb`
