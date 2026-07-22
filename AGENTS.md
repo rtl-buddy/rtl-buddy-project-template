@@ -141,9 +141,8 @@ cd verif/demo_tiny_alu
 uv run rb --machine test basic
 
 # Icarus backend smoke suite; requires iverilog + vvp on PATH
-cd ../icarus_smoke
-uv run rb --machine test basic
-uv run rb --machine -B verilator test basic
+(cd ../icarus_smoke && uv run rb --machine test basic)
+(cd ../icarus_smoke && uv run rb --machine -B verilator test basic)
 
 # Hierarchy rendering (rtl-buddy-view #99). `--view dut` (default)
 # renders the model's module tree rooted at its DUT; `--view tb`
