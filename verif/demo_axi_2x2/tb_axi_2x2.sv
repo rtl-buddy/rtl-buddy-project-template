@@ -244,7 +244,6 @@ module tb_axi_2x2;
               s_axi_``name``_awburst <= axi_pkg::BURST_INCR;                    \
               s_axi_``name``_wvalid  <= 1'b1;                                   \
               s_axi_``name``_wdata   <= {ID_BASE, name``_w_idx[27:0]};          \
-              s_axi_``name``_wstrb   <= '1;                                     \
               s_axi_``name``_wlast   <= (pick_burst_len(name``_w_idx) == 8'd0); \
               name``_aw_len_q   <= pick_burst_len(name``_w_idx);                \
               name``_w_beat_cnt <= 8'd0;                                        \

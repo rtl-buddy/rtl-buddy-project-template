@@ -57,7 +57,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /opt/systemc
-          key: systemc-${{ env.SYSTEMC_VERSION }}-${{ runner.os }}-v1
+          key: systemc-${{ env.SYSTEMC_VERSION }}-cxx20-${{ runner.os }}-v2
 
       - name: Build SystemC
         if: steps.systemc-cache.outputs.cache-hit != 'true'
@@ -67,7 +67,7 @@ jobs:
           mkdir -p /tmp/sc-build && cd /tmp/sc-build
           curl -fsSL "https://github.com/accellera-official/systemc/archive/refs/tags/${SYSTEMC_VERSION}.tar.gz" | tar xz
           cd "systemc-${SYSTEMC_VERSION}"
-          cmake -B build -DCMAKE_INSTALL_PREFIX=/opt/systemc -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=17
+          cmake -B build -DCMAKE_INSTALL_PREFIX=/opt/systemc -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_STANDARD=20
           cmake --build build -j"$(nproc)"
           cmake --install build
 

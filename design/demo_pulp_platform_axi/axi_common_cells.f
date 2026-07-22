@@ -1,7 +1,7 @@
 +incdir+../../vendor/pulp-platform/common_cells/include
 // Level 0
 -v ../../vendor/pulp-platform/common_cells/src/binary_to_gray.sv
--v ../../vendor/pulp-platform/common_cells/src/cf_math_pkg.sv
+../../vendor/pulp-platform/common_cells/src/cf_math_pkg.sv
 -v ../../vendor/pulp-platform/common_cells/src/delta_counter.sv
 -v ../../vendor/pulp-platform/common_cells/src/fifo_v3.sv
 -v ../../vendor/pulp-platform/common_cells/src/gray_to_binary.sv

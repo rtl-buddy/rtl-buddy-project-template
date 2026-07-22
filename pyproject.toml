@@ -3,9 +3,10 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy==6.1.0",
-  "rtl-buddy-cdc",
+  "rtl_buddy==6.17.2",
+  "rtl-buddy-cdc[slang]",
   "rtl-buddy-xeno[verible,slang]",
+  "rtl-buddy-axi-profiler[notebook]",
   "cocotb==2.0.1",
   "pytest==8.4.2",
   "info-process",
@@ -15,6 +16,13 @@ dependencies = [
 
 [tool.uv]
 package = false
+# Aggregator-level floor: force rtl-buddy-view >=0.2.1 across every transitive
+# path, regardless of what each consumer (rtl_buddy, rtl-buddy-cdc, ...)
+# declares. 0.2.1 is the first PyPI release and clears the 0.2.0 filelist
+# IsADirectoryError bug plus the SPA-less git build. The consumers carry a
+# floor + runtime guard of their own; this constraint is belt-and-suspenders so
+# no transitive path can ever drag the resolution below 0.2.1.
+constraint-dependencies = ["rtl-buddy-view>=0.2.1"]
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
@@ -22,9 +30,21 @@ peakrdl = { git = "https://github.com/rtl-buddy/PeakRDL.git", subdirectory = "pe
 peakrdl-regblock = { git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" }
 # Pinned CDC linter consumed via subprocess by `rb cdc`. No PyPI release
 # yet; pin to the git repo so `which rtl-buddy-cdc` works after `uv sync`.
-rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git" }
+# Pinned to the v0.3.3 release tag for reproducibility — bump the tag
+# (and re-lock) when consuming a newer rtl-buddy-cdc release.
+rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git", tag = "v0.3.3" }
 # Mutation engine driven by `rb mut`. Not on PyPI yet
 # (rtl-buddy/rtl-buddy-xeno#18), so pin the git repo; the [verible,slang]
 # extras (declared on the dependency above) pull the Verible CST + pyslang
 # toolchain the structural mutation operators need.
 rtl-buddy-xeno = { git = "https://github.com/rtl-buddy/rtl-buddy-xeno.git" }
+# AXI interconnect profiler driven by `rb axi-profile`. Not on PyPI yet
+# (no release workflow), so pin the git repo so the `axi-profiler` binary
+# resolves into the venv after `uv sync`. The [notebook] extra (declared on
+# the dependency above) pulls marimo + altair/polars/pandas/pyarrow so
+# `rb axi-profile notebook` / the rtl-buddy-view "Open in marimo" button work
+# in-venv — the notebook launcher imports rtl_buddy_axi_profiler in the rb
+# interpreter, so it must live here, not as an out-of-band tool. Self-bounds
+# pywellen<0.25 (matches rtl_buddy's own bound; the 0.25 trace-reader API
+# break is unported here).
+rtl-buddy-axi-profiler = { git = "https://github.com/rtl-buddy/rtl-buddy-axi-profiler.git" }

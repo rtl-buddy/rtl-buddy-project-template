@@ -10,14 +10,20 @@
 # setting. To run:
 #
 #   1. Build yosys-slang per tools/yosys-slang/SETUP_OSX.md.
-#   2. Update `plugin_path` below to point at *your* slang.so.
-#      (Absolute path, or relative to the project root containing
-#      root_config.yaml.)
+#   2. Point rtl_buddy at *your* slang.so via the
+#      RTL_BUDDY_SLANG_PLUGIN environment variable — export it from a
+#      toolchain env script, or put it in the gitignored
+#      `.rtl-buddy/.env` at the project root (rb loads it
+#      automatically). Alternatively hard-code `plugin_path` below
+#      (absolute, or relative to the project root); an explicit path
+#      overrides the environment.
 #   3. Then:
 #        uv run rb synth demo_slang_pkg_synth_slang \
 #            -c synth/demo_slang_pkg/synth.yaml
 #
-# Requires rtl_buddy>=4.1.0 for the `frontend` field to be honored.
+# Requires rtl_buddy>=4.1.0 for the `frontend` field to be honored;
+# the RTL_BUDDY_SLANG_PLUGIN / `.rtl-buddy/.env` fallback needs
+# >=6.11.0 (this template pins newer).
 #
 # `reglvl: 1000` excludes this block from default `rb synth-regression`
 # runs so the template's regression stays green on a vanilla install
@@ -37,4 +43,4 @@ syntheses:
     tool_overrides:
       yosys:
         frontend: "slang"
-        plugin_path: "../yosys-slang/build/slang.so"   # EDIT to your slang.so location
+        # plugin location comes from RTL_BUDDY_SLANG_PLUGIN (see header)

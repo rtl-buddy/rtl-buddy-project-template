@@ -138,9 +138,31 @@ cfg-rtl-builder:
         run-time: >-
           -l simv.log 
           -xlrm hier_inst_seed -diag hier_seed
-    builder-simv: "simv" 
+    builder-simv: "simv"
     # vcs
     # TODO in case we need platform specific builder, can use -platform in builder name
+  - <<: *rtl-builder-template
+    name: "icarus"
+    builder: "iverilog" # executable name
+    simulator-family: "icarus"
+    sim-rand-seed-prefix: "+seed="
+    builder-opts:
+      # debug-mode dumps VCD via $dumpfile/$dumpvars when DUMP is defined
+      debug:
+        compile-time: >-
+          -g2012
+          -gsupported-assertions
+          -DDUMP
+        run-time: ""
+      # regression-mode w/o trace
+      reg:
+        compile-time: >-
+          -g2012
+          -gsupported-assertions
+        run-time: ""
+    # simv is a thin wrapper rtl_buddy writes around `vvp <snapshot>.vvp`
+    builder-simv: "simv"
+    # icarus
 # cfg-rtl-builder
 # End RTL builder configuration
 
@@ -264,11 +286,13 @@ cfg-fpv-tools:
       # Path to the built yosys-slang plugin, required by any
       # verification with `frontend: slang` (e.g. demo_abv_basic,
       # whose bound checker only elaborates under slang; demo_abv_features
-      # vacuity variant). Sibling-checkout convention matches
-      # synth/demo_slang_pkg/synth.yaml; resolved relative to this file.
-      # Build per tools/yosys-slang/SETUP_OSX.md and EDIT to your
-      # slang.so location (absolute paths also work).
-      plugin-path: "../yosys-slang/build/slang.so"
+      # vacuity variant). Build per tools/yosys-slang/SETUP_OSX.md.
+      # Left unset so the machine-local location comes from the
+      # RTL_BUDDY_SLANG_PLUGIN environment variable — export it from a
+      # toolchain env script, or put it in the gitignored
+      # `.rtl-buddy/.env` next to this file (KEY=VALUE; rb loads it
+      # automatically). Setting an explicit path here overrides both.
+      plugin-path: ""
 # End formal configuration
 
 # SystemC cosim — required when a testbench in tests.yaml declares a
@@ -289,7 +313,10 @@ cfg-fpv-tools:
 cfg-systemc:
   home: "${SYSTEMC_HOME}"
   # cxx: "/opt/homebrew/bin/g++-15"
-  cflags: ["-std=c++17"]
+  # Match the C++ standard used to build libsystemc. SystemC 3.0.0 is
+  # commonly built as C++20 (libsystemc exports sc_api_version_3_0_0_cxx202002L);
+  # set this to the std your local SystemC was compiled with.
+  cflags: ["-std=c++20"]
   ldflags: []
 # End SystemC configuration
 

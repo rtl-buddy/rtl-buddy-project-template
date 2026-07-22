@@ -1,3 +1,9 @@
+// Lint waivers for the vendored pulp-platform AXI sources. The config
+// directive below is understood only by the Verilator tool, so it is
+// guarded on the VERILATOR macro — any other simulator (VCS, Xcelium,
+// yosys-slang, ...) reading this file from a shared filelist skips it
+// instead of erroring on an unknown pragma.
+`ifdef VERILATOR
 `verilator_config
 lint_off -rule GENUNNAMED   -file "*/pulp-platform/*"
 lint_off -rule SYNCASYNCNET -file "*/pulp-platform/*"
@@ -6,3 +12,4 @@ lint_off -rule ASCRANGE     -file "*/pulp-platform/*"
 lint_off -rule UNOPTFLAT    -file "*/pulp-platform/*"
 lint_off -rule UNSIGNED     -file "*/pulp-platform/*"
 lint_off -rule IMPLICIT     -file "*/pulp-platform/*"
+`endif
