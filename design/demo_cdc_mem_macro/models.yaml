@@ -1,0 +1,14 @@
+rtl-buddy-filetype: model_config
+
+# Demo: blackboxing a single-clock memory macro for CDC scaling.
+# `mem_subsys` crosses host-domain control (clk_h) into the memory
+# domain (clk_m) and drives the `sram_sp` SRAM macro. The macro is the
+# blackbox-for-scale target (see lint/cdc/cdc.yaml::demo_cdc_mem_macro_lint).
+models:
+  - name: "mem_subsys"
+    desc: "Memory subsystem: clk_h -> clk_m CDC into a single-clock SRAM macro"
+    filelist:
+      - "-v ../common/ip_cdc_sync.sv"
+      - "-v ../common/ip_cdc_handshake.sv"
+      - "-v sram_sp.sv"
+      - "-v mem_subsys.sv"

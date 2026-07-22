@@ -1,6 +1,11 @@
 # CDC waivers for the demo_tiny_alu_subsys design.
 #
 # Format: waive <RULE-ID|*> <regex> [reason ...]
+#
+# This analysis runs through the pyslang frontend (see cdc.yaml) because
+# the subsystem top has a SystemVerilog interface port (apb_intf) that
+# the yosys read paths can't elaborate cleanly. The regexes below match
+# pyslang's `$slang$adff$N` cell naming.
 
 # CDC-003 on u_sync_empty: ip_async_fifo exposes rd_empty as a bare
 # comparator (rptr_gray == wptr_gray_in_r), which feeds u_sync_empty
@@ -17,4 +22,14 @@
 # regress the test.
 #
 # See discussion in commit history for ip_async_fifo and demo_tiny_alu_subsys_top.
-waive CDC-003 .*u_sync_empty.*procdff.*  fifo_rd_empty comparator → u_sync_empty crossing; see waiver header
+waive CDC-003 .*u_sync_empty\..*  fifo_rd_empty comparator → u_sync_empty crossing; see waiver header
+
+# (CDC-012 on u_hs_cmd is no longer waived — the (* cdc_handshake *)
+# attribute on the ip_cdc_handshake primitive now suppresses CDC-012
+# directly, as it already did for CDC-001/013/014/020. Fixed upstream in
+# rtl-buddy-cdc 0.3.3; this analysis pins v0.3.3.)
+
+# (RDC-008 on u_afifo's crst_n is no longer waived — fixed in RTL: the
+# subsys now synchronises crst_n's deassertion to cclk via the
+# crst_n_sync 2FF reset synchroniser and routes every cclk consumer
+# through it. See demo_tiny_alu_subsys_top.sv "cclk reset synchroniser".)

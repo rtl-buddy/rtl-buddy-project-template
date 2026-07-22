@@ -24,6 +24,12 @@ analyses:
     tool: "rtl-buddy-cdc"
     constraints: "demo_tiny_alu_subsys.sdc"
     waivers: "demo_tiny_alu_subsys.waivers"
+    # This top has a SystemVerilog interface port (apb_intf.subordinate
+    # apb). The yosys read paths can't elaborate it cleanly — read_verilog
+    # turns the interface into phantom nets, read_slang can't represent a
+    # top-level interface port at all — so this analysis uses the pyslang
+    # frontend, which elaborates the interface hierarchy natively.
+    frontend: "slang"
 
   - name: "demo_cdc_src_sync_lint"
     desc: >-
@@ -33,3 +39,39 @@ analyses:
     model_path: "../../design/demo_cdc_src_sync/models.yaml"
     tool: "rtl-buddy-cdc"
     constraints: "demo_cdc_src_sync.sdc"
+
+  - name: "demo_cdc_open_lint"
+    desc: >-
+      Portable CDC block (2FF, Gray bus, req/ack handshake, reset sync)
+      carrying only vendor-neutral ASYNC_REG/keep. Recognition half of
+      the open FPGA demo — reports the crossings safe before
+      `rb fpga tool: openxc7` implements it (see ../../fpga/demo_cdc_open/),
+      and feeds the scoped generate→audit loop (see check_cdc_xdc.sh).
+    model: "demo_cdc_open_top"
+    model_path: "../../design/demo_cdc_open/models.yaml"
+    tool: "rtl-buddy-cdc"
+    constraints: "demo_cdc_open.sdc"
+    # slang preserves the synchronizer instance hierarchy, which
+    # `rb cdc --emit-constraints --scoped` needs to address IP-relative
+    # cells (SCOPED_TO_REF). The default yosys frontend `flatten`s that
+    # hierarchy away — scoped emit then errors rather than emitting
+    # over-broad `<top>/*` wildcards. slang also elaborates the
+    # `(* cdc_handshake *)`-annotated held-payload bus without a CDC-012
+    # false positive (rtl-buddy-cdc >= 0.3.3).
+    frontend: "slang"
+
+  # Slang-required (issue #21). Blackboxes a single-clock SRAM macro for CDC
+  # scaling — the `blackbox:` key is forwarded as `--blackbox sram_sp`, which
+  # needs rtl-buddy-cdc >= 0.3.0 (rtl-buddy-cdc#259) + rtl_buddy with the
+  # blackbox key (rtl_buddy#318), run with the yosys-slang plugin
+  # (RTL_BUDDY_SLANG_PLUGIN). Abstracting the macro is result-preserving:
+  # identical crossings/violations vs the flat run, with its internals removed.
+  - name: "demo_cdc_mem_macro_lint"
+    desc: >-
+      Blackbox a single-clock SRAM macro for CDC scaling: the clk_h -> clk_m
+      crossing is preserved while sram_sp's internals are abstracted away.
+    model: "mem_subsys"
+    model_path: "../../design/demo_cdc_mem_macro/models.yaml"
+    tool: "rtl-buddy-cdc"
+    constraints: "demo_cdc_mem_macro.sdc"
+    blackbox: ["sram_sp"]

@@ -26,6 +26,27 @@ module demo_tiny_alu_subsys_top (
   input  logic        crst_n
 );
 
+  // ────────── cclk reset synchroniser (RDC-008) ──────────
+  // crst_n is an asynchronous primary reset. Synchronise its
+  // *deassertion* to cclk so the compute-domain flops leave reset on a
+  // clean cclk edge — an unsynchronised async-reset removal can violate
+  // recovery/removal timing and let the cclk flops exit reset on
+  // different cycles. Assertion stays asynchronous/immediate. Every
+  // cclk consumer below takes crst_n_sync; the write side keeps its own
+  // apb_rst_n (an async FIFO tolerates independent per-side reset).
+  // SYNCASYNCNET is expected here and is the whole point: crst_sync_q is
+  // clocked synchronously by cclk yet its output (crst_n_sync) drives the
+  // async-reset pins of the cclk consumers — that dual use *is* the reset
+  // synchroniser. Scope the waiver to this block only.
+  /* verilator lint_off SYNCASYNCNET */
+  (* ASYNC_REG = "TRUE", keep *) logic [1:0] crst_sync_q;
+  always_ff @(posedge cclk or negedge crst_n) begin
+    if (!crst_n) crst_sync_q <= 2'b00;
+    else         crst_sync_q <= {crst_sync_q[0], 1'b1};
+  end
+  wire crst_n_sync = crst_sync_q[1];
+  /* verilator lint_on SYNCASYNCNET */
+
   // ────────── CSR block ──────────
   demo_tiny_alu_subsys_csr_pkg::demo_tiny_alu_subsys_csr__in_t  hwif_in;
   demo_tiny_alu_subsys_csr_pkg::demo_tiny_alu_subsys_csr__out_t hwif_out;
@@ -65,7 +86,7 @@ module demo_tiny_alu_subsys_top (
     .src_clk   (apb_clk), .src_rst_n (apb_rst_n),
     .src_valid (cmd_src_valid), .src_ready (cmd_src_ready),
     .src_data  (cmd_payload_apb),
-    .dst_clk   (cclk),    .dst_rst_n (crst_n),
+    .dst_clk   (cclk),    .dst_rst_n (crst_n_sync),
     .dst_valid (cmd_dst_valid_cclk),
     .dst_data  (cmd_dst_data_cclk)
   );
@@ -84,14 +105,14 @@ module demo_tiny_alu_subsys_top (
   ip_async_fifo #(.DEPTH(8), .DATA_W(19)) u_afifo (
     .wclk     (apb_clk), .wrst_n (apb_rst_n),
     .wr_en    (fifo_wr_en),    .wr_data (fifo_wr_data), .wr_full (fifo_wr_full),
-    .rclk     (cclk),    .rrst_n (crst_n),
+    .rclk     (cclk),    .rrst_n (crst_n_sync),
     .rd_en    (fifo_rd_en),    .rd_data (fifo_rd_data), .rd_empty (fifo_rd_empty)
   );
 
   // ────────── compute domain ──────────
   logic       src_sel_cclk;
   ip_cdc_sync #(.WIDTH(1), .STAGES(2)) u_sync_src (
-    .clk(cclk), .rst_n(crst_n), .d(hwif_out.ctrl.SRC.value), .q(src_sel_cclk)
+    .clk(cclk), .rst_n(crst_n_sync), .d(hwif_out.ctrl.SRC.value), .q(src_sel_cclk)
   );
 
   logic       result_valid_cclk;
@@ -101,7 +122,7 @@ module demo_tiny_alu_subsys_top (
 
   demo_tiny_alu_subsys_compute u_compute (
     .clk           (cclk),
-    .rst_n         (crst_n),
+    .rst_n         (crst_n_sync),
     .src_sel       (src_sel_cclk),
     .cmd_valid     (cmd_dst_valid_cclk),
     .cmd_op        (cmd_dst_data_cclk[18:16]),
@@ -129,7 +150,7 @@ module demo_tiny_alu_subsys_top (
   logic [11:0] result_dst_data_apb;
 
   ip_cdc_handshake #(.WIDTH(12)) u_hs_result (
-    .src_clk   (cclk),    .src_rst_n (crst_n),
+    .src_clk   (cclk),    .src_rst_n (crst_n_sync),
     .src_valid (result_valid_cclk), .src_ready (/*ignored*/),
     .src_data  (result_payload_cclk),
     .dst_clk   (apb_clk), .dst_rst_n (apb_rst_n),

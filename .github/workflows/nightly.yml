@@ -66,3 +66,21 @@ jobs:
         # (reglvl default: 4000) stays skipped under Verilator, as on push.
         # reg mode (no -M cov); full-project coverage is run on demand.
         run: uv run rtl-buddy --machine -B verilator regression -c regression.yaml -l 1000
+
+      - name: Run FPGA regression (open flow, skip-clean)
+        # The open FPGA demo (fpga/demo_cdc_open, tool: openxc7) keeps the
+        # config green against rtl_buddy bumps. The open toolchain
+        # (nextpnr-xilinx + prjxray + chipdb) is not installed on the
+        # runner, so every run reports SKIP (not FAIL) and the step stays
+        # green — exactly the reglvl + optional-backend gating that lets a
+        # fresh checkout without the FPGA toolchain pass. Install the
+        # openXC7 toolchain (or set CHIPDB) to actually implement here.
+        run: uv run rtl-buddy --machine fpga-regression -c fpga_regression.yaml -l 1000
+
+      - name: Check demo_cdc_open scoped CDC constraint loop
+        # generate -> freshness -> audit for fpga/demo_cdc_open's scoped XDC
+        # (rb cdc --emit-constraints --scoped / --check-xdc). Needs only the
+        # open rtl-buddy-cdc[slang] engine (in the locked env), not the FPGA
+        # toolchain, so it runs for real here. The script self-SKIPs (exit 0)
+        # if the installed rtl_buddy predates --emit-constraints.
+        run: RB="uv run rtl-buddy" bash lint/cdc/check_cdc_xdc.sh

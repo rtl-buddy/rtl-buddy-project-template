@@ -36,6 +36,15 @@ module ip_async_fifo #(
   logic [PTR_W-1:0] wptr_bin_next, wptr_gray_next;
   logic [PTR_W-1:0] rptr_gray_in_w;
 
+  // Read-pointer registers. Declared up here, ahead of the read-side
+  // logic below, so the write-side read-pointer synchroniser
+  // (u_sync_rptr) can reference `rptr_gray` without a forward use —
+  // stricter SystemVerilog frontends (yosys-slang) reject use-before-
+  // declaration that the built-in read_verilog frontend tolerates.
+  logic [PTR_W-1:0] rptr_bin, rptr_gray;
+  logic [PTR_W-1:0] rptr_bin_next, rptr_gray_next;
+  logic [PTR_W-1:0] wptr_gray_in_r;
+
   assign wptr_bin_next  = wptr_bin + 1'b1;
   assign wptr_gray_next = wptr_bin_next ^ (wptr_bin_next >> 1);
 
@@ -58,11 +67,7 @@ module ip_async_fifo #(
   assign wr_full = (wptr_gray_next ==
                     {~rptr_gray_in_w[PTR_W-1:PTR_W-2], rptr_gray_in_w[PTR_W-3:0]});
 
-  // ── Read side
-  logic [PTR_W-1:0] rptr_bin, rptr_gray;
-  logic [PTR_W-1:0] rptr_bin_next, rptr_gray_next;
-  logic [PTR_W-1:0] wptr_gray_in_r;
-
+  // ── Read side (pointer registers declared above, with the write side)
   assign rptr_bin_next  = rptr_bin + 1'b1;
   assign rptr_gray_next = rptr_bin_next ^ (rptr_bin_next >> 1);
 
