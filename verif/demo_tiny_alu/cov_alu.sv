@@ -6,7 +6,12 @@
 // `cover property` constructs (with `bins`-equivalent semantics encoded
 // as named cover labels). Each label matches a SAND-FUNC-* ID in
 // `spec/demo_tiny_alu/specs.yaml` so `rb spec check-coverage` closes the loop.
+//
+// `cover property` is unsupported by Icarus 12, so the whole module is
+// gated out under SIM_ICARUS (the file stays in the suite filelist but
+// compiles to nothing; tb_top.sv skips the matching bind there).
 
+`ifndef SIM_ICARUS
 module cov_alu (
   input logic         clk,
   input logic         rst,
@@ -60,3 +65,4 @@ module cov_alu (
   );
 
 endmodule
+`endif

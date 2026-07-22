@@ -147,18 +147,23 @@ cfg-rtl-builder:
     simulator-family: "icarus"
     sim-rand-seed-prefix: "+seed="
     builder-opts:
+      # SIM_ICARUS gates out constructs Icarus 12 cannot compile
+      # (cover-property SVA, interface-class LVM hooks); see
+      # verif/demo_tiny_alu/ and common/lvm_core.sv.
       # debug-mode dumps VCD via $dumpfile/$dumpvars when DUMP is defined
       debug:
         compile-time: >-
           -g2012
           -gsupported-assertions
           -DDUMP
+          -DSIM_ICARUS
         run-time: ""
       # regression-mode w/o trace
       reg:
         compile-time: >-
           -g2012
           -gsupported-assertions
+          -DSIM_ICARUS
         run-time: ""
     # simv is a thin wrapper rtl_buddy writes around `vvp <snapshot>.vvp`
     builder-simv: "simv"

@@ -66,6 +66,21 @@ uv run python build_report.py
 open report/index.md
 ```
 
+### Running on Icarus Verilog
+
+The suite also runs on Icarus Verilog (`iverilog` 12) with `-B icarus`:
+
+```bash
+uv run rb -B icarus test basic     # dumps dump.vcd; PASS/FAIL via LVM report
+```
+
+Icarus 12 cannot compile the suite's `cover property` SVA (in `cov_alu.sv`)
+or LVM's `interface class` end-of-test hooks (in `common/lvm_core.sv`), so
+both are gated out under the `SIM_ICARUS` define (set by the `icarus`
+builder in `root_config.yaml`). Functional checking against the Python
+golden is unchanged; only the cover-property coverage and the hook plumbing
+are skipped. See [Simulators (Verilator vs Icarus)](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/simulators/).
+
 ## Files
 
 | File              | Purpose                                                                |
