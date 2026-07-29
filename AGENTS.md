@@ -11,8 +11,9 @@ The project should stay runnable. `design/demo_tiny_alu/` is the primary working
 
 ## Block Categories
 
-Blocks shipped with this template fall into three categories. The
-naming convention surfaces the category in the directory name:
+Blocks shipped with this template fall into four categories. The
+naming convention surfaces the category in the directory name where
+possible:
 
 - **Base IP** — leaf, reusable components (`apb`, `ip_cdc_sync`,
   `ip_cdc_handshake`, `ip_async_fifo`). No prefix.
@@ -21,12 +22,22 @@ naming convention surfaces the category in the directory name:
   when starting fresh.
 - **Demo blocks** — `demo_*` end-to-end examples that exercise
   specific rtl_buddy capabilities (`demo_tiny_alu`,
-  `demo_tiny_alu_cocotb`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`,
-  `demo_abv_basic`). Safe to delete when starting a new project.
+  `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`,
+  `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, `demo_cdc_open`,
+  `demo_abv_basic`, `demo_abv_features`, `demo_abv_induction`,
+  `demo_axi_2x2`, `demo_pulp_platform_axi`). Safe to delete when
+  starting a new project, after removing their regression/config
+  references.
+- **Tool smoke blocks** — small, purpose-named compatibility examples
+  that are not product IP and are not meant to become user design
+  blocks. `icarus_smoke` exists only to exercise the Icarus builder
+  path and should stay intentionally minimal.
 
 Preserve this categorisation in new work — name new leaf IP without a
 prefix, new demos with `demo_*`, and don't touch `template/` unless
-you're updating the starter skeleton itself.
+you're updating the starter skeleton itself. If you add another tool
+smoke block, keep it narrow and document why it is not part of the main
+demo hierarchy.
 
 ## This Is A Template Repo
 
@@ -43,6 +54,7 @@ Remove or update anything that refers to:
 - example project names or block names that no longer apply
 - private infrastructure, private links, or organization-specific paths
 - vendoring or dependency arrangements that the new project does not use
+- demo or smoke blocks that were removed from `design/`, `verif/`, `fpv/`, `fpga/`, `lint/`, or regression configs
 
 The `rtl_buddy` workflow sections below are worth keeping in downstream projects because they describe how to use the toolchain inside a project repo.
 
@@ -51,15 +63,30 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 ```text
 root_config.yaml
 regression.yaml
+synth_regression.yaml
 fpv_regression.yaml
+fpga_regression.yaml
 design/demo_tiny_alu/
+design/demo_tiny_alu_subsys/
+design/demo_abv/
+design/demo_cdc_open/
+design/icarus_smoke/
 design/template/
 spec/template/                  # spec traceability example
 verif/template/
+verif/demo_tiny_alu/
+verif/demo_tiny_alu_cocotb/
+verif/demo_tiny_alu_sc/
+verif/demo_abv/
+verif/icarus_smoke/
 fpv/demo_abv/demo_abv_basic/
-pyproject.toml                 # uv-managed project environment and rtl_buddy dependency pin
-uv.lock                        # committed lockfile for reproducible project setup
-.python-version                # pinned Python version for uv
+fpv/demo_abv/demo_abv_features/
+fpv/demo_abv/demo_abv_induction/
+fpga/demo_cdc_open/
+lint/cdc/                       # CDC analyses plus generated/audited constraint checks
+pyproject.toml                  # uv-managed project environment and rtl_buddy dependency pin
+uv.lock                         # committed lockfile for reproducible project setup
+.python-version                 # pinned Python version for uv
 ```
 
 The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.
@@ -71,6 +98,7 @@ The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and material
 - **uv** — install from Astral and make sure it is on `PATH`.
 - **Python 3.11** — standard interpreter for this repo.
 - **Verilator** — e.g. `brew install verilator` on macOS, or build from source.
+- **Icarus Verilog 12** — optional, but required for the `icarus_smoke` and `-B icarus` compatibility checks.
 - **Verible** — e.g. `brew tap chipsalliance/verible && brew install verible` on macOS, or see the [Verible releases](https://github.com/chipsalliance/verible/releases) for other platforms.
 
 ### Setup steps
@@ -122,11 +150,22 @@ Use this repo to validate the project setup and `rtl_buddy` integration.
 # from repo root
 uv run rb --machine regression -c regression.yaml
 uv run rb --machine fpv-regression -c fpv_regression.yaml
+uv run rb --machine synth-regression -c synth_regression.yaml
+uv run rb --machine cdc-regression -c lint/cdc/cdc_regression.yaml
+uv run rb --machine fpga-regression -c fpga_regression.yaml
 uv run rb --machine filelist demo_tiny_alu -c design/demo_tiny_alu/models.yaml
 uv run rb --machine verible syntax design/demo_tiny_alu/demo_tiny_alu.sv
 uv run rb --machine spec list
 uv run rb --machine spec check-design
 uv run rb --machine spec check-coverage
+
+# Icarus compatibility checks (requires Icarus Verilog 12 on PATH)
+(cd verif/icarus_smoke && uv run rb --machine test smoke)
+(cd verif/demo_tiny_alu && uv run rb --machine -B icarus test basic)
+(cd verif/demo_tiny_alu_cocotb && uv run rb --machine -B icarus test cocotb_random)
+
+# CDC constraint freshness/audit loop for the FPGA CDC demo
+./lint/cdc/check_cdc_xdc.sh
 
 # from suite dir
 cd verif/demo_tiny_alu
@@ -161,7 +200,7 @@ silently degrades to the DUT-rooted view.
 
 ## When rtl_buddy Changes
 
-- Add or adjust examples in `design/`, `verif/`, `spec/`, and `fpv/` if the feature needs visible coverage.
+- Add or adjust examples in `design/`, `verif/`, `spec/`, `fpv/`, `fpga/`, `lint/`, and regression configs if the feature needs visible coverage.
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
 - Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Commit only the dependency pin (`pyproject.toml` / `uv.lock`) — skill files are gitignored.
