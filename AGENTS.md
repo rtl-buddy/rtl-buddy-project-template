@@ -24,10 +24,10 @@ possible:
   specific rtl_buddy capabilities (`demo_tiny_alu`,
   `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`,
   `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, `demo_cdc_open`,
-  `demo_abv_basic`, `demo_abv_features`, `demo_abv_induction`,
-  `demo_axi_2x2`, `demo_pulp_platform_axi`). Safe to delete when
-  starting a new project, after removing their regression/config
-  references.
+  `demo_cdc_mem_macro`, `demo_abv_basic`, `demo_abv_features`,
+  `demo_abv_induction`, `demo_axi_2x2`, `demo_pulp_platform_axi`).
+  Safe to delete when starting a new project, after removing their
+  regression/config references.
 - **Tool smoke blocks** — small, purpose-named compatibility examples
   that are not product IP and are not meant to become user design
   blocks. `icarus_smoke` exists only to exercise the Icarus builder
@@ -70,6 +70,7 @@ design/demo_tiny_alu/
 design/demo_tiny_alu_subsys/
 design/demo_abv/
 design/demo_cdc_open/
+design/demo_cdc_mem_macro/
 design/icarus_smoke/
 design/template/
 spec/template/                  # spec traceability example
