@@ -10,6 +10,14 @@ testbenches:
       - "+incdir+../../common"
       - "../../verif/demo_tiny_alu/cov_alu.sv"
       - "tb_top.sv"
+    # Default Slurm reservation for this testbench's tests under
+    # `rb regression --dispatch slurm` (rtl_buddy >= 6.21). Overrides the
+    # cluster-wide cfg-dispatch.resources; a per-test `resources:` overrides
+    # this in turn, field by field. Ignored by the default in-process run.
+    resources:
+      cpus: 2
+      mem: 6G
+      time: "00:15:00"
 tests:
   - name: "basic"
     desc: "smoke — exercise each opcode once with non-zero operands; vectors from Python golden"
@@ -36,6 +44,12 @@ tests:
   - name: "ops_sweep"
     desc: "every opcode with progressing operands; targets opcode + operand-range bins"
     reglvl: 0
+    # Heavier than the rest of the suite: override just mem+time (cpus is
+    # inherited from the tb_top reservation above). A distinct reservation
+    # means this test lands in its own Slurm array under --dispatch slurm.
+    resources:
+      mem: 12G
+      time: "00:40:00"
     plusargs:
       TEST: ops_sweep
       lvm_verbosity: 2
