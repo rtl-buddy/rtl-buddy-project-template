@@ -333,6 +333,51 @@ cfg-rtl-reg:
     reg-cfg-path: "regression.yaml"
   }
 
+# Parallel dispatch (rtl_buddy >= 6.21). By default a regression runs
+# in-process, one test at a time. On a cluster you can fan the tests out as
+# parallel Slurm jobs after a single shared build:
+#
+#   rb regression --dispatch slurm
+#
+# `backend` is intentionally left unset so the default stays local
+# (in-process) — nothing here affects a plain `rb regression`. Selecting
+# slurm requires a Slurm client on the submit host and a shared filesystem
+# visible at the same paths on the compute nodes. See
+# https://rtl-buddy.github.io/rtl_buddy/latest/concepts/dispatch/
+cfg-dispatch:
+  # backend: slurm          # uncomment (or pass --dispatch slurm) to opt in
+
+  # Cluster-wide default reservation for each SIMULATION job. Per-testbench
+  # and per-test `resources:` in tests.yaml override these field-by-field
+  # (see verif/demo_tiny_alu/tests.yaml for a worked example).
+  resources:
+    cpus: 2
+    mem: 4G
+    time: "00:30:00"        # QUOTE time values — an unquoted 4:00:00 is
+                            # YAML sexagesimal (14400), which Slurm reads as
+                            # minutes. rtl_buddy rejects the unquoted form.
+
+  # The shared build (Verilation) usually needs more than the sims it
+  # precedes; give the dispatched build job its own reservation.
+  compile:
+    cpus: 4
+    mem: 8G
+    time: "01:00:00"
+
+  # Extra flags passed to sbatch verbatim (partition, account, QOS, ...).
+  # sbatch-args:
+  #   - --partition=verif
+  #   - --account=chip
+
+  max-jobs-per-array: 64    # concurrency cap PER submitted array
+  poll-interval: 10         # seconds between queue polls while collecting
+
+  # After a dispatched run, rtl_buddy compares reserved vs used (from sacct)
+  # and prints right-sizing advice — it suggests, you apply. Needs slurmdbd
+  # accounting; degrades gracefully to no advice without it.
+  rightsize:
+    report: true
+
 # TODO cfg-rtl-lint : RTL Code Linter
 # cfg-rtl-lint : support spyglass
 
