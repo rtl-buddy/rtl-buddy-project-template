@@ -35,6 +35,28 @@ module tb_top;
   );
   /* verilator lint_on SYNCASYNCNET */
 
+  // Labeled cover properties. `assertions: true` already injects
+  // `--coverage-user`, so these are counted on every run of this test and
+  // roll up into the `F:` (functional) column of the results table.
+  //
+  // The label is the part that matters: under `--machine`, rtl_buddy reports
+  // each point by name with its hit count in
+  // `payload.coverage.covers` — `{name, file, line, module, hits}` — so a
+  // consumer can grade *which* points a run exercised rather than just how
+  // many. See the "Per-cover-point results" section of the rtl_buddy
+  // Coverage docs. Naming them after the intent, not the expression, is what
+  // makes them mappable to verification-plan items.
+  CNT_REACHED_MAX: cover property (@(posedge clk) rst_n && cnt == MAX[WIDTH-1:0]);
+  CNT_ENABLED_LOW: cover property (@(posedge clk) rst_n && cnt == '0 && en);
+
+  // Deliberately unreachable: `en` is never deasserted after reset release,
+  // so this point stays at 0 hits. It is here to show that an uncovered
+  // point is *reported* with `hits: 0` rather than omitted — a consumer
+  // grading plan items needs to see the gap, not infer it from an absence.
+  CNT_STALLED_WHILE_DISABLED: cover property (
+    @(posedge clk) rst_n && !en && cnt == $past(cnt)
+  );
+
   // Stimulus is driven on `negedge clk`, half a cycle before the DUT
   // and SVA both sample on the next posedge. Driving on `posedge clk`
   // with blocking `=` (the natural `initial`-script shape) puts the
