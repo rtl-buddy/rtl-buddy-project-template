@@ -22,6 +22,11 @@ module tb_top;
   // Reference queue (`active` gates the scoreboard until both resets are
   // released and the source has accepted at least one transfer)
   bit [W-1:0] expected[$];
+  // `mismatches` / `xfers` are 2-state, so they start at 0 without an explicit
+  // reset — which is just as well, because Verilator 5.050 rejects both ways of
+  // stating it: initialising them in the initial block below is MULTIDRIVEN
+  // against the always_ff increments, and a declaration initialiser is
+  // PROCASSINIT against the same writes.
   int unsigned mismatches;
   int unsigned xfers;
   bit          active;
@@ -59,7 +64,7 @@ module tb_top;
   endtask
 
   initial begin
-    mismatches = 0; xfers = 0; active = 1'b0;
+    active = 1'b0;
     src_clk = 1'b0; dst_clk = 1'b0;
     src_rst_n = 1'b0; dst_rst_n = 1'b0;
     src_valid = 1'b0; src_data = '0;
