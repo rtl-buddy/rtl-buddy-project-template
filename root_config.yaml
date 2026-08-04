@@ -357,8 +357,14 @@ cfg-dispatch:
                             # YAML sexagesimal (14400), which Slurm reads as
                             # minutes. rtl_buddy rejects the unquoted form.
 
-  # The shared build (Verilation) usually needs more than the sims it
-  # precedes; give the dispatched build job its own reservation.
+  # The shared build usually needs more than the sims it precedes; give the
+  # dispatched build job its own reservation. Sharing is builder-generic
+  # (Verilator, VCS, Icarus) as of rtl_buddy 6.22 — where a builder cannot
+  # share (e.g. a `builder-simv:` pinned to an absolute path), the compile
+  # runs inside each sim job and rtl_buddy reserves the per-field MAXIMUM of
+  # this block and the resolved sim reservation, since one allocation has to
+  # carry both phases. Right-sizing advice then points its edit hint here
+  # rather than at the test when the compile side governs the allocation.
   compile:
     cpus: 4
     mem: 8G
