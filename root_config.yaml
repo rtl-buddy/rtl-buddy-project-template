@@ -334,18 +334,29 @@ cfg-rtl-reg:
   }
 
 # Parallel dispatch (rtl_buddy >= 6.21). By default a regression runs
-# in-process, one test at a time. On a cluster you can fan the tests out as
-# parallel Slurm jobs after a single shared build:
+# in-process, one test at a time. Two backends fan the tests out in parallel
+# after a single shared build:
 #
-#   rb regression --dispatch slurm
+#   rb regression --dispatch slurm                  # a cluster
+#   rb regression --dispatch local-parallel -j 4    # this machine (>= 6.24)
 #
 # `backend` is intentionally left unset so the default stays local
 # (in-process) — nothing here affects a plain `rb regression`. Selecting
 # slurm requires a Slurm client on the submit host and a shared filesystem
-# visible at the same paths on the compute nodes. See
+# visible at the same paths on the compute nodes; local-parallel requires
+# nothing at all (and works on macOS, where Slurm does not run). See
 # https://rtl-buddy.github.io/rtl_buddy/latest/concepts/dispatch/
+#
+# NOTE: everything below this line is Slurm's. `local-parallel` runs jobs as
+# plain subprocesses on one host, which cannot enforce a reservation, so it
+# IGNORES `resources`/`compile`/`max-jobs-per-array` — it warns once per run
+# saying so — and has no accounting source, so it produces no right-sizing
+# advice. Its one knob is `-j/--jobs` (or `jobs:` below); size that for the
+# MEMORY your heaviest tests need, since nothing else limits them.
 cfg-dispatch:
   # backend: slurm          # uncomment (or pass --dispatch slurm) to opt in
+
+  # jobs: 4                 # local-parallel pool size; default min(4, cpus)
 
   # Cluster-wide default reservation for each SIMULATION job. Per-testbench
   # and per-test `resources:` in tests.yaml override these field-by-field
