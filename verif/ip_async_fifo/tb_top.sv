@@ -17,6 +17,11 @@ module tb_top;
   );
 
   bit [DATA_W-1:0] expected[$];
+  // `popped` / `mismatches` are incremented from the always_ff below, so they
+  // are deliberately left un-initialised: they are 2-state and start at 0, and
+  // both ways of saying so explicitly are rejected by Verilator 5.050 —
+  // assigning them in the initial block below is MULTIDRIVEN against the
+  // always_ff writes, a declaration initialiser is PROCASSINIT against them.
   int unsigned    pushed;
   int unsigned    popped;
   int unsigned    mismatches;
@@ -68,7 +73,7 @@ module tb_top;
   endtask
 
   initial begin
-    pushed = 0; popped = 0; mismatches = 0; active = 1'b0;
+    pushed = 0; active = 1'b0;
     wclk = 1'b0; rclk = 1'b0;
     wrst_n = 1'b0; rrst_n = 1'b0;
     wr_en = 1'b0; rd_en = 1'b0; wr_data = '0;
