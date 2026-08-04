@@ -13,7 +13,9 @@ testbenches:
     # Default Slurm reservation for this testbench's tests under
     # `rb regression --dispatch slurm` (rtl_buddy >= 6.21). Overrides the
     # cluster-wide cfg-dispatch.resources; a per-test `resources:` overrides
-    # this in turn, field by field. Ignored by the default in-process run.
+    # this in turn, field by field. Ignored by the default in-process run —
+    # and by `--dispatch local-parallel`, which cannot cap a subprocess and
+    # warns that it is ignoring these (see cfg-dispatch in root_config.yaml).
     resources:
       cpus: 2
       mem: 6G
