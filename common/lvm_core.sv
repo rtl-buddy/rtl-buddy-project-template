@@ -220,7 +220,7 @@ endclass
 `ifndef SIM_ICARUS
 class LvmComponent;
 
-  TestCore tc; // handle to the TestCore in tb_top
+  TestCore tc; // handle to the TestCore in the testbench top
 
   function new(TestCore etc);
     this.tc = etc;
