@@ -7,7 +7,12 @@
 
 `timescale 1ns/10ps
 
+// GlobalLvmTestCore is an unused cross-package singleton helper whose
+// `LvmPkg::TestCore::get_singleton()` scope-resolved static call Icarus
+// 12 cannot parse; gate it out there.
+`ifndef SIM_ICARUS
 typedef class GlobalLvmTestCore;
+`endif
 
 package LvmPkg;
 
@@ -33,6 +38,10 @@ typedef class TestCore;
       $dumpfile("dump.fst"); \
       $dumpvars(); \
   `endif \
+  `ifdef SIM_ICARUS \
+      $dumpfile("dump.vcd"); \
+      $dumpvars(); \
+  `endif \
   end:tc_dump \
   `endif \
 
@@ -52,6 +61,10 @@ typedef class TestCore;
 `define lvm_rpt_fat(fmt_msg) \
   tc.rpt_fat($sformatf fmt_msg)
 
+// Interface class end-of-test hooks. Icarus 12 does not support
+// `interface class`, so the hook framework is gated out under
+// SIM_ICARUS; TestCore below still reports PASS/FAIL without hooks.
+`ifndef SIM_ICARUS
 // Interface
 interface class TestEndHook;
   pure virtual function void end_of_test(LvmPkg::TestCore c);
@@ -62,6 +75,7 @@ class NullEndHook implements TestEndHook;
   virtual function void end_of_test(LvmPkg::TestCore c);
   endfunction
 endclass
+`endif
 
 // TestCore
 // Core framework for handling test reporting
@@ -69,7 +83,9 @@ class TestCore;
 
   string name;
 
+`ifndef SIM_ICARUS
   local TestEndHook end_hooks[$];
+`endif
 
   const integer RPT_INF = 0;
   const integer RPT_WRN = 1;
@@ -78,32 +94,48 @@ class TestCore;
 
   integer verbosity = RPT_ERR;
 
+  // Under Verilator 5.050 these report MULTIDRIVEN when a testbench calls
+  // rpt_err()/rpt_wrn() from inside an always_ff: it pairs the declaration
+  // initialiser with the increment in the report method and treats the class
+  // property as a multiply-driven variable. A class property has no drivers to
+  // conflict, so the warning cannot apply here — and unlike a module variable
+  // there is no way to drop the initialiser, since these are 4-state.
+  /* verilator lint_off MULTIDRIVEN */
   integer ninf = 0;
   integer nerr = 0;
   integer nwrn = 0;
   integer nfat = 0;
+  /* verilator lint_on MULTIDRIVEN */
 
   function new(string new_name);
+    integer v;
     $display("TestCore(%s) new", new_name);
     this.name = new_name;
     if ($test$plusargs("lvm_verbosity"))
       begin
-      $value$plusargs("lvm_verbosity=%d", this.verbosity);
+      // Icarus 12's vvp cannot $value$plusargs directly into a class
+      // property; read into a local integer, then assign.
+      if ($value$plusargs("lvm_verbosity=%d", v))
+        this.verbosity = v;
       $display("set lvm_verbosity=%1d", this.verbosity);
       end
-    TestCore::singleton = this;
+    // Unqualified static-member assignment (Icarus 12 rejects the
+    // `TestCore::singleton` scope-resolved l-value form).
+    singleton = this;
   endfunction
 
+`ifndef SIM_ICARUS
   function void add_test_end_hook(TestEndHook h);
     this.end_hooks.push_back(h);
   endfunction
+`endif
 
   // TODO randseed
 
   static local TestCore singleton;
 
   static function TestCore get_singleton();
-    return TestCore::singleton;
+    return singleton;
   endfunction
   
   // report information 
@@ -145,8 +177,10 @@ class TestCore;
     $display("-------------------------");
     $display("name : %s", name);
     $display("-------------------------");
+`ifndef SIM_ICARUS
     foreach(this.end_hooks[i])
       end_hooks[i].end_of_test(this);
+`endif
     $display("-------------------------");
   endfunction
 
@@ -169,8 +203,10 @@ class TestCore;
   function void end_of_test();
     report_preface();
     report_values();
+`ifndef SIM_ICARUS
     foreach(this.end_hooks[i])
       end_hooks[i].end_of_test(this);
+`endif
     report_result();
   endfunction
 
@@ -178,7 +214,10 @@ endclass
 
 
 // LvmComponent class
-// For testbench components to extend
+// For testbench components to extend. Unused by the demo TB; Icarus 12
+// rejects calling TestCore's void methods through the handle here, so
+// gate it out there.
+`ifndef SIM_ICARUS
 class LvmComponent;
 
   TestCore tc; // handle to the TestCore in tb_top
@@ -190,7 +229,7 @@ class LvmComponent;
   function void rpt_inf(string s);
     tc.rpt_inf(s);
   endfunction
-  
+
   function void rpt_wrn(string s);
     tc.rpt_inf(s);
   endfunction
@@ -204,9 +243,11 @@ class LvmComponent;
   endfunction
 
 endclass
+`endif
 
 endpackage // LvmPkg
 
+`ifndef SIM_ICARUS
 class GlobalLvmTestCore;
 
   static local LvmPkg::TestCore singleton;
@@ -218,3 +259,4 @@ class GlobalLvmTestCore;
   endfunction
 
 endclass
+`endif

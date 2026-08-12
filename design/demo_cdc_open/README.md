@@ -39,5 +39,9 @@ demo_cdc_open_top                 (clk_a, clk_b — asynchronous)
 All metastability flops live in `cdc_open_sync` / `cdc_open_reset_sync` and
 carry the vendor-neutral `ASYNC_REG`/`keep` attributes. The
 `(* cdc_handshake *)` marks in `cdc_open_handshake.sv` are a CDC-linter hint
-(silently ignored by Yosys and Vivado — not a vendor macro), not a
-portability concern.
+(a plain SV attribute, not a vendor macro — ignored by Yosys and Vivado, so
+not a portability concern). `rtl-buddy-cdc >= 0.3.3` reads them to recognise
+the held-payload handshake and suppress a CDC-012 data-hold false positive,
+which keeps the `frontend: slang` analysis clean — see the
+[open FPGA flow README](../../fpga/demo_cdc_open/README.md) for the scoped
+generate → audit loop that analysis feeds.

@@ -28,7 +28,7 @@ jobs:
       # installation on Ubuntu. Pin to a specific release tag so CI is
       # reproducible. Browse available tags at:
       # https://hub.docker.com/r/verilator/verilator/tags
-      image: verilator/verilator:v5.048
+      image: verilator/verilator:v5.050
 
     steps:
       # The reglvl-0 sanity tier (leaf IP + demo_tiny_alu + the SystemC
@@ -91,6 +91,15 @@ jobs:
   verilator-coverage:
     runs-on: ubuntu-latest
     container:
+      # HELD AT v5.048 while the other jobs run v5.050. 5.050 cannot build any
+      # design that combines --coverage-expr (this project's `cov` builder
+      # mode, per root_config.yaml) with a concurrent assert/cover property:
+      # it dies with "Internal Error: V3Localize.cpp:203: AstVarRef not under
+      # function". That is verilator/verilator#7898, fixed by #7904 — merged
+      # 2026-07-08, a week after v5.050 was tagged, so no released Verilator
+      # carries the fix yet. Move this job to the first release after 5.050
+      # and drop this comment; a plain (non-coverage) build is unaffected,
+      # which is why verilator-test above is already on 5.050.
       image: verilator/verilator:v5.048
 
     steps:

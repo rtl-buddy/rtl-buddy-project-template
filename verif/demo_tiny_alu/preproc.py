@@ -88,8 +88,11 @@ def _build_vectors(cfg) -> list[tuple]:
 vectors = _build_vectors(test_cfg)  # noqa: F821
 out_path = Path(artifact_dir) / "vectors.txt"  # noqa: F821
 out_path.parent.mkdir(parents=True, exist_ok=True)
+# Pure CSV rows (op,a,b,y,zf,cf,nf,vf), no comment header: tb_top.sv reads
+# them with $fscanf, which both Verilator and Icarus 12 support — and Icarus
+# 12's $fgets/$sscanf cannot parse a SystemVerilog `string`, so a header line
+# to skip is best avoided.
 with out_path.open("w") as f:
-    f.write("# op,a,b,y,zf,cf,nf,vf\n")
     for row in vectors:
         f.write(",".join(str(x) for x in row) + "\n")
 
