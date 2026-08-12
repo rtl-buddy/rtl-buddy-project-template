@@ -55,25 +55,23 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 ## Important Paths
 
 ```text
-root_config.yaml
-regression.yaml
-synth_regression.yaml
-fpv_regression.yaml
-design/demo_tiny_alu/
-design/demo_tiny_alu_subsys/
-design/demo_axi_2x2/
-design/demo_pulp_platform_axi/
-design/demo_abv/              # grouped ABV/FPV demo models
-design/template/
-spec/template/                # spec traceability example
-verif/template/
-verif/demo_abv/demo_abv_features/
-fpv/demo_abv/demo_abv_basic/
-fpv/demo_abv/demo_abv_features/
-fpv/demo_abv/demo_abv_induction/
-pyproject.toml                # uv-managed project environment and rtl_buddy dependency pin
-uv.lock                       # committed lockfile for reproducible project setup
-.python-version               # pinned Python version for uv
+root_config.yaml                         # builders, platforms, tools, defaults
+regression.yaml                          # top-level sim regression list
+synth_regression.yaml                    # top-level synth regression list
+fpv_regression.yaml                      # top-level formal regression list
+fpga_regression.yaml                     # top-level FPGA implementation regression list
+design/template/                         # starter RTL skeleton
+spec/template/                           # starter spec traceability skeleton
+verif/template/                          # starter verification skeleton
+design/demo_tiny_alu/                    # primary leaf demo design
+verif/demo_tiny_alu*/                    # SV, cocotb, and SystemC peer suites
+verif/icarus_smoke/                      # minimal Icarus builder-selection example
+lint/cdc/cdc.yaml                        # CDC analyses, including slang and blackbox examples
+fpga/demo_cdc_open/                      # openXC7 FPGA flow example
+fpv/demo_abv/                            # FPV and ABV examples
+pyproject.toml                           # uv-managed project environment and rtl_buddy dependency pin
+uv.lock                                  # committed lockfile for reproducible project setup
+.python-version                          # pinned Python version for uv
 ```
 
 The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.
@@ -146,8 +144,9 @@ Use this repo to validate the project setup and `rtl_buddy` integration. Prefer 
 # from repo root
 uv run rb --machine regression -c regression.yaml
 uv run rb --machine regression -c regression.yaml -l 1000
-uv run rb --machine fpv-regression -c fpv_regression.yaml
 uv run rb --machine cdc-regression -c lint/cdc/cdc_regression.yaml
+uv run rb --machine fpv-regression -c fpv_regression.yaml
+uv run rb --machine fpga-regression -c fpga_regression.yaml -l 1000
 uv run rb --machine synth-regression -c synth_regression.yaml
 uv run rb --machine filelist demo_tiny_alu -c design/demo_tiny_alu/models.yaml
 uv run rb --machine verible syntax design/demo_tiny_alu/demo_tiny_alu.sv
@@ -159,9 +158,16 @@ uv run rb --machine spec check-coverage
 cd verif/demo_tiny_alu
 uv run rb --machine test basic
 
-# hierarchy rendering
-uv run rb --machine hier demo_tiny_alu --format tree        # DUT view
-uv run rb --machine hier basic --view tb --format tree      # TB view
+cd ../icarus_smoke
+uv run rb --machine test basic
+uv run rb --machine --builder verilator test basic
+
+# Hierarchy rendering (rtl-buddy-view #99). `--view dut` (default)
+# renders the model's module tree rooted at its DUT; `--view tb`
+# renders the testbench tree with the DUT called out as a subtree,
+# using the test's tb.toplevel to anchor the new --tb-top flag.
+uv run rb --machine hier demo_tiny_alu                   --format tree   # DUT view
+uv run rb --machine hier basic --view tb --format tree                   # TB view
 
 cd ../demo_tiny_alu_cocotb
 uv run rb --machine test cocotb_random
