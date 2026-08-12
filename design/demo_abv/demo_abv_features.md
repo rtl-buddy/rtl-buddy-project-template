@@ -13,6 +13,7 @@ correctly in your environment.
 | **#136 — COI coverage** | `fpv/demo_abv/demo_abv_features/` | `rb fpv` results table grows a **COI** column showing `89% (8/9)` — the fraction of design cells in the assertion's cone of influence |
 | **#135 — Dead-assume detection** | `fpv/demo_abv/demo_abv_features/` | Results table grows an **Assumes** column showing `0 used, 1 dead` — the intentionally tautological `assume (en \|\| !en)` is flagged as structurally dead |
 | **#134 — Vacuity covers** | `fpv/demo_abv/demo_abv_features/` (`demo_abv_features_vacuity` verification, slang-fronted) | Results table grows a **Vacuity** column showing `1/2 vacuous` — `p_safe_count` (antecedent `en`) reaches its cover, `p_vacuous` (antecedent `1'b0`) is flagged as unreachable. Reads `demo_abv_features_props_slang.sv` via `frontend: slang` since yosys's native verilog frontend does not parse `\|->` |
+| **#367 — Per-cover-point results** | `verif/demo_abv/demo_abv_features/tb_top.sv` | Three labeled `cover property` statements, two reachable and one not, so the **Coverage** column shows `F:0.67`. Under `--machine`, `payload.coverage.covers` names each one with its hit count |
 
 ## Files
 
@@ -55,6 +56,34 @@ The testbench-side property (`CNT_MONOTONE` in
 `verif/demo_abv/demo_abv_features/tb_top.sv`) uses SVA `disable iff (!rst_n)`
 to skip evaluation during reset, which is the safer pattern for
 Verilator-driven simulation.
+
+## Cover properties
+
+The same testbench carries three labeled `cover property` statements.
+`assertions: true` already injects `--coverage-user`, so they are counted
+on every run and roll up into the `F:` (functional) figure in the
+**Coverage** column — `F:0.67`, two of three.
+
+`CNT_STALLED_WHILE_DISABLED` is deliberately unreachable: `en` is never
+deasserted after reset release. It is there to show that an uncovered
+point is *reported* with `hits: 0` rather than dropped, which is what a
+consumer grading verification-plan items needs — a silent absence and a
+recorded zero mean very different things.
+
+The labels are the point. Under `--machine`, each is reported
+individually in `payload.coverage.covers` as
+`{name, file, line, module, hits}`, on both the per-test rows and the
+run-level rollup:
+
+```json
+{"name": "CNT_REACHED_MAX", "file": "../../tb_top.sv", "line": 49,
+ "module": "tb_top", "hits": 2}
+```
+
+Naming them after intent rather than the expression is what makes them
+mappable back to a plan item. Requires `rtl_buddy` with per-cover-point
+reporting (#367); older versions still simulate the covers and report the
+`F:` scalar, just without the per-point list.
 
 Vacuity (#134) is exercised by the `demo_abv_features_vacuity`
 verification, which reads `fpv/demo_abv/demo_abv_features/demo_abv_features_props_slang.sv`

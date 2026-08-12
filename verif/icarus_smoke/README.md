@@ -26,11 +26,12 @@ uv run rb -B verilator test basic
 
 ## Requirements / status
 
-- **rtl_buddy** with per-suite/per-test `builder:` selection. Until that ships
-  in the pinned release, validate against a local checkout via the
-  `dev/local-rtl-buddy` override branch (see `AGENTS.md`).
+- **rtl_buddy** at the version pinned in `pyproject.toml`, which includes
+  per-suite/per-test `builder:` selection and the Icarus backend support this
+  suite exercises.
 - **Icarus Verilog** (`iverilog` + `vvp`) on `PATH` for the default builder.
 
 This suite is intentionally **not** wired into `regression.yaml`: the per-push
-and nightly CI run in a Verilator-only container without `iverilog`. Add it to
-a dedicated Icarus CI job (or run it locally) rather than the default tiers.
+Verilator regression container does not install `iverilog`. It is covered by the
+dedicated Icarus CI workflow and can also be run locally with the commands
+above.

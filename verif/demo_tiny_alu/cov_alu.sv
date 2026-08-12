@@ -32,6 +32,12 @@ module cov_alu (
     a_d1  <= a;
   end
 
+  // Wrapped in coverage_off/on: Verilator 5.050 ICEs in V3Localize
+  // ("AstVarRef not under function") when --coverage-expr instruments
+  // the property expressions. The pragma skips line/expr instrumentation
+  // here; --coverage-user cover records are still inserted, so the
+  // functional metric is unaffected.
+  /* verilator coverage_off */
   // Opcodes
   SAND_FUNC_OP_ADD: cover property (@(posedge clk) !rst && op_d1 == 3'd0 && (a_d1 != '0));
   SAND_FUNC_OP_SUB: cover property (@(posedge clk) !rst && op_d1 == 3'd1);
@@ -64,5 +70,6 @@ module cov_alu (
     @(posedge clk) $fell(rst) |-> (y == '0 && zf == 1'b1 && cf == 1'b0 && nf == 1'b0 && vf == 1'b0)
   );
 
+  /* verilator coverage_on */
 endmodule
 `endif
