@@ -46,6 +46,13 @@ module tb_top;
   // many. See the "Per-cover-point results" section of the rtl_buddy
   // Coverage docs. Naming them after the intent, not the expression, is what
   // makes them mappable to verification-plan items.
+  // Wrapped in coverage_off/on: Verilator 5.050 ICEs in V3Localize
+  // ("AstVarRef not under function") when --coverage-expr instruments
+  // the property expressions. The pragma skips line/expr instrumentation
+  // here; --coverage-user cover records are still inserted, so the
+  // functional metric is unaffected. Same treatment as cov_alu.sv and
+  // the subsys tb; drop when the pinned Verilator moves past 5.050.
+  /* verilator coverage_off */
   CNT_REACHED_MAX: cover property (@(posedge clk) rst_n && cnt == MAX[WIDTH-1:0]);
   CNT_ENABLED_LOW: cover property (@(posedge clk) rst_n && cnt == '0 && en);
 
@@ -56,6 +63,7 @@ module tb_top;
   CNT_STALLED_WHILE_DISABLED: cover property (
     @(posedge clk) rst_n && !en && cnt == $past(cnt)
   );
+  /* verilator coverage_on */
 
   // Stimulus is driven on `negedge clk`, half a cycle before the DUT
   // and SVA both sample on the next posedge. Driving on `posedge clk`
