@@ -63,7 +63,7 @@ side is the procedural TB scope (`tb_axi_2x2`). The manifest's `signals:` block
 names every one. `rb axi-profile run` reads it to sample the FST, and
 rtl-buddy-view's `axi-perf` overlay reads it to **synthesize a bundle pin on the
 real `tb_axi_2x2.dut` node** — so the AXI overlay attaches to the ordinary
-tb_top test hierarchy with no profiler-specific view stub.
+tb_axi_2x2 test hierarchy with no profiler-specific view stub.
 
 End-to-end (with `rtl-buddy-axi-profiler` installed):
 

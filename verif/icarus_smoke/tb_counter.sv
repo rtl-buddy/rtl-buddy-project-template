@@ -1,6 +1,6 @@
 // Minimal procedural testbench for the icarus_smoke counter.
 // No classes / SVA / covergroups — runs on both Verilator and Icarus.
-module tb_top;
+module tb_counter;
 
   logic       clk;
   logic       rst_n;

@@ -10,7 +10,7 @@ models:
     # tb_axi_2x2.dut node from it (no profiler-specific system_view.sv).
     axi_bundles: axi_2x2.axi-bundles.yaml
 
-  # The testbench top (tb_top) is the natural view/profiling target for
+  # The testbench top (tb_axi_2x2) is the natural view/profiling target for
   # AXI perf — the overlay attaches to the real tb_axi_2x2.dut node.
   # Listed as a model so `rb hub start --model tb_axi_2x2` serves it and
   # it appears in the SPA model picker.
