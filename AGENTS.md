@@ -45,6 +45,7 @@ Rewrite the following files so they describe the new project, not this template:
 - **`CLAUDE.md`** / **`AGENTS.md`** — keep the `rtl_buddy` workflow guidance, but rewrite role and layout sections for the new project.
 
 Remove or update anything that refers to:
+
 - example project names or block names that no longer apply
 - private infrastructure, private links, or organization-specific paths
 - vendoring or dependency arrangements that the new project does not use
@@ -166,15 +167,12 @@ uv run rb --machine fpv --list   # dry-list verification names
 
 `test` and `randtest` are typically run from the suite directory so relative testbench paths resolve correctly. Likewise, run `fpv` from the suite directory that contains the relevant `fpv.yaml`, and run `fpv-regression` from the repo root.
 
-`hier --view tb` requires the test's testbench entry in `tests.yaml`
-to carry a `toplevel:` field (the SV module name at the testbench's
-root). All shipped templates include this; new suites copied from
-`verif/template/` inherit it. Without `toplevel:`, `--view tb`
-silently degrades to the DUT-rooted view.
+`hier --view tb` requires the test's testbench entry in `tests.yaml` to carry a `toplevel:` field (the SV module name at the testbench's root). All shipped templates include this; new suites copied from `verif/template/` inherit it. Without `toplevel:`, `--view tb` silently degrades to the DUT-rooted view.
 
 ## When rtl_buddy Changes
 
-- Add or adjust examples in `design/`, `verif/`, `spec/`, and `fpv/` if the feature needs visible coverage.
+- Review recent `rtl_buddy` changes against this template's README, configs, and examples. New user-facing features should be either demonstrated in a focused example or explicitly called out as intentionally out of scope.
+- Add or adjust examples in `design/`, `verif/`, `spec/`, `fpv/`, `synth/`, `pnr/`, or `lint/` if the feature needs visible coverage.
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
 - Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Commit only the dependency pin (`pyproject.toml` / `uv.lock`) — skill files are gitignored.
