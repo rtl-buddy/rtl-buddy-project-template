@@ -11,13 +11,27 @@ The project should stay runnable. `design/demo_tiny_alu/` is the primary working
 
 ## Block Categories
 
-Blocks shipped with this template fall into three categories. The naming convention surfaces the category in the directory name:
+Blocks shipped with this template fall into three categories. The
+naming convention surfaces the category in the directory name:
 
-- **Base IP** — leaf, reusable components (`apb`, `ip_cdc_sync`, `ip_cdc_handshake`, `ip_async_fifo`). No prefix.
-- **Workflow templates** — `template/` skeletons that show the expected spec/design/verif/test shape for a new block. Copy these when starting fresh.
-- **Demo blocks** — `demo_*` end-to-end examples that exercise specific rtl_buddy capabilities. Current demos include `demo_tiny_alu`, `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, the grouped `demo_abv_*` examples under `design/demo_abv/`, `demo_axi_2x2`, and `demo_pulp_platform_axi`.
+- **Base IP** — leaf, reusable components (`apb`, `ip_cdc_sync`,
+  `ip_cdc_handshake`, `ip_async_fifo`). No prefix.
+- **Workflow templates** — `template/` skeletons that show the
+  expected spec/design/verif/test shape for a new block. Copy these
+  when starting fresh.
+- **Demo blocks** — `demo_*` end-to-end examples that exercise
+  specific rtl_buddy capabilities (`demo_tiny_alu`,
+  `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`,
+  `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, the grouped
+  `demo_abv` family, `demo_axi_2x2`, and `demo_pulp_platform_axi`).
+  Safe to delete when starting a new project.
 
-Preserve this categorisation in new work: name new leaf IP without a prefix, name new demos with `demo_*`, and do not touch `template/` unless you are updating the starter skeleton itself. The ABV demos are the exception to one-directory-per-demo: their design files intentionally share `design/demo_abv/` and separate into `fpv/demo_abv/<demo>/` and `verif/demo_abv/<demo>/` suites.
+Preserve this categorisation in new work — name new leaf IP without a
+prefix, new demos with `demo_*`, and don't touch `template/` unless
+you're updating the starter skeleton itself. The ABV/formal demos are a
+special grouped family: their design models live under `design/demo_abv/`,
+while their run configs live under `fpv/demo_abv/<block>/` and, where
+applicable, `verif/demo_abv/<block>/`.
 
 ## This Is A Template Repo
 
@@ -45,26 +59,21 @@ root_config.yaml
 regression.yaml
 synth_regression.yaml
 fpv_regression.yaml
-design/demo_tiny_alu/             # primary leaf DUT example
-design/demo_tiny_alu_subsys/      # APB/CDC/FIFO system demonstrator
-design/demo_abv/                  # grouped ABV + mutation design examples
-design/demo_axi_2x2/              # AXI profiler traffic demo
-design/demo_pulp_platform_axi/    # third-party vendored AXI integration
-design/template/                  # starter design skeleton
-spec/template/                    # spec traceability skeleton
-verif/template/                   # starter verification skeleton
-verif/demo_tiny_alu/              # SV/LVM golden-model cosim suite
-verif/demo_tiny_alu_cocotb/       # cocotb peer suite for the same DUT
-verif/demo_tiny_alu_sc/           # SystemC peer suite for the same DUT
-verif/demo_abv/demo_abv_features/ # simulation-side SVA example
-fpv/demo_abv/demo_abv_basic/      # FPV + mutation reference block
-fpv/demo_abv/demo_abv_features/   # COI/dead-assume/vacuity FPV example
-fpv/demo_abv/demo_abv_induction/  # BMC-vs-induction teaching case
-lint/cdc/                         # CDC lint configs and waivers
-pnr/demo_tiny_alu_subsys/         # OpenROAD P&R example
-pyproject.toml                    # uv-managed project environment and rtl_buddy dependency pin
-uv.lock                           # committed lockfile for reproducible project setup
-.python-version                   # pinned Python version for uv
+design/demo_tiny_alu/
+design/demo_tiny_alu_subsys/
+design/demo_axi_2x2/
+design/demo_pulp_platform_axi/
+design/demo_abv/              # grouped ABV/FPV demo models
+design/template/
+spec/template/                # spec traceability example
+verif/template/
+verif/demo_abv/demo_abv_features/
+fpv/demo_abv/demo_abv_basic/
+fpv/demo_abv/demo_abv_features/
+fpv/demo_abv/demo_abv_induction/
+pyproject.toml                # uv-managed project environment and rtl_buddy dependency pin
+uv.lock                       # committed lockfile for reproducible project setup
+.python-version               # pinned Python version for uv
 ```
 
 The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.

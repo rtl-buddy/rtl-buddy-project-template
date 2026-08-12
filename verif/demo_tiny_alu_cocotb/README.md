@@ -44,6 +44,25 @@ The DUT is loaded as `toplevel: demo_tiny_alu`; cocotb drives `clk/rst/op/a/b`
 directly. Imports of `tiny_alu_model` are resolved by inserting
 `spec/demo_tiny_alu/` onto `sys.path` from the test module.
 
+### Running on Icarus Verilog
+
+The same tests also run under cocotb on Icarus Verilog 12 with `-B icarus`
+(needs `iverilog` + `vvp` on `PATH`):
+
+```bash
+uv run rb -B icarus test cocotb_flags
+uv run rb -B icarus test cocotb_random
+```
+
+The Python testbench is identical — only the backend changes. rtl_buddy
+compiles with `iverilog` and loads the cocotb VPI module into `vvp`
+(`-M $(cocotb-config --lib-dir) -m libcocotbvpi_icarus`); Verilator instead
+links the VPI library at `--build` time. The DUT carries an explicit
+`` `timescale `` so Icarus has a fine-enough time precision to represent the
+cocotb clock (cocotb supplies no SV testbench to set one). The dedicated
+Icarus CI job (`.github/workflows/icarus.yml`) runs both tests this way. See
+the [Simulators concept page](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/simulators/).
+
 ## Files
 
 | File                   | Purpose                                                                |
