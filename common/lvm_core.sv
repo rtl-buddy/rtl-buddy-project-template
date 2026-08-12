@@ -94,10 +94,18 @@ class TestCore;
 
   integer verbosity = RPT_ERR;
 
+  // Under Verilator 5.050 these report MULTIDRIVEN when a testbench calls
+  // rpt_err()/rpt_wrn() from inside an always_ff: it pairs the declaration
+  // initialiser with the increment in the report method and treats the class
+  // property as a multiply-driven variable. A class property has no drivers to
+  // conflict, so the warning cannot apply here — and unlike a module variable
+  // there is no way to drop the initialiser, since these are 4-state.
+  /* verilator lint_off MULTIDRIVEN */
   integer ninf = 0;
   integer nerr = 0;
   integer nwrn = 0;
   integer nfat = 0;
+  /* verilator lint_on MULTIDRIVEN */
 
   function new(string new_name);
     integer v;
