@@ -207,6 +207,10 @@ uv run rb regression -c regression.yaml -l 1000
 uv run rb -M cov regression -c regression.yaml -l 1000 \
     --coverage-merge --coverage-html --coverage-coverview
 
+# Hub UI              — landing + schematic / graph / coverage apps in the browser
+uv run rb graph build                 # one-off: feeds the graph app
+uv run rb hub start --serve-viewer    # then open the printed http://127.0.0.1:<port>/
+
 # Waveform viewer     — open Surfer with the suite's signal layout
 (cd verif/demo_tiny_alu && uv run rb wave basic)
 
@@ -453,6 +457,51 @@ runs the same `-M cov regression --coverage-merge --coverage-html` on
 every push and uploads the merged HTML report (`coverage-html`) and
 LCOV data (`coverage-data`) as workflow artifacts, so browsing
 coverage from a PR is one download away.
+
+---
+
+## Hub UI — `rb hub start --serve-viewer`
+
+`rtl_buddy` ships a browser UI family served by the project hub: a
+landing page at `/` that lists the apps by task, and three apps —
+**rtl-buddy-schematic** (`sch`, at `/view`), **rtl-buddy-graph**
+(`gph`, at `/graph`), and **rtl-buddy-coverage** (`cov`, at `/cov`).
+All three share one design-token sheet (light default, dark via your
+OS preference), one connection-status strip, and one
+`rtl-buddy <version> @ <sha>` label — and they talk to each other
+live through the hub.
+
+### How it is wired
+
+- `rb hub start --serve-viewer` starts the project hub (one per
+  project directory, discovered via `.rtl-buddy/hub.json`) and serves
+  the UI on the printed `http_port`. The schematic SPA is
+  auto-discovered from the installed `rtl-buddy-view` wheel — no npm,
+  no build step, nothing off localhost.
+- The landing greys out an app whose data is missing and names the
+  command that produces it: the graph app wants `rb graph build`, the
+  coverage app wants a coverage-flagged regression (its model is read
+  straight off the artefacts on disk — no export step).
+- Each app is a hub peer with its own origin, so all three can be
+  open at once. Selections cross-link: clicking a module in the graph
+  or coverage selects its instance in the schematic, every app
+  carries `send → sch / gph / cov / editor` actions, and
+  `rb hub send` (or the MCP hub tools) drives the same vocabulary
+  from the CLI and agents.
+- The schematic adds a hierarchy tree with filter (`/`), live
+  coverage tint from the same model the coverage app reads,
+  double-click descend, and Esc/`u` keyboard navigation.
+
+### Try it
+
+```bash
+uv run rb graph build          # feed the graph app (re-run after design changes)
+uv run rb -M cov regression -c regression.yaml -l 1000 \
+    --coverage-merge           # feed the coverage app
+uv run rb hub start --serve-viewer
+# open the printed http://127.0.0.1:<http_port>/ and pick an app
+uv run rb hub status           # peers + ports at a glance
+```
 
 ---
 
