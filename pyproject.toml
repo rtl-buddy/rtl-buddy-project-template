@@ -3,7 +3,7 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy==6.24.0",
+  "rtl_buddy==6.30.0",
   "rtl-buddy-cdc[slang]",
   "rtl-buddy-xeno[verible,slang]",
   "rtl-buddy-axi-profiler[notebook]",
@@ -16,13 +16,14 @@ dependencies = [
 
 [tool.uv]
 package = false
-# Aggregator-level floor: force rtl-buddy-view >=0.2.1 across every transitive
+# Aggregator-level floor: force rtl-buddy-view >=0.5.0 across every transitive
 # path, regardless of what each consumer (rtl_buddy, rtl-buddy-cdc, ...)
-# declares. 0.2.1 is the first PyPI release and clears the 0.2.0 filelist
-# IsADirectoryError bug plus the SPA-less git build. The consumers carry a
-# floor + runtime guard of their own; this constraint is belt-and-suspenders so
-# no transitive path can ever drag the resolution below 0.2.1.
-constraint-dependencies = ["rtl-buddy-view>=0.2.1"]
+# declares. 0.5.0 ships the hub-family SPA that rtl_buddy 6.30.0's hub pages
+# pair with (cov origin in the vendored protocol, graph_focus consumer, hub
+# design tokens, sch/gph/cov chrome). The consumers carry floors + runtime
+# guards of their own; this constraint is belt-and-suspenders so no transitive
+# path can ever drag the resolution below 0.5.0.
+constraint-dependencies = ["rtl-buddy-view>=0.5.0"]
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
