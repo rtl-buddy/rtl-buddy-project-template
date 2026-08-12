@@ -23,7 +23,8 @@ Blocks shipped with this template fall into four categories. Preserve this categ
   `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`,
   `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, the grouped
   `demo_abv` family, `demo_axi_2x2`, and `demo_pulp_platform_axi`).
-  Safe to delete when starting a new project.
+  Safe to delete when starting a new project, after removing their
+  regression/config references.
 - **Focused smoke suites** — small backend or tool smoke tests such as
   `icarus_smoke`, which are intentionally minimal and may not follow
   the `demo_*` naming pattern.
@@ -52,6 +53,7 @@ Remove or update anything that refers to:
 - example project names or block names that no longer apply
 - private infrastructure, private links, or organization-specific paths
 - vendoring or dependency arrangements that the new project does not use
+- demo or smoke blocks that were removed from `design/`, `verif/`, `fpv/`, `fpga/`, `lint/`, or regression configs
 - optional tool flows that the new project will not support
 
 The `rtl_buddy` workflow sections below are worth keeping in downstream projects because they describe how to use the toolchain inside a project repo.
@@ -160,6 +162,14 @@ uv run rb --machine spec list
 uv run rb --machine spec check-design
 uv run rb --machine spec check-coverage
 
+# Icarus compatibility checks (requires Icarus Verilog 12 on PATH)
+(cd verif/icarus_smoke && uv run rb --machine test smoke)
+(cd verif/demo_tiny_alu && uv run rb --machine -B icarus test basic)
+(cd verif/demo_tiny_alu_cocotb && uv run rb --machine -B icarus test cocotb_random)
+
+# CDC constraint freshness/audit loop for the FPGA CDC demo
+./lint/cdc/check_cdc_xdc.sh
+
 # from suite dir
 cd verif/demo_tiny_alu
 uv run rb --machine test basic
@@ -199,7 +209,7 @@ uv run rb --machine fpv --list   # dry-list verification names
 ## When rtl_buddy Changes
 
 - Review recent `rtl_buddy` changes against this template's README, configs, and examples. New user-facing features should be either demonstrated in a focused example or explicitly called out as intentionally out of scope.
-- Add or adjust examples in `design/`, `verif/`, `spec/`, `fpv/`, `synth/`, `pnr/`, or `lint/` if the feature needs visible coverage.
+- Add or adjust examples in `design/`, `verif/`, `spec/`, `fpv/`, `fpga/`, `synth/`, `pnr/`, `lint/`, or the regression configs if the feature needs visible coverage.
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
 - Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Re-check feature-dependent dependencies in `pyproject.toml`, especially git-pinned tools such as `rtl-buddy-cdc`, `rtl-buddy-xeno`, and `rtl-buddy-axi-profiler`.
