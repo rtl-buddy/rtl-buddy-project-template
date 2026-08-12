@@ -103,6 +103,12 @@ module tb_top;
   bit cov_csr_write, cov_csr_read, cov_csr_direct, cov_fifo_push,
       cov_fifo_full, cov_fifo_drain, cov_done_inc, cov_result_match;
 
+  // Wrapped in coverage_off/on: Verilator 5.050 ICEs in V3Localize
+  // ("AstVarRef not under function") when --coverage-expr instruments
+  // the property expressions. The pragma skips line/expr instrumentation
+  // here; --coverage-user cover records are still inserted, so the
+  // functional metric is unaffected.
+  /* verilator coverage_off */
   ACCEL_CSR_WRITE:    cover property (@(posedge apb_clk) cov_csr_write);
   ACCEL_CSR_READ:     cover property (@(posedge apb_clk) cov_csr_read);
   ACCEL_CSR_DIRECT_OP:cover property (@(posedge apb_clk) cov_csr_direct);
@@ -111,6 +117,7 @@ module tb_top;
   ACCEL_FIFO_DRAIN:   cover property (@(posedge apb_clk) cov_fifo_drain);
   ACCEL_DONE_INC:     cover property (@(posedge apb_clk) cov_done_inc);
   ACCEL_RESULT_MATCH: cover property (@(posedge apb_clk) cov_result_match);
+  /* verilator coverage_on */
 
   always @(posedge apb_clk) begin
     if (bus.psel && bus.penable && bus.pready &&  bus.pwrite) cov_csr_write <= 1'b1;
