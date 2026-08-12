@@ -20,7 +20,9 @@ jobs:
   verilator-full:
     runs-on: ubuntu-latest
     container:
-      image: verilator/verilator:v5.048
+      # Keep in step with verilator-test in verilator.yml. The coverage job
+      # there is deliberately a release behind — see the comment on it.
+      image: verilator/verilator:v5.050
 
     steps:
       - uses: actions/checkout@v4

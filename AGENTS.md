@@ -13,12 +13,24 @@ The project should stay runnable. `design/demo_tiny_alu/` is the primary small w
 
 Blocks shipped with this template fall into four categories. Preserve this categorisation in new work: name reusable leaf IP without a prefix, keep starter skeletons under `template/`, name integrated demos with `demo_*`, and keep third-party vendor examples explicit.
 
-- **Base IP** - leaf, reusable components with their own spec/verif: `apb`, `ip_cdc_sync`, `ip_cdc_handshake`, and `ip_async_fifo`.
-- **Workflow templates** - `design/template/`, `spec/template/`, and `verif/template/` skeletons that show the expected spec/design/verif/test shape for a new block. Copy these when starting fresh.
-- **Demo blocks** - end-to-end examples that exercise specific rtl_buddy capabilities: `demo_tiny_alu`, `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`, `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, `demo_abv_basic`, `demo_abv_features`, `demo_abv_induction`, and `demo_axi_2x2`.
-- **Third-party IP examples** - vendored external IP examples, currently `demo_pulp_platform_axi` under `design/`, `verif/`, and `vendor/pulp-platform/`.
+- **Base IP** — leaf, reusable components (`apb`, `ip_cdc_sync`,
+  `ip_cdc_handshake`, `ip_async_fifo`). No prefix.
+- **Workflow templates** — `template/` skeletons that show the
+  expected spec/design/verif/test shape for a new block. Copy these
+  when starting fresh.
+- **Demo blocks** — `demo_*` end-to-end examples that exercise
+  specific rtl_buddy capabilities (`demo_tiny_alu`,
+  `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`,
+  `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, the grouped
+  `demo_abv` family, `demo_axi_2x2`, and `demo_pulp_platform_axi`).
+  Safe to delete when starting a new project.
 
-Demo blocks are safe to delete when starting a new project, but update `README.md`, `regression.yaml`, `synth_regression.yaml`, `fpv_regression.yaml`, `lint/cdc/cdc_regression.yaml`, and any matching `pyproject.toml` dependencies when removing their flows.
+Preserve this categorisation in new work — name new leaf IP without a
+prefix, new demos with `demo_*`, and don't touch `template/` unless
+you're updating the starter skeleton itself. The ABV/formal demos are a
+special grouped family: their design models live under `design/demo_abv/`,
+while their run configs live under `fpv/demo_abv/<block>/` and, where
+applicable, `verif/demo_abv/<block>/`.
 
 ## This Is A Template Repo
 
@@ -43,31 +55,25 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 ## Important Paths
 
 ```text
-root_config.yaml                         # builder, platform, Verible, synth, P&R, FPGA, CDC, FPV, coverage, waveform config
-regression.yaml                          # top-level sim regression list
-synth_regression.yaml                    # top-level synth regression list
-fpv_regression.yaml                      # top-level FPV regression list
-lint/cdc/cdc_regression.yaml             # top-level CDC regression list
-pyproject.toml                           # uv-managed project environment and rtl_buddy dependency pin
-uv.lock                                  # committed lockfile for reproducible project setup
-.python-version                          # pinned Python version for uv
-
-design/common/                           # shared base IP RTL
-design/template/                         # starter design skeleton for a new block
-design/demo_tiny_alu/                    # primary small DUT example
-design/demo_tiny_alu_subsys/             # APB/CSR/multi-clock system demo
-design/demo_abv/                         # ABV teaching RTL used by FPV and mutation demos
-design/demo_axi_2x2/                     # AXI crossbar/profiler demo
-design/demo_pulp_platform_axi/           # curated filelists and waivers for vendored AXI IP
-
-spec/template/                           # starter spec traceability skeleton
-verif/template/                          # starter verification skeleton
-verif/demo_tiny_alu*/                    # SV, cocotb, and SystemC ALU suites
-verif/demo_abv/demo_abv_features/         # testbench-side SVA example
-fpv/demo_abv/demo_abv_basic/              # basic FPV saturation proof/cover demo
-fpv/demo_abv/demo_abv_features/           # FPV vacuity/COI/dead-assume examples
-fpv/demo_abv/demo_abv_induction/          # BMC-vs-induction teaching demo
-vendor/pulp-platform/                    # third-party AXI/common_cells/common_verification submodules
+root_config.yaml
+regression.yaml
+synth_regression.yaml
+fpv_regression.yaml
+design/demo_tiny_alu/
+design/demo_tiny_alu_subsys/
+design/demo_axi_2x2/
+design/demo_pulp_platform_axi/
+design/demo_abv/              # grouped ABV/FPV demo models
+design/template/
+spec/template/                # spec traceability example
+verif/template/
+verif/demo_abv/demo_abv_features/
+fpv/demo_abv/demo_abv_basic/
+fpv/demo_abv/demo_abv_features/
+fpv/demo_abv/demo_abv_induction/
+pyproject.toml                # uv-managed project environment and rtl_buddy dependency pin
+uv.lock                       # committed lockfile for reproducible project setup
+.python-version               # pinned Python version for uv
 ```
 
 The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.
@@ -179,7 +185,8 @@ uv run rb --machine fpv --list   # dry-list verification names
 
 ## When rtl_buddy Changes
 
-- Add or adjust examples in `design/`, `verif/`, `spec/`, `fpv/`, `lint/`, and flow-specific configs if the feature needs visible coverage.
+- Review recent `rtl_buddy` changes against this template's README, configs, and examples. New user-facing features should be either demonstrated in a focused example or explicitly called out as intentionally out of scope.
+- Add or adjust examples in `design/`, `verif/`, `spec/`, `fpv/`, `synth/`, `pnr/`, or `lint/` if the feature needs visible coverage.
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
 - Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Re-check feature-dependent dependencies in `pyproject.toml`, especially git-pinned tools such as `rtl-buddy-cdc`, `rtl-buddy-xeno`, and `rtl-buddy-axi-profiler`.
