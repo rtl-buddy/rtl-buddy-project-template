@@ -24,10 +24,14 @@ Blocks shipped with this template fall into four categories. Preserve this categ
   `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, the grouped
   `demo_abv` family, `demo_axi_2x2`, and `demo_pulp_platform_axi`).
   Safe to delete when starting a new project.
+- **Focused smoke suites** — small backend or tool smoke tests such as
+  `icarus_smoke`, which are intentionally minimal and may not follow
+  the `demo_*` naming pattern.
 
 Preserve this categorisation in new work — name new leaf IP without a
-prefix, new demos with `demo_*`, and don't touch `template/` unless
-you're updating the starter skeleton itself. The ABV/formal demos are a
+prefix, new demos with `demo_*`, keep backend/tool smoke suites small
+and clearly named, and don't touch `template/` unless you're updating
+the starter skeleton itself. The ABV/formal demos are a
 special grouped family: their design models live under `design/demo_abv/`,
 while their run configs live under `fpv/demo_abv/<block>/` and, where
 applicable, `verif/demo_abv/<block>/`.
@@ -65,7 +69,9 @@ spec/template/                           # starter spec traceability skeleton
 verif/template/                          # starter verification skeleton
 design/demo_tiny_alu/                    # primary leaf demo design
 verif/demo_tiny_alu*/                    # SV, cocotb, and SystemC peer suites
+design/icarus_smoke/                     # minimal design for the Icarus smoke suite
 verif/icarus_smoke/                      # minimal Icarus builder-selection example
+.github/workflows/icarus.yml             # dedicated Icarus CI coverage
 lint/cdc/cdc.yaml                        # CDC analyses, including slang and blackbox examples
 fpga/demo_cdc_open/                      # openXC7 FPGA flow example
 fpv/demo_abv/                            # FPV and ABV examples
@@ -87,7 +93,7 @@ Required for the base sanity path:
 - **Verilator** - e.g. `brew install verilator` on macOS, or build from source.
 - **Verible** - e.g. `brew tap chipsalliance/verible && brew install verible` on macOS, or see the Verible releases for other platforms.
 
-Feature-dependent tools include VCS, SystemC, Yosys, yosys-slang, OpenROAD, KLayout, Surfer, Coverview, PeakRDL, SymbiYosys plus a solver, `rtl-buddy-cdc`, `rtl-buddy-xeno`, and `rtl-buddy-axi-profiler`. The README gives the current install notes and which demo uses each tool.
+Feature-dependent tools include Icarus Verilog (required for `verif/icarus_smoke/` and the dedicated Icarus CI path; `brew install icarus-verilog` on macOS, `apt install iverilog` on Debian/Ubuntu), VCS, SystemC, Yosys, yosys-slang, OpenROAD, KLayout, Surfer, Coverview, PeakRDL, SymbiYosys plus a solver, `rtl-buddy-cdc`, `rtl-buddy-xeno`, and `rtl-buddy-axi-profiler`. The README gives the current install notes and which demo uses each tool.
 
 If you plan to use `demo_pulp_platform_axi`, initialise the vendor submodules after cloning:
 
@@ -158,6 +164,7 @@ uv run rb --machine spec check-coverage
 cd verif/demo_tiny_alu
 uv run rb --machine test basic
 
+# Icarus backend smoke suite; requires iverilog + vvp on PATH
 cd ../icarus_smoke
 uv run rb --machine test basic
 uv run rb --machine --builder verilator test basic
