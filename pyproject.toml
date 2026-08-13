@@ -3,7 +3,7 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy==6.30.0",
+  "rtl_buddy==6.32.0",
   "rtl-buddy-cdc[slang]",
   "rtl-buddy-xeno[verible,slang]",
   "rtl-buddy-axi-profiler[notebook]",
@@ -18,11 +18,18 @@ dependencies = [
 package = false
 # Aggregator-level floor: force rtl-buddy-view >=0.5.0 across every transitive
 # path, regardless of what each consumer (rtl_buddy, rtl-buddy-cdc, ...)
-# declares. 0.5.0 ships the hub-family SPA that rtl_buddy 6.30.0's hub pages
+# declares. 0.5.0 ships the hub-family SPA that rtl_buddy 6.32.0's hub pages
 # pair with (cov origin in the vendored protocol, graph_focus consumer, hub
 # design tokens, sch/gph/cov chrome). The consumers carry floors + runtime
 # guards of their own; this constraint is belt-and-suspenders so no transitive
 # path can ever drag the resolution below 0.5.0.
+#
+# Deliberately NOT rtl-buddy-sch: the viewer distribution was renamed for
+# 0.7.0+ (rtl-buddy-view is frozen at 0.5.0 on PyPI), but rtl_buddy 6.32.0
+# still probes the dist name "rtl-buddy-view" for the in-env SPA bundle, so
+# installing the renamed dist would trip that guard. Move to
+# rtl-buddy-sch>=0.7.0 once rtl-buddy/rtl_buddy#431 (dual dist-name probe)
+# ships in a release.
 constraint-dependencies = ["rtl-buddy-view>=0.5.0"]
 
 [tool.uv.sources]
