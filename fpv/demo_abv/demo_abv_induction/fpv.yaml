@@ -50,6 +50,11 @@ verifications:
       - "demo_abv_induction_props.sv"
     mode: "bmc"
     depth: 20
+    # Bounded reachability is a real (if bounded) establishment of the
+    # claim, so this run closes the spec item. The `prove` twin below
+    # does not — see its note.
+    covers:
+      - "ABV-IND-NO-26"
     engines:
       - "smtbmc yices"
 
@@ -69,6 +74,10 @@ verifications:
     # this property ever starts proving (e.g. the depth is raised past the
     # induction boundary), the regression goes red to flag the stale demo.
     xfail_strict: true
+    # Deliberately NO `covers:` — this run is expected to fail, so it
+    # establishes nothing and must not close a spec item. ABV-IND-NO-26
+    # is closed by the runs that do establish it: the BMC twin above
+    # (bounded) and the companion prove below (unbounded).
     engines:
       - "smtbmc yices"
 
@@ -82,6 +91,9 @@ verifications:
       - "demo_abv_induction_props.sv"
     mode: "prove"
     depth: 20
+    # The unbounded statement of the counter's reachable state set.
+    covers:
+      - "ABV-IND-REACHABLE-SET"
     engines:
       - "smtbmc yices"
 
@@ -103,5 +115,10 @@ verifications:
     # mutually-strengthening assertions inductive together. PASS.
     mode: "prove"
     depth: 20
+    # Two assertions, two items — and this is the run that upgrades
+    # ABV-IND-NO-26 from bounded to proved.
+    covers:
+      - "ABV-IND-NO-6"
+      - "ABV-IND-NO-26"
     engines:
       - "smtbmc yices"
