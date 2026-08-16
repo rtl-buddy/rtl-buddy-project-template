@@ -28,6 +28,11 @@ verifications:
     properties: []
     mode: "bmc"
     depth: 32
+    # The DUT's one real inline assertion. The tautological `assume`
+    # alongside it constrains nothing (that is what the dead-assume
+    # report is for), so it closes no spec item.
+    covers:
+      - "ABV-FEAT-RESET"
     engines:
       - "smtbmc yices"
 
@@ -41,6 +46,11 @@ verifications:
       - "demo_abv_features_props_slang.sv"
     mode: "bmc"
     depth: 32
+    # Only `p_safe_count` closes an item: its antecedent is reachable,
+    # which the vacuity pass confirms. `p_vacuous` is proved vacuously
+    # and therefore establishes nothing about the design.
+    covers:
+      - "ABV-FEAT-SAT-WHEN-EN"
     engines:
       - "smtbmc yices"
     # Use slang for the SVA `|->` lowering (rejected by yosys's

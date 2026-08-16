@@ -1,0 +1,59 @@
+name: Spec / FPV Config
+
+# Guards the spec-traceability and formal-config surface on every push —
+# the chain rtl-buddy/rtl_buddy#385 wired up (fpv `covers:` reaching the
+# spec tier) previously had no CI coverage at all.
+#
+# Deliberately solver-less: no sby/yosys/SMT here. This tier catches what
+# actually regresses silently — unparseable specs.yaml/fpv.yaml, broken
+# `spec:` links in models.yaml, `covers:` ids that no longer match a spec
+# block's coverage-items, and coverage items left with no covering test or
+# formal run. Actually PROVING the properties needs a solver and stays a
+# local/nightly concern.
+on: [push]
+
+jobs:
+  spec-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked --python 3.11
+
+      - name: Spec blocks parse and list
+        run: uv run rtl-buddy --machine spec list
+
+      - name: Every spec block has its model
+        run: uv run rtl-buddy --machine spec check-design
+
+      - name: Coverage map builds and stays fully covered
+        # check-coverage exits 0 even with uncovered items (it is a report),
+        # so assert the reference project's invariant explicitly: every
+        # coverage item is closed by a sim test or a formal run. If you add
+        # spec items ahead of their tests, this step is the reminder.
+        run: |
+          uv run rtl-buddy spec check-coverage | tee spec-coverage.txt
+          if grep -q "Uncovered items:" spec-coverage.txt; then
+            echo "::error::spec coverage items without a covering test or formal run (see report above)"
+            exit 1
+          fi
+
+      - name: FPV configs parse
+        # `fpv --list` loads each suite's fpv.yaml through the full config
+        # model without invoking any formal tool, so schema errors fail
+        # here. A typo'd/stale `covers:` id is NOT an error at this layer
+        # (verified: it silently matches nothing) — it surfaces as an
+        # uncovered spec item, which the coverage step above turns fatal.
+        run: |
+          for f in $(find fpv -name fpv.yaml | sort); do
+            d=$(dirname "$f")
+            echo "== $d"
+            (cd "$d" && uv run rtl-buddy --machine fpv --list)
+          done

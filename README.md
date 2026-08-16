@@ -53,9 +53,9 @@ naming convention surfaces the category in the directory name:
 | `demo_tiny_alu_sc`     | SystemC + Verilator cosim peer of `demo_tiny_alu`, showing the same DUT driven from `sc_main()` | [`verif/demo_tiny_alu_sc/`](verif/demo_tiny_alu_sc/) |
 | `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the `rb pnr` Nangate45 flow | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
-| `demo_abv_basic`    | Saturating up-counter with a bound SVA checker for `rb fpv` (bmc-proves no-overflow, cover-reaches saturation); also the `rb mut` reference block | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_basic.md)), [`fpv/demo_abv/demo_abv_basic/`](fpv/demo_abv/demo_abv_basic/) |
-| `demo_abv_features`   | Assertion-Based Verification end-to-end — testbench-side SVA via `rb test` + `rb fpv` reporting **COI**, **dead-assume**, and slang-fronted **vacuity** (`1/2 vacuous`) on a tiny saturating counter | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_features.md)), [`verif/demo_abv/demo_abv_features/`](verif/demo_abv/demo_abv_features/), [`fpv/demo_abv/demo_abv_features/`](fpv/demo_abv/demo_abv_features/) |
-| `demo_abv_induction`  | BMC-vs-induction teaching block — a wrapping counter whose `cnt != 26` is true but not inductive (passes BMC, fails `prove`), with the inductive-invariant fix `cnt <= 5`; rides in regression via `xfail_strict` | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_induction.md)), [`fpv/demo_abv/demo_abv_induction/`](fpv/demo_abv/demo_abv_induction/) |
+| `demo_abv_basic`    | Saturating up-counter with a bound SVA checker for `rb fpv` (bmc-proves no-overflow, cover-reaches saturation); also the `rb mut` reference block | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_basic.md)), [`spec/demo_abv/`](spec/demo_abv/), [`fpv/demo_abv/demo_abv_basic/`](fpv/demo_abv/demo_abv_basic/) |
+| `demo_abv_features`   | Assertion-Based Verification end-to-end — testbench-side SVA via `rb test` + `rb fpv` reporting **COI**, **dead-assume**, and slang-fronted **vacuity** (`1/2 vacuous`) on a tiny saturating counter | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_features.md)), [`spec/demo_abv/`](spec/demo_abv/), [`verif/demo_abv/demo_abv_features/`](verif/demo_abv/demo_abv_features/), [`fpv/demo_abv/demo_abv_features/`](fpv/demo_abv/demo_abv_features/) |
+| `demo_abv_induction`  | BMC-vs-induction teaching block — a wrapping counter whose `cnt != 26` is true but not inductive (passes BMC, fails `prove`), with the inductive-invariant fix `cnt <= 5`; rides in regression via `xfail_strict` | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_induction.md)), [`spec/demo_abv/`](spec/demo_abv/), [`fpv/demo_abv/demo_abv_induction/`](fpv/demo_abv/demo_abv_induction/) |
 | `demo_axi_2x2`        | Minimal 2×2 AXI4 crossbar demo with directed traffic, waveform-friendly back-pressure, and profiler-ready AXI bundle metadata | [`design/demo_axi_2x2/`](design/demo_axi_2x2/), [`verif/demo_axi_2x2/`](verif/demo_axi_2x2/) |
 
 ### Third-party IP
@@ -157,7 +157,8 @@ uv run rb skill install --project
 │   ├── template/           # workflow template — spec traceability skeleton
 │   ├── demo_tiny_alu/       # demo — ALU spec + Python golden model
 │   ├── demo_tiny_alu_subsys/     # demo — system spec + demo_tiny_alu_subsys_csr.rdl + demo_tiny_alu_subsys_model.py
-│   └── demo_cdc_src_sync/  # demo — source-synchronous methodology + coverage items
+│   ├── demo_cdc_src_sync/  # demo — source-synchronous methodology + coverage items
+│   └── demo_abv/           # demo — one block per demo_abv counter; items closed by `rb fpv` `covers:`
 ├── verif/
 │   ├── apb/  ip_cdc_sync/  ip_cdc_handshake/  ip_async_fifo/   # base IP suites
 │   ├── template/           # workflow template — starter verification files
@@ -270,13 +271,26 @@ direction shows up as a missing item rather than going unnoticed.
   `verif/<block>/cov_*.sv` (and equivalents) match the spec IDs.
 - **Test → coverage**: each test in `verif/<block>/tests.yaml`
   declares a `covers:` list of the IDs it targets.
+- **Formal run → coverage**: an `rb fpv` verification declares the same
+  `covers:` list in `fpv/<block>/fpv.yaml`, so a proof closes a spec
+  item exactly as a test does. The formal runs are discovered through
+  the root-level `fpv_regression.yaml` (the `verif/` walk never reaches
+  `fpv/`). [`spec/demo_abv/`](spec/demo_abv/) is the worked example —
+  one block per `demo_abv` sub-block, every item closed by a property
+  the shipped proofs actually establish.
 
 ### Try it
 
 ```bash
-uv run rb spec list             # 8 blocks (47 coverage IDs total)
+uv run rb spec list             # 11 blocks (55 coverage IDs total)
 uv run rb spec check-design     # every block points at a design model
-uv run rb spec check-coverage   # every coverage ID is referenced by a test
+uv run rb spec check-coverage   # every coverage ID is referenced by a test or proof
+
+# the formal → spec chain, on the design knowledge graph
+uv run rb graph build --force
+uv run rb graph path \
+    test:fpv/demo_abv/demo_abv_induction#demo_abv_induction_inductive_prove \
+    spec:demo_abv_induction
 ```
 
 A failing `check-coverage` row means an ID exists in `specs.yaml` but

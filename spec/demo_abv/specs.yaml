@@ -1,0 +1,60 @@
+# RTL-Buddy Spec Configuration File
+rtl-buddy-filetype: spec_config
+
+# One spec block per demo_abv sub-block. These blocks exist to
+# demonstrate the *formal* half of spec traceability: their coverage
+# items are closed by `rb fpv` verifications declaring `covers:` in
+# fpv/demo_abv/<block>/fpv.yaml, not by simulation tests
+# (rtl-buddy/rtl_buddy#385). Every item below names a property that a
+# shipped proof actually establishes — nothing is aspirational.
+blocks:
+  - name: "demo_abv_basic"
+    desc: >-
+      Saturating up-counter whose invariants are established by a bound
+      SVA checker under `rb fpv` (bmc + cover). Formal is the only
+      verification this block has — there is no simulation suite, so
+      every item here is closed by a proof.
+    docs:
+      - "README.md"
+      - "../../design/demo_abv/demo_abv_basic.md"
+    coverage-items:
+      - id: "ABV-BASIC-SAT"
+        desc: "Counter never exceeds MAX once reset is released (cnt <= MAX, bounded proof)"
+      - id: "ABV-BASIC-RESET"
+        desc: "Counter is held at zero for as long as rst_n is asserted"
+      - id: "ABV-BASIC-REACH-MAX"
+        desc: "Saturation is reachable — a trace exists in which cnt == MAX"
+
+  - name: "demo_abv_induction"
+    desc: >-
+      Wrapping mod-5 counter used to teach BMC vs induction. Its
+      reachable state set is exactly {0..5}; the items below are the
+      three claims the shipped proofs establish about it, each closed
+      by the run (or runs) strong enough to establish it.
+    docs:
+      - "README.md"
+      - "../../design/demo_abv/demo_abv_induction.md"
+    coverage-items:
+      - id: "ABV-IND-REACHABLE-SET"
+        desc: "cnt stays within the reachable set {0..5} — inductive invariant cnt <= 5 proved by k-induction"
+      - id: "ABV-IND-NO-6"
+        desc: "cnt never takes the value 6 (5 wraps to 0, so 6 has no predecessor) — proved by k-induction"
+      - id: "ABV-IND-NO-26"
+        desc: "cnt never takes the value 26 — bounded-reachable to depth 20, and proved by k-induction once cnt != 6 is asserted alongside it"
+
+  - name: "demo_abv_features"
+    desc: >-
+      Saturating counter carrying inline formal-only assertions, used to
+      demonstrate rtl_buddy's COI, dead-assume, and vacuity reporting.
+      Only two of its properties constrain the design — the deliberately
+      vacuous `1'b0 |-> …` property and the tautological `assume` exist
+      to be *reported*, not to prove anything, so neither closes a spec
+      item.
+    docs:
+      - "README.md"
+      - "../../design/demo_abv/demo_abv_features.md"
+    coverage-items:
+      - id: "ABV-FEAT-RESET"
+        desc: "Counter is zero whenever rst_n is low, checked combinationally to match the DUT's async reset"
+      - id: "ABV-FEAT-SAT-WHEN-EN"
+        desc: "cnt <= MAX on every enabled cycle (`en |-> cnt <= MAX`), with the antecedent proven reachable so the result is non-vacuous"

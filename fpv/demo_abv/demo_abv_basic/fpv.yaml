@@ -10,6 +10,12 @@ rtl-buddy-filetype: fpv_config
 # `bind`, which only the yosys-slang frontend elaborates (the native
 # verilog frontend silently drops it). Point cfg-fpv-tools.opts.
 # plugin-path at your built slang.so (see root_config.yaml).
+#
+# `covers:` names the spec/demo_abv/specs.yaml items each proof
+# establishes — the formal counterpart of a test's `covers:` in
+# tests.yaml. `rb spec check-coverage` counts these runs (it finds them
+# through the root fpv_regression.yaml), and the design knowledge graph
+# walks fpv run -> coverage_item -> spec block.
 verifications:
   - name: "demo_abv_basic_safety"
     desc: "Bounded proof: counter never overflows past MAX"
@@ -22,6 +28,11 @@ verifications:
       - "demo_abv_basic_props.sv"
     mode: "bmc"
     depth: 32
+    # Both assertions in the bound checker are proved by this run: the
+    # saturation bound and the reset hold.
+    covers:
+      - "ABV-BASIC-SAT"
+      - "ABV-BASIC-RESET"
     engines:
       - "smtbmc yices"
 
@@ -36,5 +47,10 @@ verifications:
       - "demo_abv_basic_props.sv"
     mode: "cover"
     depth: 32
+    # Reachability only — under `mode: cover` sby chases the cover
+    # statement, so this run establishes the "MAX is reachable" item and
+    # not the safety ones above.
+    covers:
+      - "ABV-BASIC-REACH-MAX"
     engines:
       - "smtbmc yices"
