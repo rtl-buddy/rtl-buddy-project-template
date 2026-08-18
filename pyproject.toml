@@ -3,7 +3,7 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy==6.32.1",
+  "rtl_buddy[graph-extract]==6.34.0",
   "rtl-buddy-cdc[slang]",
   "rtl-buddy-xeno[verible,slang]",
   "rtl-buddy-axi-profiler[notebook]",
