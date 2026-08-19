@@ -8,7 +8,7 @@ resolution-markers = [
 ]
 
 [manifest]
-constraints = [{ name = "rtl-buddy-sch", specifier = ">=0.8.1" }]
+constraints = [{ name = "rtl-buddy-sch", specifier = ">=0.9.0" }]
 
 [[package]]
 name = "altair"
@@ -1035,14 +1035,14 @@ requires-dist = [
 
 [[package]]
 name = "rtl-buddy-sch"
-version = "0.8.1"
+version = "0.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jsonschema" },
     { name = "typer" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/75/ba869f33b453f752d2e30cabdc7c4c1fcf1e4fbaae83352127bda586cf53/rtl_buddy_sch-0.8.1-py3-none-any.whl", hash = "sha256:afd37125841b4d49925617aa59d5f3d2c2b211219e95462a0057d5d37e500ec6", size = 1284939, upload-time = "2026-08-19T03:47:12.707Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/21/ff780f78f012ef6297c0499d3c06035f5d549d5fc49fd9ba00cebbed433d/rtl_buddy_sch-0.9.0-py3-none-any.whl", hash = "sha256:8c424e38caece160c220f47dd236c50730c7124fab768044be01ea8c172d7843", size = 1296269, upload-time = "2026-08-19T11:27:19.688Z" },
 ]
 
 [[package]]
