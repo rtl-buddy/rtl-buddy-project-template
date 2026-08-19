@@ -4,6 +4,7 @@
 // crossing from a foreign domain into `clk`. STAGES≥2; default 2 flops.
 // See spec/ip_cdc_sync/README.md.
 
+// rbsch: leaf
 module ip_cdc_sync #(
   parameter int               WIDTH   = 1,
   parameter int               STAGES  = 2,

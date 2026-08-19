@@ -51,6 +51,7 @@ module demo_tiny_alu_subsys_top (
   demo_tiny_alu_subsys_csr_pkg::demo_tiny_alu_subsys_csr__in_t  hwif_in;
   demo_tiny_alu_subsys_csr_pkg::demo_tiny_alu_subsys_csr__out_t hwif_out;
 
+  // rbsch: label="CSR block (PeakRDL)"
   demo_tiny_alu_subsys_csr u_csr (
     .clk            (apb_clk),
     .rst_n          (apb_rst_n),
@@ -69,16 +70,18 @@ module demo_tiny_alu_subsys_top (
   );
 
   // ────────── apb→cclk: CSR-direct command via handshake ──────────
-  logic [18:0] cmd_payload_apb;     // {op[2:0], a[7:0], b[7:0]}
+  logic [18:0] cmd_payload_apb;     // {op[2:0], a[7:0], b[7:0]}  // rbsch: bundle="cmd (apb)"
   assign cmd_payload_apb = { hwif_out.op.OP.value,
                               hwif_out.operand_a.A.value,
                               hwif_out.operand_b.B.value };
 
   // src_valid: apb-side qualified GO pulse (only when SRC == 0)
+  // rbsch: bundle="cmd (apb)"
   logic cmd_src_valid;
   logic cmd_src_ready;
   assign cmd_src_valid = hwif_out.ctrl.GO.value & ~hwif_out.ctrl.SRC.value;
 
+  // rbsch: bundle="cmd (cclk)" main
   logic        cmd_dst_valid_cclk;
   logic [18:0] cmd_dst_data_cclk;
 
@@ -115,11 +118,12 @@ module demo_tiny_alu_subsys_top (
     .clk(cclk), .rst_n(crst_n_sync), .d(hwif_out.ctrl.SRC.value), .q(src_sel_cclk)
   );
 
-  logic       result_valid_cclk;
+  logic       result_valid_cclk;  // rbsch: bundle="result (cclk)"
   logic [7:0] result_y_cclk;
   logic       result_zf_cclk, result_cf_cclk, result_nf_cclk, result_vf_cclk;
   logic       busy_cclk;
 
+  // rbsch: label="ALU datapath"
   demo_tiny_alu_subsys_compute u_compute (
     .clk           (cclk),
     .rst_n         (crst_n_sync),
@@ -141,7 +145,7 @@ module demo_tiny_alu_subsys_top (
   );
 
   // ────────── cclk→apb: result handshake ──────────
-  logic [11:0] result_payload_cclk;        // {y[7:0], zf, cf, nf, vf}
+  logic [11:0] result_payload_cclk;        // {y[7:0], zf, cf, nf, vf}  // rbsch: bundle="result (cclk)"
   assign result_payload_cclk = { result_y_cclk,
                                   result_zf_cclk, result_cf_cclk,
                                   result_nf_cclk, result_vf_cclk };
