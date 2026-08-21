@@ -7,6 +7,10 @@
 // See spec/ip_async_fifo/README.md.
 
 // rbsch: leaf label="CDC FIFO"
+// Timescale matches demo_tiny_alu.sv (slang errors on mixed `timescale
+// presence within a compilation unit — LRM 3.14.2.3).
+`timescale 1ns/10ps
+
 module ip_async_fifo #(
   parameter int DEPTH  = 8,
   parameter int DATA_W = 8

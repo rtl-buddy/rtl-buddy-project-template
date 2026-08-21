@@ -43,10 +43,18 @@ prepend() {
   fi
 }
 
+# The timescale matches the hand-written RTL these files are compiled with
+# (see design/demo_tiny_alu/demo_tiny_alu.sv): slang errors on mixed
+# `timescale presence within a compilation unit (LRM 3.14.2.3), and the
+# CDC lint of demo_tiny_alu_subsys_top elaborates with the slang frontend.
 prepend "$CSR_SV"  '/* verilator lint_off MULTIDRIVEN */' \
                    '/* verilator lint_off GENUNNAMED */'  \
                    '/* verilator tracing_off */'
 prepend "$CSR_PKG" '/* verilator tracing_off */'
+# Prepended last so each ends up on its own line 1 — Verilator's
+# preprocessor rejects a `timescale directive with trailing text.
+prepend "$CSR_SV"  '`timescale 1ns/10ps'
+prepend "$CSR_PKG" '`timescale 1ns/10ps'
 
 echo "Done."
 ls -1 "${OUT_DIR}"/*.sv 2>/dev/null

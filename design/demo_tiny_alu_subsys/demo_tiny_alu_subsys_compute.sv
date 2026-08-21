@@ -11,6 +11,10 @@
 // `busy` is high while a command is in flight or while the FIFO has
 // entries waiting to be drained.
 
+// Timescale matches demo_tiny_alu.sv (slang errors on mixed `timescale
+// presence within a compilation unit — LRM 3.14.2.3).
+`timescale 1ns/10ps
+
 module demo_tiny_alu_subsys_compute (
   input  logic       clk,
   input  logic       rst_n,
