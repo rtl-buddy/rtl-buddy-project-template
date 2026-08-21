@@ -48,10 +48,13 @@ graph.
 
 Measured on this demo, changing nothing but which `rtl_buddy` runs it:
 
-| | reported area | WNS | macro instances after `link_design` |
+| rtl_buddy | reported area | WNS | macro instances after `link_design` |
 |---|---|---|---|
-| stub read (the bug) | 54 um^2 | +3.906 ns | 0 |
-| stub skipped (fixed) | 8054 um^2 | +3.850 ns | 1 |
+| 6.37.0 and earlier | 54 um^2 | +3.906 ns | 0 |
+| 6.37.2 onwards | 8054 um^2 | +3.850 ns | 1 |
+
+Fixed in rtl_buddy **6.37.2** (rtl-buddy/rtl_buddy#471), which this project pins.
+6.37.1 does **not** have it.
 
 Both runs **PASS**. That is the whole problem: no error, no warning, and a
 plausible-looking table. The area is out by 149x, and the WNS is worse than
