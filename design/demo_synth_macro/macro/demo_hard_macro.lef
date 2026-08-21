@@ -1,0 +1,171 @@
+# Synthetic hard-macro abstract, standing in for a compiled SRAM or any vendor
+# block: something whose physical extent comes from a LEF and whose timing comes
+# from a Liberty, not from RTL. Deliberately small and hand-written so the demo
+# needs no vendor download; the layers it references are Nangate45's.
+#
+# CLASS BLOCK is what makes this a placeable block rather than a standard cell,
+# and SIZE is what report_design_area should count.
+#
+# The bus pins are bit-blasted (d[0] .. d[7]), which is how a real macro abstract
+# carries them and is load-bearing for what this demo tests -- see
+# synth/demo_synth_macro/README.md.
+VERSION 5.7 ;
+BUSBITCHARS "[]" ;
+DIVIDERCHAR "/" ;
+
+MACRO demo_hard_macro
+  CLASS BLOCK ;
+  ORIGIN 0 0 ;
+  SIZE 100.0 BY 80.0 ;
+  SYMMETRY X Y R90 ;
+  PIN clk
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 1.0 1.0 2.0 2.0 ;
+    END
+  END clk
+  PIN en
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 4.0 1.0 5.0 2.0 ;
+    END
+  END en
+  PIN d[0]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 7.0 1.0 8.0 2.0 ;
+    END
+  END d[0]
+  PIN d[1]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 10.0 1.0 11.0 2.0 ;
+    END
+  END d[1]
+  PIN d[2]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 13.0 1.0 14.0 2.0 ;
+    END
+  END d[2]
+  PIN d[3]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 16.0 1.0 17.0 2.0 ;
+    END
+  END d[3]
+  PIN d[4]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 19.0 1.0 20.0 2.0 ;
+    END
+  END d[4]
+  PIN d[5]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 22.0 1.0 23.0 2.0 ;
+    END
+  END d[5]
+  PIN d[6]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 25.0 1.0 26.0 2.0 ;
+    END
+  END d[6]
+  PIN d[7]
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 28.0 1.0 29.0 2.0 ;
+    END
+  END d[7]
+  PIN q[0]
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 31.0 1.0 32.0 2.0 ;
+    END
+  END q[0]
+  PIN q[1]
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 34.0 1.0 35.0 2.0 ;
+    END
+  END q[1]
+  PIN q[2]
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 37.0 1.0 38.0 2.0 ;
+    END
+  END q[2]
+  PIN q[3]
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 40.0 1.0 41.0 2.0 ;
+    END
+  END q[3]
+  PIN q[4]
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 43.0 1.0 44.0 2.0 ;
+    END
+  END q[4]
+  PIN q[5]
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 46.0 1.0 47.0 2.0 ;
+    END
+  END q[5]
+  PIN q[6]
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 49.0 1.0 50.0 2.0 ;
+    END
+  END q[6]
+  PIN q[7]
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER metal4 ;
+        RECT 52.0 1.0 53.0 2.0 ;
+    END
+  END q[7]
+  OBS
+    LAYER metal1 ;
+      RECT 0.0 0.0 100.0 80.0 ;
+  END
+END demo_hard_macro
+
+END LIBRARY
