@@ -478,8 +478,8 @@ coverage from a PR is one download away.
 
 `rtl_buddy` ships a browser UI family served by the project hub: a
 landing page at `/` that lists the apps by task, and three apps —
-**rtl-buddy-schematic** (`sch`, at `/view`), **rtl-buddy-graph**
-(`gph`, at `/graph`), and **rtl-buddy-coverage** (`cov`, at `/cov`).
+**rtl-buddy-schematic** (`sch`, at `/sch`), **rtl-buddy-graph**
+(`gph`, at `/gph`), and **rtl-buddy-coverage** (`cov`, at `/cov`).
 All three share one design-token sheet (light default, dark via your
 OS preference), one connection-status strip, and one
 `rtl-buddy <version> @ <sha>` label — and they talk to each other
