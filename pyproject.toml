@@ -27,10 +27,11 @@ package = false
 # both installed is a collision, not a fallback. The consumers carry
 # floors + runtime guards of their own; this constraint is
 # belt-and-suspenders so no transitive path can ever drag the resolution
-# below 0.8.1 — the release pairing rtl_buddy 6.36.0's
-# `rb hier --block-diagram`, and the first wheel to ship
-# THIRD-PARTY-NOTICES.md in its dist-info.
-constraint-dependencies = ["rtl-buddy-sch>=0.8.1"]
+# below 0.9.0 — the release completing the rbsch pragma vocabulary
+# (net classification, bundle=, rank=/group=, in=/out=; epic
+# rtl-buddy-sch#159) plus its ELK/SPA presentation, which this
+# template's demo designs and hint sidecars exercise directly.
+constraint-dependencies = ["rtl-buddy-sch>=0.9.0"]
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }

@@ -6,6 +6,7 @@
 //
 // See spec/ip_async_fifo/README.md.
 
+// rbsch: leaf label="CDC FIFO"
 module ip_async_fifo #(
   parameter int DEPTH  = 8,
   parameter int DATA_W = 8

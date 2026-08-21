@@ -20,6 +20,7 @@
 //
 // See spec/ip_cdc_handshake/README.md.
 
+// rbsch: leaf
 module ip_cdc_handshake #(
   parameter int WIDTH = 8
 )(
