@@ -229,7 +229,7 @@ uv run rb hub start --serve-viewer    # then open the printed http://127.0.0.1:<
 (cd design/demo_tiny_alu_subsys && ./gen_demo_tiny_alu_subsys_csr.sh)
 
 # CDC lint regression — clock-domain-crossing checks across all configured analyses
-uv run rb cdc-regression -c lint/cdc/cdc_regression.yaml
+uv run rb cdc-regression
 
 # AXI traffic demo    — directed 2x2 crossbar traffic for waveform/profiler work
 (cd verif/demo_axi_2x2 && uv run rb test basic_traffic)
@@ -689,12 +689,18 @@ with optional waivers. Same shape as the sim/synth flows: a
 - **CDC config**: [`lint/cdc/cdc.yaml`](lint/cdc/cdc.yaml) declares
   one entry per analysis with `name`, `model`, `model_path:` pointer
   into `design/.../models.yaml`, `tool:`, an SDC `constraints:` file,
-  and an optional `waivers:` file. Three analyses today:
+  and an optional `waivers:` file. Five analyses today:
   - `ip_cdc_handshake_lint` — the request/ack handshake IP
   - `demo_tiny_alu_subsys_lint` — the multi-clock APB↔compute system
-    (uses [`demo_tiny_alu_subsys.waivers`](lint/cdc/demo_tiny_alu_subsys.waivers))
+    (uses [`demo_tiny_alu_subsys.waivers`](lint/cdc/demo_tiny_alu_subsys.waivers);
+    `frontend: slang` for its SV interface port)
   - `demo_cdc_src_sync_lint` — the source-synchronous A→B→C chain;
     relies on internal-pin `create_generated_clock` declarations
+  - `demo_cdc_open_lint` — the vendor-neutral open FPGA CDC block;
+    `frontend: slang` preserves the synchronizer hierarchy for the
+    scoped constraint loop (see [`check_cdc_xdc.sh`](lint/cdc/check_cdc_xdc.sh))
+  - `demo_cdc_mem_macro_lint` — blackboxes a single-clock SRAM macro
+    (`blackbox: ["sram_sp"]`) while preserving the clk_h→clk_m crossing
 - **Tool defaults**: `cfg-cdc-tools` in
   [`root_config.yaml`](root_config.yaml) defines the `rtl-buddy-cdc`
   entry and its options (default `sync-depth: 2`). `tool:` in
@@ -702,6 +708,13 @@ with optional waivers. Same shape as the sim/synth flows: a
 - **Discoverable regression**:
   [`lint/cdc/cdc_regression.yaml`](lint/cdc/cdc_regression.yaml)
   drives `rb cdc-regression` across all listed `cdc.yaml` files.
+  Because it lives under `lint/cdc/` rather than at the project root,
+  `cfg-rtl-reg.cdc-reg-cfg-path` in
+  [`root_config.yaml`](root_config.yaml) points at it (rtl_buddy >=
+  6.35) — so bare `rb cdc-regression` finds it and `rb graph build`
+  stamps the analyses into the graph's config tier, exactly as the
+  root-level `synth_regression.yaml` / `fpv_regression.yaml` are found
+  by filename.
 
 ### Try it
 
@@ -716,7 +729,8 @@ uv run rb cdc ip_cdc_handshake_lint -c lint/cdc/cdc.yaml
 uv run rb cdc -c lint/cdc/cdc.yaml
 
 # discoverable regression — every cdc.yaml in cdc_regression.yaml
-uv run rb cdc-regression -c lint/cdc/cdc_regression.yaml
+# (found via cfg-rtl-reg.cdc-reg-cfg-path in root_config.yaml; -c overrides)
+uv run rb cdc-regression
 ```
 
 ---

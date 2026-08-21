@@ -330,7 +330,13 @@ cfg-systemc:
 cfg-rtl-reg:
   {
     # regression config yaml, discover full list of reg from this root
-    reg-cfg-path: "regression.yaml"
+    reg-cfg-path: "regression.yaml",
+    # The CDC manifest lives with its analyses under lint/cdc/, away from
+    # the project root where the ./cdc_regression.yaml filename convention
+    # would find it. This per-flow key (rtl_buddy >= 6.35, rtl_buddy#389)
+    # lets bare `rb cdc-regression` and `rb graph build` discover it; the
+    # synth/fpv/fpga manifests sit at the root and need no such entry.
+    cdc-reg-cfg-path: "lint/cdc/cdc_regression.yaml"
   }
 
 # Parallel dispatch (rtl_buddy >= 6.21). By default a regression runs
