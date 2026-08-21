@@ -5,6 +5,10 @@
 // See spec/ip_cdc_sync/README.md.
 
 // rbsch: leaf
+// Timescale matches demo_tiny_alu.sv (slang errors on mixed `timescale
+// presence within a compilation unit — LRM 3.14.2.3).
+`timescale 1ns/10ps
+
 module ip_cdc_sync #(
   parameter int               WIDTH   = 1,
   parameter int               STAGES  = 2,

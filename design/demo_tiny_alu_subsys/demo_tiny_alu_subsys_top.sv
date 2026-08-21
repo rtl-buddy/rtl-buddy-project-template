@@ -15,6 +15,10 @@
 // is generated in cclk and synchronized to apb via ip_cdc_sync. BUSY
 // is computed in apb domain from outstanding apb-side state.
 
+// Timescale matches demo_tiny_alu.sv (slang errors on mixed `timescale
+// presence within a compilation unit — LRM 3.14.2.3).
+`timescale 1ns/10ps
+
 module demo_tiny_alu_subsys_top (
   // APB host
   input  logic        apb_clk,

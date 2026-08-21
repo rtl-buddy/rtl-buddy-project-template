@@ -3,6 +3,11 @@
 // See spec/apb/README.md and ARM IHI 0024C.
 // Carries the full APB4 signal set including PPROT and PSTRB.
 
+// Timescale matches demo_tiny_alu.sv: slang enforces LRM 3.14.2.3 (mixed
+// presence of `timescale across design elements in one compilation unit is
+// an error), and this file is compiled alongside it for CDC lint.
+`timescale 1ns/10ps
+
 interface apb_intf #(
   parameter int ADDR_W = 32,
   parameter int DATA_W = 32
