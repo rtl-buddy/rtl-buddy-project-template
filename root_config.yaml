@@ -172,9 +172,15 @@ cfg-rtl-builder:
 # End RTL builder configuration
 
 # Verible configuration
+# Both entries point at /usr/local/bin — the rtl-buddy-tools deployment
+# convention (https://github.com/rtl-buddy/rtl-buddy-tools `make verible`
+# + its /usr/local/bin symlinks; one pinned version on macOS and Linux,
+# replacing the old brew install / site module). Where the symlinks are
+# not laid down, rb falls back to PATH with a warning — sourcing
+# rtl-buddy-tools' env-macos.zsh / env-linux.sh covers that case.
 cfg-verible:
   - name: "verible-macos"
-    path: "/opt/homebrew/bin"
+    path: "/usr/local/bin"
     extra_args: &verible_extra_args
       # extra verible lint args
       # see lint help for --rules, comma-sep lint rules, (-) excl, (+) incl
