@@ -3,7 +3,7 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy[graph-extract]==6.36.0",
+  "rtl_buddy[graph-extract]==6.38.0",
   "rtl-buddy-cdc[slang]",
   "rtl-buddy-xeno[verible,slang]",
   "rtl-buddy-axi-profiler[notebook]",
@@ -27,11 +27,12 @@ package = false
 # both installed is a collision, not a fallback. The consumers carry
 # floors + runtime guards of their own; this constraint is
 # belt-and-suspenders so no transitive path can ever drag the resolution
-# below 0.9.0 — the release completing the rbsch pragma vocabulary
-# (net classification, bundle=, rank=/group=, in=/out=; epic
-# rtl-buddy-sch#159) plus its ELK/SPA presentation, which this
-# template's demo designs and hint sidecars exercise directly.
-constraint-dependencies = ["rtl-buddy-sch>=0.9.0"]
+# below 0.10.0 — the release that makes the schematic readable: a
+# pin fed by procedural logic names the net it binds (rb.net), a
+# bundle marks the pins it stands for with junction dots, and
+# producer-baked CDC/RDC accents survive the theme re-tint. The
+# demo designs and hint sidecars here exercise all of it.
+constraint-dependencies = ["rtl-buddy-sch>=0.10.0"]
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
