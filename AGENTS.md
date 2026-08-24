@@ -163,7 +163,7 @@ uv run rb --machine spec check-design
 uv run rb --machine spec check-coverage
 
 # Icarus compatibility checks (requires Icarus Verilog 12 on PATH)
-(cd verif/icarus_smoke && uv run rb --machine test smoke)
+(cd verif/icarus_smoke && uv run rb --machine test basic)
 (cd verif/demo_tiny_alu && uv run rb --machine -B icarus test basic)
 (cd verif/demo_tiny_alu_cocotb && uv run rb --machine -B icarus test cocotb_random)
 
