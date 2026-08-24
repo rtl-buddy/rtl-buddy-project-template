@@ -517,6 +517,44 @@ uv run rb hub start --serve-viewer
 uv run rb hub status           # peers + ports at a glance
 ```
 
+### Expected `rb graph build` design-tier failures
+
+Two shipped models are **legitimately non-graphable**, and a fresh
+clone's `rb graph build` reports them as design-tier failures — the
+build still exits 0, writes the merged graph, and records both in
+`graph-meta.json`. They are expected; don't chase them:
+
+- **`apb_intf`** — the model's top is a pure SV `interface`, not a
+  module. The graph frontend registers only modules, so the file
+  parses to `Known modules: []`. (Same yosys-path limitation already
+  noted for interface-port tops in `lint/cdc/cdc.yaml`.)
+- **`pp_axi`** — a vendored **library collection** (62 pulp-platform
+  files via `-F pp_axi.f`) with no module named `pp_axi`;
+  `rb graph build` assumes top = model name.
+
+Both appear in the merged graph as `dangling` module nodes so the
+config tier's cross-references still resolve. Once `models.yaml`
+grows a `graph: false` / `top:` override knob upstream
+(rtl-buddy/rtl_buddy#479), these two can be marked out of the design
+tier instead.
+
+**Any other model failing with `top module 'X' not found. Known
+modules: []` — while the module is plainly in the file — is a
+poisoned CST cache, not a parse error.** `rb mut` (rtl-buddy-xeno)
+and the graph/hier exports (rtl-buddy-sch) share a user-global
+content-hash CST cache but store incompatible entry shapes, so a
+mutation campaign silently breaks later graph builds of the exact
+same file content — across checkouts, until the file changes or the
+cache is cleared (rtl-buddy/rtl-buddy-sch#186,
+rtl-buddy/rtl-buddy-xeno#27; misdiagnosed as an RTL-construct
+problem in template#109). Remedy:
+
+```bash
+rm -rf ~/.cache/rtl-buddy/sv-cst ~/.cache/rtl-buddy-view/cst   # both roots
+# or bypass for one run:
+RTL_BUDDY_NO_CACHE=1 uv run rb graph build --force
+```
+
 ---
 
 ## Golden-Model Cosim — One Spec, Two Flows
