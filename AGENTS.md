@@ -93,7 +93,7 @@ Required for the base sanity path:
 - **uv** - install from Astral and make sure it is on `PATH`.
 - **Python 3.11** - standard interpreter for this repo; `.python-version` pins it for uv.
 - **Verilator** - e.g. `brew install verilator` on macOS, or build from source.
-- **Verible** - e.g. `brew tap chipsalliance/verible && brew install verible` on macOS, or see the Verible releases for other platforms.
+- **Verible** - deployed by [rtl-buddy-tools](https://github.com/rtl-buddy/rtl-buddy-tools) (`make verible`; one pinned version on macOS and Linux). A PATH install (e.g. the Verible releases) also works via rb's documented PATH fallback.
 
 Feature-dependent tools include Icarus Verilog (required for `verif/icarus_smoke/` and the dedicated Icarus CI path; `brew install icarus-verilog` on macOS, `apt install iverilog` on Debian/Ubuntu), VCS, SystemC, Yosys, yosys-slang, OpenROAD, KLayout, Surfer, Coverview, PeakRDL, SymbiYosys plus a solver, `rtl-buddy-cdc`, `rtl-buddy-xeno`, and `rtl-buddy-axi-profiler`. The README gives the current install notes and which demo uses each tool.
 

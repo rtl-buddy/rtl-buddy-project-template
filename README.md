@@ -100,7 +100,7 @@ External prerequisites:
 - A simulator on `PATH` — Verilator (open-source) and/or VCS
 - `lcov` for LCOV/HTML coverage export — `brew install lcov` on macOS; `apt-get install lcov` on Debian/Ubuntu (needed for the `--coverage-html` step of `rb -M cov regression`)
 - `coverview` (Antmicro) for the Coverview package path — see [`coverview.md`](coverview.md)
-- Verible — `brew tap chipsalliance/verible && brew install verible` on macOS (optional, for `rb verible …`)
+- Verible — deployed by [rtl-buddy-tools](https://github.com/rtl-buddy/rtl-buddy-tools) (`make verible`: bazel source build on macOS, prebuilt static release binary on Linux — one pinned version everywhere; optional, for `rb verible …`)
 - Yosys — build the [rtl-buddy fork](https://github.com/rtl-buddy/yosys) onto `PATH` (optional, for `rb synth …`); macOS notes in [`tools/yosys/SETUP_OSX.md`](tools/yosys/SETUP_OSX.md)
 - yosys-slang — build the yosys-slang plugin (optional; required for any synth or FPV analysis that sets `frontend: "slang"`). Use povik's [yosys-slang](https://github.com/povik/yosys-slang) for synth-only; use the [rtl-buddy fork's `rtl-buddy` branch](https://github.com/rtl-buddy/yosys-slang/tree/rtl-buddy) for `rb fpv` with concurrent SVA (`|->`, `|=>`) until [povik/yosys-slang#317](https://github.com/povik/yosys-slang/pull/317) merges upstream. macOS notes in [`tools/yosys-slang/SETUP_OSX.md`](tools/yosys-slang/SETUP_OSX.md).
 - OpenROAD — build from source onto `PATH` (optional, for downstream P&R; macOS notes in [`tools/openroad/SETUP_OSX.md`](tools/openroad/SETUP_OSX.md))
