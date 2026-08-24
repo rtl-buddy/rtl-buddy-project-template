@@ -1,0 +1,38 @@
+# RTL-Buddy Synthesis Configuration File
+rtl-buddy-filetype: synth_config
+
+# A design with a hard macro. Two runs:
+#  - demo_synth_macro_generic:    tech-independent Yosys synth, proves the
+#                                 blackbox elaborates (no PDK, no macro views)
+#  - demo_synth_macro_nangate45:  the real point of the demo -- OpenROAD reading
+#                                 the macro's LEF and Liberty alongside the PDK
+#
+# `lef-paths` and `lib-paths` are what make a hard macro work. They are per
+# design rather than per process, which is why they live here and not in
+# root_config.yaml's cfg-pdks. Between them the backend has a complete master for
+# demo_hard_macro: extent from the LEF, arcs from the Liberty. See README.md for
+# why the RTL blackbox must not be handed to OpenROAD as Verilog as well.
+syntheses:
+  - name: "demo_synth_macro_generic"
+    desc: "Tech-independent Yosys synthesis of a design with a blackbox hard macro"
+    model: "demo_synth_macro_top"
+    model_path: "../../design/demo_synth_macro/models.yaml"
+    tool: "yosys"
+    constraints: "constraints.sdc"
+    reglvl: 0
+
+  - name: "demo_synth_macro_nangate45"
+    desc: "OpenROAD synthesis of a hard-macro design, macro views alongside the PDK"
+    model: "demo_synth_macro_top"
+    model_path: "../../design/demo_synth_macro/models.yaml"
+    tool: "openroad"
+    platform: "nangate45_typ"
+    constraints: "constraints.sdc"
+    lib-paths:
+      - "../../design/demo_synth_macro/macro/demo_hard_macro.lib"
+    lef-paths:
+      - "../../design/demo_synth_macro/macro/demo_hard_macro.lef"
+    # Deferred tier: needs the Nangate45 views and `openroad` on PATH. Download
+    # with `synth/demo_tiny_alu_subsys/download_pdk.sh`, then invoke directly:
+    #   rb synth demo_synth_macro_nangate45 -c synth/demo_synth_macro/synth.yaml
+    reglvl: 1000

@@ -223,6 +223,15 @@ cfg-synth-tools:
       synth-args: ""
       abc-args: ""
 
+  # Yosys for elaboration, then OpenROAD for STA. Needed by any synth entry with
+  # `tool: "openroad"` — synth/demo_synth_macro is the one here. Reads the PDK
+  # Liberty and both LEFs, plus whatever `lib-paths` / `lef-paths` a hard-macro
+  # design adds, so the LEFs have to be downloaded and not just the Liberty.
+  - name: "openroad"
+    tool: "openroad"
+    opts:
+      strategy: "AREA"
+
 # Technology / PDK assets. Files are not vendored — fetch with
 # `synth/demo_tiny_alu_subsys/download_pdk.sh` (or the alu equivalent)
 # before running tech-mapped synth or P&R. Multiple PDKs can be

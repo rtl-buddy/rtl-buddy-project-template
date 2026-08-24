@@ -1,0 +1,6 @@
+# RTL-Buddy RTL Model Configuration File
+rtl-buddy-filetype: model_config
+
+models:
+  - name      : "demo_synth_macro_top"
+    filelist  : [ "-F demo_synth_macro_top.f" ]
