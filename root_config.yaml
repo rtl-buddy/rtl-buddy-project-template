@@ -369,11 +369,13 @@ cfg-rtl-reg:
 # https://rtl-buddy.github.io/rtl_buddy/latest/concepts/dispatch/
 #
 # NOTE: everything below this line is Slurm's. `local-parallel` runs jobs as
-# plain subprocesses on one host, which cannot enforce a reservation, so it
-# IGNORES `resources`/`compile`/`max-jobs-per-array` — it warns once per run
-# saying so — and has no accounting source, so it produces no right-sizing
-# advice. Its one knob is `-j/--jobs` (or `jobs:` below); size that for the
-# MEMORY your heaviest tests need, since nothing else limits them.
+# plain subprocesses on one host, which cannot enforce reservation fields, so it
+# IGNORES `resources`, the reservation fields of `compile`, and Slurm-only
+# `max-jobs-per-array`/`max-array-size` controls — it warns once per run — and
+# has no accounting source, so it produces no right-sizing advice. It still
+# honors `compile.parallel` as concurrency inside the local build job. Its one
+# pool knob is `-j/--jobs` (or `jobs:` below); size that for the MEMORY your
+# heaviest tests need, since nothing else limits them.
 cfg-dispatch:
   # backend: slurm          # uncomment (or pass --dispatch slurm) to opt in
 
