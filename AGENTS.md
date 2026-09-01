@@ -82,7 +82,7 @@ uv.lock                                  # committed lockfile for reproducible p
 .python-version                          # pinned Python version for uv
 ```
 
-The `rtl_buddy` agent skill is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl_buddy/`, `~/.codex/skills/rtl_buddy/`); `--project` installs into `.claude/skills/rtl_buddy/` and `.agents/skills/rtl_buddy/` under the project root instead. Both project-level dirs are gitignored.
+The `rtl_buddy` agent skill family is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl-buddy/`, `~/.codex/skills/rtl-buddy/`); `--project` installs into `.claude/skills/rtl-buddy/` and `.agents/skills/rtl-buddy/` under the project root instead. Both project-level dirs are gitignored.
 
 ## Fresh Clone Setup
 
@@ -213,4 +213,4 @@ uv run rb --machine fpv --list   # dry-list verification names
 - Update the pinned `rtl_buddy` dependency and refresh `uv.lock`.
 - Re-run `uv run rb skill install --force` (add `--project` if you use project-scoped skill files) so the installed skill content matches the new rtl_buddy version.
 - Re-check feature-dependent dependencies in `pyproject.toml`, especially git-pinned tools such as `rtl-buddy-cdc`, `rtl-buddy-xeno`, and `rtl-buddy-axi-profiler`.
-- Commit only the dependency pin (`pyproject.toml` / `uv.lock`) - skill files are gitignored.
+- Commit relevant example, documentation, and configuration changes together with the dependency pin (`pyproject.toml` / `uv.lock`); installed skill files are gitignored.
