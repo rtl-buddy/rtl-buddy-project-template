@@ -401,6 +401,12 @@ cfg-dispatch:
     cpus: 4
     mem: 8G
     time: "01:00:00"
+    # parallel: 2             # compile distinct suite builds concurrently in
+                              # the shared build job; increase only when each
+                              # preproc hook leaves other compile inputs alone
+  # A suite can override compile fields with a top-level `compile:` block in
+  # its tests.yaml. `parallel` belongs only in this root-level block; see the
+  # dispatch guide for reservation sizing and hook-isolation requirements.
 
   # Extra flags passed to sbatch verbatim (partition, account, QOS, ...).
   # sbatch-args:
