@@ -517,28 +517,21 @@ uv run rb hub start --serve-viewer
 uv run rb hub status           # peers + ports at a glance
 ```
 
-### Expected `rb graph build` design-tier failures
+### `rb graph build` and the non-module models
 
-Two shipped models are **legitimately non-graphable**, and a fresh
-clone's `rb graph build` reports them as design-tier failures — the
-build still exits 0, writes the merged graph, and records both in
-`graph-meta.json`. They are expected; don't chase them:
+Two shipped models are legitimately not elaborable as a module top, and
+`models.yaml` says so (rtl_buddy >=6.44.0, rtl-buddy/rtl_buddy#479):
 
-- **`apb_intf`** — the model's top is a pure SV `interface`, not a
-  module. The graph frontend registers only modules, so the file
-  parses to `Known modules: []`. (Same yosys-path limitation already
-  noted for interface-port tops in `lint/cdc/cdc.yaml`.)
-- **`pp_axi`** — a vendored **library collection** (62 pulp-platform
-  files via `-F pp_axi.f`) with no module named `pp_axi`;
-  `rb graph build` assumes top = model name.
+- **`apb_intf`** is a pure SV `interface`, so it carries `graph: false`
+  — it keeps its `model:` node in the config tier (the blocks that include
+  it still cross-reference it) but is skipped by the design tier and
+  listed under `skipped` in `graph-meta.json`.
+- **`pp_axi`** is a vendored **library collection** (62 pulp-platform
+  files via `-F pp_axi.f`) with no module named `pp_axi`, so it carries
+  `top: axi_xbar` and the crossbar is exported as that model's root.
 
-Both appear in the merged graph as `dangling` module nodes so the
-config tier's cross-references still resolve. Once `models.yaml`
-grows a `graph: false` / `top:` override knob upstream
-(rtl-buddy/rtl_buddy#479), these two can be marked out of the design
-tier instead.
-
-**Any other model failing with `top module 'X' not found. Known
+A fresh clone's `rb graph build` therefore reports no design-tier
+failures. **A model failing with `top module 'X' not found. Known
 modules: []` — while the module is plainly in the file — is a
 poisoned CST cache, not a parse error.** `rb mut` (rtl-buddy-xeno)
 and the graph/hier exports (rtl-buddy-sch) share a user-global
