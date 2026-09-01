@@ -6,4 +6,5 @@ models:
   - name: "apb_intf"
     desc: "AMBA APB4 SV interface with manager/subordinate/monitor modports"
     filelist: ["-v apb_intf.sv"]
+    graph: false
     spec: "../../spec/apb/specs.yaml"
