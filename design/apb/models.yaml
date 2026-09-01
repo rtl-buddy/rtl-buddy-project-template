@@ -6,4 +6,9 @@ models:
   - name: "apb_intf"
     desc: "AMBA APB4 SV interface with manager/subordinate/monitor modports"
     filelist: ["-v apb_intf.sv"]
+    # A pure SV interface has no module to elaborate, so it is not part of
+    # the design graph (rtl_buddy >=6.44.0, rtl-buddy/rtl_buddy#479). It keeps
+    # its model: node in the config tier so blocks that include it still
+    # cross-reference it.
+    graph: false
     spec: "../../spec/apb/specs.yaml"
