@@ -201,6 +201,10 @@ uv run rb spec check-coverage
 # Single test         — one named test in a suite
 (cd verif/demo_tiny_alu && uv run rb test basic)
 
+# Model elaboration   — base model, then every named profile through level 1
+uv run rb elab demo_tiny_alu -c design/demo_tiny_alu/models.yaml
+uv run rb elab-regression -c elab_regression.yaml -l 1
+
 # Sim regression      — full suite (sanity tier + the reglvl-1000 deferred tier)
 uv run rb regression -c regression.yaml -l 1000
 
@@ -243,6 +247,36 @@ uv run rb fpv-regression
 
 Each section below walks through *what* the feature does, *how it is
 wired*, and where to look for a working example.
+
+---
+
+## Model Elaboration — `rb elab` / `rb elab-regression`
+
+Checks that a model parses and elaborates with pyslang without introducing a
+second per-model configuration file.
+
+### How it is wired
+
+- **Base model**: `rb elab demo_tiny_alu -c
+  design/demo_tiny_alu/models.yaml` consumes the model's existing `filelist`
+  and `top` (falling back to the model name).
+- **Named profiles**: the optional `elaborations:` list lives inside that same
+  [`models.yaml`](design/demo_tiny_alu/models.yaml). Profiles only describe
+  deltas such as parameter overrides, defines, extra sources, or resources;
+  they do not repeat a model path.
+- **Regression manifest**: [`elab_regression.yaml`](elab_regression.yaml)
+  explicitly lists model configuration files. `rb elab-regression` runs their
+  named profiles and applies normal regression-level filtering.
+- **Outputs**: each run writes `elab.f`, `elab.log`, and `result.json` below
+  `design/demo_tiny_alu/artefacts/elab/<model>/<profile>/`.
+
+### Try it
+
+```bash
+uv run rb elab demo_tiny_alu -c design/demo_tiny_alu/models.yaml
+uv run rb elab demo_tiny_alu --profile smoke -c design/demo_tiny_alu/models.yaml
+uv run rb --machine elab-regression -c elab_regression.yaml -l 1
+```
 
 ---
 
