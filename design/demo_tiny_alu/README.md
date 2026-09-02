@@ -22,6 +22,18 @@ A small 8-bit ALU used by the sandbox demonstrator suites to exercise
 
 Result and flags appear **one cycle** after the inputs (registered output).
 
+## Model elaboration
+
+[`models.yaml`](models.yaml) is both the model definition and the home of its
+optional named elaboration profiles. The `smoke` profile checks the default
+width; `wide` overrides `W` and is deferred to regression level 1.
+
+```bash
+uv run rb elab demo_tiny_alu -c design/demo_tiny_alu/models.yaml
+uv run rb elab demo_tiny_alu --profile smoke -c design/demo_tiny_alu/models.yaml
+uv run rb elab-regression -c elab_regression.yaml -l 1
+```
+
 ## Cross-references
 
 - Authoritative spec: [`spec/demo_tiny_alu/`](../../spec/demo_tiny_alu/)

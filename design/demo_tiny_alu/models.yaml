@@ -6,3 +6,12 @@ models:
     desc: "Tiny 8-bit ALU — sandbox demonstrator DUT"
     filelist: ["-F test_modules.f"]
     spec: "../../spec/demo_tiny_alu/specs.yaml"
+    elaborations:
+      - name: smoke
+        desc: "Default-width model elaboration"
+        parameters: {W: 8}
+        resources: {cpus: 1}
+      - name: wide
+        desc: "Deferred wider-parameter elaboration"
+        reglvl: 1
+        parameters: {W: 16}

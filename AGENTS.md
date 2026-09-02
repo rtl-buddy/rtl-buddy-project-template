@@ -63,6 +63,7 @@ The `rtl_buddy` workflow sections below are worth keeping in downstream projects
 ```text
 root_config.yaml                         # builders, platforms, tools, defaults
 regression.yaml                          # top-level sim regression list
+elab_regression.yaml                     # named model elaboration profiles
 synth_regression.yaml                    # top-level synth regression list
 fpv_regression.yaml                      # top-level formal regression list
 fpga_regression.yaml                     # top-level FPGA implementation regression list
@@ -152,6 +153,8 @@ Use this repo to validate the project setup and `rtl_buddy` integration. Prefer 
 # from repo root
 uv run rb --machine regression -c regression.yaml
 uv run rb --machine regression -c regression.yaml -l 1000
+uv run rb --machine elab demo_tiny_alu -c design/demo_tiny_alu/models.yaml
+uv run rb --machine elab-regression -c elab_regression.yaml -l 1
 uv run rb --machine cdc-regression -c lint/cdc/cdc_regression.yaml
 uv run rb --machine fpv-regression -c fpv_regression.yaml
 uv run rb --machine fpga-regression -c fpga_regression.yaml -l 1000

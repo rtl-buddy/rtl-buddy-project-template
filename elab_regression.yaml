@@ -1,0 +1,5 @@
+# RTL-Buddy model elaboration regression
+rtl-buddy-filetype: elab_reg_config
+
+model-configs:
+  - design/demo_tiny_alu/models.yaml
