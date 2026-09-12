@@ -1038,14 +1038,14 @@ requires-dist = [
 
 [[package]]
 name = "rtl-buddy-sch"
-version = "0.10.0"
+version = "0.10.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jsonschema" },
     { name = "typer" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/02/22023ecee5207fbc2882f1ef92c355b15dee8988dd2ad02dac3748113858/rtl_buddy_sch-0.10.0-py3-none-any.whl", hash = "sha256:cc07b5bf507b48c825160f96b9193b95884be9f920e539181ffab0301fb782e0", size = 1298113, upload-time = "2026-08-22T03:10:50.91Z" },
+    { url = "https://files.pythonhosted.org/packages/22/85/56c4a2441d230c101a0769d3c203a671b127ca37be6e05060cd8524ddcf0/rtl_buddy_sch-0.10.1-py3-none-any.whl", hash = "sha256:9f54cc01354dad83f8e17cb9e6e95d1947335a6434fe041be5f77f8377d67c4e", size = 1303077, upload-time = "2026-09-12T14:49:00.231Z" },
 ]
 
 [[package]]
