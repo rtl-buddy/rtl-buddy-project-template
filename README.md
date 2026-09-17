@@ -84,7 +84,7 @@ template the supported flows are:
 - **SystemC + Verilator cosim** for C++-driven harnesses through `rb test`
 - **Yosys** (rtl-buddy fork) for synthesis (generic + tech-mapped)
 - **rtl-buddy-cdc** for `rb cdc` clock-domain-crossing lint
-- **OpenROAD** for `rb pnr` (floorplan → P&R → optional GDSII streamout); KLayout for GDS rendering
+- **OpenROAD** for `rb pnr` (floorplan → P&R → optional GDSII streamout) and `rb power` (static and activity-driven power); KLayout for GDS rendering
 - **cocotb** for Python-driven testbenches
 - **Surfer** + WCP for live waveform viewing and headless capture
 - **Coverview** for browser-based coverage dashboards
@@ -174,6 +174,9 @@ uv run rb skill install --project
 │   ├── demo_tiny_alu/       # demo — Yosys synth of the ALU leaf (generic + Nangate45)
 │   ├── demo_tiny_alu_subsys/     # demo — Yosys synth of the system block (generic + Nangate45)
 │   └── demo_cdc_src_sync/  # demo — Yosys synth of the source-sync chain
+├── power/
+│   └── demo_tiny_alu_subsys/     # demo — `rb power` runs (static / synthetic / SAIF / post-P&R);
+│                                 #        the static one is `phys-run`-paired into the synthesis' model
 ├── pnr/
 │   └── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
 ├── fpv/
@@ -240,6 +243,10 @@ uv run rb cdc-regression
 
 # Synth regression    — generic synth runs (tech-mapped is gated by reglvl)
 uv run rb synth-regression -c synth_regression.yaml
+
+# Physical metrics    — read back what a synth / power run already measured
+uv run rb phys runs                   # every run with physical artefacts
+uv run rb phys summary                # totals + heaviest modules + hottest instances
 
 # FPV regression      — SymbiYosys proofs for every suite in fpv_regression.yaml
 uv run rb fpv-regression
@@ -511,13 +518,13 @@ coverage from a PR is one download away.
 ## Hub UI — `rb hub start --serve-viewer`
 
 `rtl_buddy` ships a browser UI family served by the project hub: a
-landing page at `/` that lists the apps by task, and three apps —
+landing page at `/` that lists the apps by task, and four apps —
 **rtl-buddy-schematic** (`sch`, at `/sch`), **rtl-buddy-graph**
-(`gph`, at `/gph`), and **rtl-buddy-coverage** (`cov`, at `/cov`).
-All three share one design-token sheet (light default, dark via your
-OS preference), one connection-status strip, and one
-`rtl-buddy <version> @ <sha>` label — and they talk to each other
-live through the hub.
+(`gph`, at `/gph`), **rtl-buddy-coverage** (`cov`, at `/cov`), and
+**rtl-buddy-phys** (`phy`, at `/phy`). All four share one design-token
+sheet (light default, dark via your OS preference), one
+connection-status strip, and one `rtl-buddy <version> @ <sha>` label —
+and they talk to each other live through the hub.
 
 ### How it is wired
 
@@ -528,9 +535,10 @@ live through the hub.
   no build step, nothing off localhost.
 - The landing greys out an app whose data is missing and names the
   command that produces it: the graph app wants `rb graph build`, the
-  coverage app wants a coverage-flagged regression (its model is read
+  coverage app wants a coverage-flagged regression, and the physical
+  app wants `rb synth` or `rb power` (all three models are read
   straight off the artefacts on disk — no export step).
-- Each app is a hub peer with its own origin, so all three can be
+- Each app is a hub peer with its own origin, so all four can be
   open at once. Selections cross-link: clicking a module in the graph
   or coverage selects its instance in the schematic, every app
   carries `send → sch / gph / cov / editor` actions, and
@@ -546,6 +554,8 @@ live through the hub.
 uv run rb graph build          # feed the graph app (re-run after design changes)
 uv run rb -M cov regression -c regression.yaml -l 1000 \
     --coverage-merge           # feed the coverage app
+uv run rb synth demo_tiny_alu_subsys_synth_generic \
+    -c synth/demo_tiny_alu_subsys/synth.yaml   # feed the physical app
 uv run rb hub start --serve-viewer
 # open the printed http://127.0.0.1:<http_port>/ and pick an app
 uv run rb hub status           # peers + ports at a glance
@@ -889,6 +899,275 @@ uv run rb pnr demo_tiny_alu_subsys_pnr_nangate45 \
 Outputs land in `pnr/demo_tiny_alu_subsys/artefacts/<run>/`. Requires a
 local `openroad` build (referenced via `cfg-pnr-tools` if outside PATH);
 KLayout is optional and only needed for `--gds`/`--png`.
+
+---
+
+## Physical Metrics — `rb phys`
+
+`rb synth` and `rb power` write a physical model beside their reports;
+`rb phys` reads it back. The read verbs run no tool and write nothing,
+so they answer on a machine that has neither Yosys nor OpenROAD — all
+they need is the artefact directory.
+
+The model has two halves. A synthesis fills the **per-module** half
+(cells and area, as Yosys' `stat -liberty` counted them). A power run
+fills the **per-instance** half, one row per leaf cell with its
+internal, switching and leakage power. Each verb answers from the half
+it needs, and names the command that produces a missing one.
+
+A model carries **both** halves only when both producers wrote into one
+`artefacts/<run>/` directory, for the same top, off the same netlist —
+the merge is gated on the netlist hash each records. A run publishes
+into its own `<config-dir>/artefacts/<run-name>/` unless it is told
+otherwise, and a `power/` suite and a `synth/` suite never share one. So
+a power run says the pairing out loud with **`phys-run`**: the name of
+the synthesis run, in the `synth.yaml` that `synth-path` already points
+at, whose artefact directory this analysis publishes its half into. It
+is a run name and not a path — the directory is derived, so moving the
+synth suite moves the pairing with it. (Before the knob existed the only
+way to merge was to name a power run after the synthesis and configure
+it in the same directory; that convention still works, and is what an
+older `power.yaml` is relying on.) This template pairs one run and
+leaves the rest apart, so both shapes are here to read.
+
+### How it is wired
+
+- **Complete model** — `demo_tiny_alu_subsys_power_static` in
+  [`power/demo_tiny_alu_subsys/power.yaml`](power/demo_tiny_alu_subsys/power.yaml)
+  carries `phys-run: demo_tiny_alu_subsys_synth_nangate45`, the
+  tech-mapped run in
+  [`synth/demo_tiny_alu_subsys/synth.yaml`](synth/demo_tiny_alu_subsys/synth.yaml)
+  it already reads the netlist from. Its per-instance half is published
+  into
+  `synth/demo_tiny_alu_subsys/artefacts/demo_tiny_alu_subsys_synth_nangate45/`,
+  beside the synthesis' per-module half, and that one model answers all
+  four verbs. Only the model half moves: the log, the reports and this
+  run's copy of the netlist stay in
+  `power/demo_tiny_alu_subsys/artefacts/demo_tiny_alu_subsys_power_static/`,
+  and the manifest names them there.
+- **Per-instance only** — the other three runs in the same file —
+  synthetic-activity dynamic, SAIF-driven off the `csr_smoke` trace, and
+  post-P&R off the routed database — deliberately leave `phys-run` off.
+  One directory holds one power half, so pairing all four would have
+  them overwrite each other's rows in turn; keeping the breakdowns apart
+  is what their own artefact directories are for. Each of those models
+  carries instances and no modules, and `rb phys module` against one of
+  them names `rb synth` as the command that fills the other half. A
+  `pnr`-source run like `demo_tiny_alu_subsys_power_postpnr` could not
+  be paired anyway: it records no netlist hash, so `phys-run` is refused
+  on it.
+- **Prerequisites** — the tech-mapped synthesis and every run in
+  `power.yaml` are `reglvl: 1000`. They need the Nangate45 views
+  (`./synth/demo_tiny_alu_subsys/download_pdk.sh`) and, for the power
+  half, an `openroad` build on PATH. `rb phys` itself needs neither.
+  The PDK-free `demo_tiny_alu_subsys_synth_generic` run writes a model
+  too — per-module cell counts with no area, since nothing mapped it —
+  so the verbs and the `/phy` pane have something to read on a machine
+  with no PDK at all.
+- **Tool defaults** — `cfg-power-tools` and `cfg-pnr-platforms` in
+  [`root_config.yaml`](root_config.yaml); a power run reuses the
+  `cfg-pnr-platforms` entry for its Liberty and corner.
+
+Naming the pairing does not make it. The netlist sha256 both producers
+record is still the whole of the merge gate: re-synthesise between the
+two runs and the halves no longer describe one design, so the power run
+logs a `power.phys_pair_mismatch` warning and publishes its half alone
+rather than replacing module rows counted off a netlist it never read.
+Run the pair in the order the `Try it` block gives them and it passes,
+because the analysis reads exactly what the synthesis wrote.
+
+### Try it
+
+```bash
+# produce a complete model — synthesis half, then power half, one directory
+./synth/demo_tiny_alu_subsys/download_pdk.sh
+uv run rb synth demo_tiny_alu_subsys_synth_nangate45 \
+    -c synth/demo_tiny_alu_subsys/synth.yaml
+uv run rb power demo_tiny_alu_subsys_power_static \
+    -c power/demo_tiny_alu_subsys/power.yaml -l 1000
+
+# a per-instance-only run to read beside it, in its own directory
+uv run rb power demo_tiny_alu_subsys_power_dynamic \
+    -c power/demo_tiny_alu_subsys/power.yaml -l 1000
+
+# which runs does this project hold? newest first; `*` is the default
+uv run rb phys runs
+
+# read the complete one
+D=synth/demo_tiny_alu_subsys/artefacts/demo_tiny_alu_subsys_synth_nangate45
+uv run rb phys summary  --phys-dir $D --limit 5
+uv run rb phys module   demo_tiny_alu_subsys_csr --phys-dir $D
+uv run rb phys module   DFFR_X1                  --phys-dir $D --limit 5
+uv run rb phys instance u_inner/u_compute        --phys-dir $D --limit 5
+uv run rb phys instance u_inner/u_compute/_270_  --phys-dir $D
+
+# the same payload, for an agent
+uv run rb phys summary --phys-dir $D --limit 0 --machine
+```
+
+`rb phys runs` lists one row per artefact directory it found, anywhere
+under the project. The two runs above come back as:
+
+| Run | Backends | Power | Artefact directory |
+|---|---|---|---|
+| `demo_tiny_alu_subsys_power_dynamic` `*` | openroad | dynamic (toggle 0.2, duty 0.5) | `power/demo_tiny_alu_subsys/artefacts/demo_tiny_alu_subsys_power_dynamic` |
+| `demo_tiny_alu_subsys_power_static` | yosys+openroad | static (defaults) | `synth/demo_tiny_alu_subsys/artefacts/demo_tiny_alu_subsys_synth_nangate45` |
+
+The second row is the paired one, and it shows what pairing looks like
+from the outside: both backends, and a run name that does not match the
+directory it sits in. A manifest header names the run whose publication
+it is, and in a shared directory that is whichever half published last —
+here the power analysis, over the synthesis that wrote the modules. The
+tech-independent runs `rb synth-regression` leaves behind
+(`demo_tiny_alu_synth_generic`, `demo_synth_macro_generic`, …) are
+listed too; this is a project-wide menu, not a per-suite one.
+
+Each row also carries the top, the config fingerprint
+(`nangate45_typ · standard · sdc <sha> · opts <digest>`), the `rb xplr`
+experiment id when there is one, and a timestamp; the artefact
+directories are printed under the table rather than in it, because that
+is what the next command takes as `--phys-dir`. `*` marks the newest —
+what the other three verbs read when no `--phys-dir` is given, which is
+why the examples above pass one.
+
+### Reading the complete model
+
+`rb phys summary` reports the totals, then the heaviest modules and the
+hottest instances. Measured on this template at the pinned `rtl_buddy`:
+
+| Metric | Value |
+|---|---|
+| `area_um2` | 42.560 |
+| `cell_count` | 1,377 |
+| `internal_uw` | 503.000 |
+| `switching_uw` | 139.000 |
+| `leakage_uw` | 55.300 |
+| `total_uw` | 697.000 |
+
+> **`totals.area_um2` is a submodule's area, not the design's.** Both
+> synth backends scrape the figure out of the Yosys log with a
+> first-match regex, and `stat -liberty` prints one `Chip area for
+> module` line per module — so on a hierarchical design like this one
+> the totals block reports 42.560 µm² while the design is 3,140.928 µm²
+> (the `demo_tiny_alu_subsys_synth_top` row of the per-module table, and
+> what `synth_stat.json` records). The per-module rows come from `stat
+> -json` and are right. Tracked as rtl-buddy/rtl_buddy#559 — read the
+> module rows for area until it is fixed.
+
+Heaviest modules, 5 of 10:
+
+| Module | Cells | Area µm² |
+|---|---|---|
+| `$paramod$f6cc9ee3…\ip_async_fifo` | 484 | 1,358.196 |
+| `demo_tiny_alu_subsys_csr` | 345 | 588.392 |
+| `$paramod\demo_tiny_alu\W=s32'…00001000` | 230 | 281.428 |
+| `$paramod\ip_cdc_handshake\WIDTH=s32'…00010011` | 88 | 324.520 |
+| `demo_tiny_alu_subsys_compute` | 84 | 454.062 |
+
+The parameterized base IPs come back under Yosys' mangled `$paramod`
+names, one row per parameterization — two `ip_cdc_sync` widths and two
+`ip_cdc_handshake` widths in this design. That mangled string is the
+name `rb phys module` takes; `--limit 0` on the summary lists all ten.
+
+Hottest instances, 5 of 1,377:
+
+| Instance | Module | Total µW | Internal | Switching | Leakage |
+|---|---|---|---|---|---|
+| `u_inner/u_compute/_270_` | `DFFR_X1` | 6.060 | 2.310 | 3.670 | 0.085 |
+| `u_inner/u_compute/_269_` | `DFFR_X1` | 5.310 | 2.320 | 2.910 | 0.085 |
+| `u_inner/u_compute/_278_` | `DFFR_X1` | 3.980 | 2.310 | 1.580 | 0.085 |
+| `u_inner/u_compute/_279_` | `DFFR_X1` | 3.830 | 2.310 | 1.430 | 0.085 |
+| `u_inner/u_compute/_271_` | `DFFR_X1` | 3.750 | 2.310 | 1.350 | 0.085 |
+
+### The two `module` namespaces
+
+The halves spell `module` in two namespaces, and `rb phys module`
+answers from either. `demo_tiny_alu_subsys_csr` is an RTL module, so it
+resolves out of the synthesis half — 345 cells, 588.392 µm² — and
+reports **zero instances**, with a note saying why:
+
+```text
+liberty-cell names only: no instance row carries this RTL module, so power
+cannot be attributed to it until the hierarchy join lands
+```
+
+A mapped netlist's leaves are Liberty cells, so the power half's
+`module` column holds `DFFR_X1`, `NAND2_X1` and friends — never an RTL
+module name. `DFFR_X1` is that other namespace: no cells and no area
+(Yosys counted modules, not cells), 156 instances, and a `total` row
+summing every one of them — 253.327 µW total, of which 12.668 µW is
+leakage.
+
+So ask what a *block* burns by its instance path instead.
+
+### Rolling a subtree up
+
+The model records leaf rows only; `rb phys instance` sums them at query
+time and leaves the document alone. `u_inner/u_compute` is a prefix
+match over 314 leaves:
+
+| | Total µW | Internal | Switching | Leakage |
+|---|---|---|---|---|
+| rollup (314) | 288.498 | 167.180 | 111.897 | 9.421 |
+
+That is the compute domain's share of the design's 697 µW. An exact
+path answers with its own row and a rollup of one:
+`u_inner/u_compute/_270_` is `exact match, 1 leaf instance(s)` at 6.060
+µW. The rollup adds the four power columns and nothing else — it
+carries no area, because the model holds no per-cell area to sum. Area
+is per RTL module, from `rb phys module`.
+
+### The `/phy` pane
+
+The hub serves the same model as a page —
+**rtl-buddy-phys** (`phy`, at `/phy`), the fourth card on the landing
+page, *Weigh area and power*:
+
+```bash
+uv run rb hub start --serve-viewer
+# open the printed http://127.0.0.1:<http_port>/ and pick `phy`
+```
+
+`GET /phy.json` is the `rb phys summary` payload with no row limit, so
+the pane and the CLI cannot disagree about a number. It also carries the
+`rb phys runs` listing, which the header renders as a run dropdown —
+pick the entry whose artefact directory is under
+`synth/demo_tiny_alu_subsys/` to get both halves, since an untouched
+pane follows the newest run and this template's newest is usually a
+per-instance-only power run; the directory and the config fingerprint
+are on each entry's hover. Modules rank by cells or area, instances by
+leakage, dynamic or total; clicking a module filters the instance table
+to it, and that table renders 500 rows at a time.
+
+Point the pane at a target from anywhere, including before the tab is
+open — the hub replays the latest focus on connect:
+
+```bash
+uv run rb hub send phys-focus instance:u_inner/u_compute/_270_ --metric leakage
+uv run rb hub send phys-focus module:demo_tiny_alu_subsys_csr --metric area
+```
+
+Targets are relative to the design top, the spelling the model rows use
+— `u_inner/u_compute/_270_`, not
+`demo_tiny_alu_subsys_synth_top/u_inner/u_compute/_270_`. An unprefixed
+target is read as an instance path, and an instance target has to name a
+leaf row: a subtree path, the one `rb phys instance` answers with a
+prefix match, selects nothing. `--metric` is one of `cells`, `area`,
+`leakage`, `dynamic`, `total`.
+
+### From an agent
+
+`rb mcp` exposes the same query builders. They read the artefact files
+directly — no hub, no EDA tool:
+
+- `phys_runs` — the run listing, and where the `phys_dir` the others take comes from
+- `phys_summary` — totals plus both rankings
+- `phys_module` — one module's row and the instances of it
+- `phys_instance` — one instance row, or the rollup under a subtree path
+- `phys_focus` — the `rb hub send phys-focus` broadcast; needs a live hub
+
+`--machine` on any of the four CLI verbs emits the same payload, and
+`--limit 0` is how a caller asks for every row.
 
 ---
 
