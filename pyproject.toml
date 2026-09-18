@@ -3,7 +3,7 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy[elab,graph-extract]==6.49.0",
+  "rtl_buddy[elab,graph-extract]==6.52.0",
   "rtl-buddy-cdc[slang]",
   "rtl-buddy-xeno[verible,slang]",
   "rtl-buddy-axi-profiler[notebook]",
@@ -32,7 +32,7 @@ package = false
 # bundle marks the pins it stands for with junction dots, and
 # producer-baked CDC/RDC accents survive the theme re-tint. The
 # demo designs and hint sidecars here exercise all of it.
-constraint-dependencies = ["rtl-buddy-sch>=0.10.0"]
+constraint-dependencies = ["rtl-buddy-sch>=0.11.0"]
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
