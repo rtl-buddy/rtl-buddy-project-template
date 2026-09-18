@@ -27,12 +27,13 @@ package = false
 # both installed is a collision, not a fallback. The consumers carry
 # floors + runtime guards of their own; this constraint is
 # belt-and-suspenders so no transitive path can ever drag the resolution
-# below 0.10.0 — the release that makes the schematic readable: a
-# pin fed by procedural logic names the net it binds (rb.net), a
+# below 0.11.0 — the release that makes the schematic readable (0.10.0:
+# a pin fed by procedural logic names the net it binds (rb.net), a
 # bundle marks the pins it stands for with junction dots, and
-# producer-baked CDC/RDC accents survive the theme re-tint. The
-# demo designs and hint sidecars here exercise all of it.
-constraint-dependencies = ["rtl-buddy-sch>=0.10.0"]
+# producer-baked CDC/RDC accents survive the theme re-tint) and adds the
+# phys overlay on the hierarchy schematic (0.11.0, `--overlay phys=`
+# over the phys-manifest.json the phys examples here produce).
+constraint-dependencies = ["rtl-buddy-sch>=0.11.0"]
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
@@ -54,7 +55,6 @@ rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git", tag = 
 # the dependency above) pulls marimo + altair/polars/pandas/pyarrow so
 # `rb axi-profile notebook` / the rtl-buddy-view "Open in marimo" button work
 # in-venv — the notebook launcher imports rtl_buddy_axi_profiler in the rb
-# interpreter, so it must live here, not as an out-of-band tool. Self-bounds
-# pywellen<0.25 (matches rtl_buddy's own bound; the 0.25 trace-reader API
-# break is unported here).
+# interpreter, so it must live here, not as an out-of-band tool. Needs
+# >=0.2.0 (the pywellen 0.25 port) to co-install with rtl_buddy >=6.55.0.
 rtl-buddy-axi-profiler = { git = "https://github.com/rtl-buddy/rtl-buddy-axi-profiler.git" }
