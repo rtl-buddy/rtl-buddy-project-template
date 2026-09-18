@@ -76,6 +76,7 @@ design/icarus_smoke/                     # minimal design for the Icarus smoke s
 verif/icarus_smoke/                      # minimal Icarus builder-selection example
 .github/workflows/icarus.yml             # dedicated Icarus CI coverage
 lint/cdc/cdc.yaml                        # CDC analyses, including slang and blackbox examples
+power/demo_tiny_alu_subsys/power.yaml    # `rb power` runs; the static one carries `phys-run` for a merged physical model
 fpga/demo_cdc_open/                      # openXC7 FPGA flow example
 fpv/demo_abv/                            # FPV and ABV examples
 pyproject.toml                           # uv-managed project environment and rtl_buddy dependency pin
@@ -164,6 +165,13 @@ uv run rb --machine verible syntax design/demo_tiny_alu/demo_tiny_alu.sv
 uv run rb --machine spec list
 uv run rb --machine spec check-design
 uv run rb --machine spec check-coverage
+
+# Physical metrics — read-only over artefacts already on disk; no tool runs.
+# `rb synth demo_tiny_alu_subsys_synth_generic` is enough to populate one
+# (per-module cell counts, no area); the tech-mapped + power pair below needs
+# the Nangate45 PDK and an `openroad` build.
+uv run rb --machine phys runs
+uv run rb --machine phys summary --limit 0
 
 # Icarus compatibility checks (requires Icarus Verilog 12 on PATH)
 (cd verif/icarus_smoke && uv run rb --machine test basic)

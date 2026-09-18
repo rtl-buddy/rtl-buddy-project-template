@@ -7,13 +7,32 @@ rtl-buddy-filetype: power_config
 # Reglvl-deferred — invoke directly:
 #   rb power demo_tiny_alu_subsys_power_static  -c power/demo_tiny_alu_subsys/power.yaml
 #   rb power demo_tiny_alu_subsys_power_dynamic -c power/demo_tiny_alu_subsys/power.yaml
+#
+# `phys-run` on the static entry is what makes a *complete* physical model
+# here. A synthesis writes the model's per-module half and a power run its
+# per-instance half, and the two only merge in one artefact directory — which
+# a power suite in `power/` and a synth suite in `synth/` would never share.
+# `phys-run` names the synthesis run in the `synth-path` suite to publish
+# beside, so the static analysis lands its half in
+# `synth/demo_tiny_alu_subsys/artefacts/demo_tiny_alu_subsys_synth_nangate45/`
+# and `rb phys` answers all four verbs from that one model. It is a run name,
+# not a path; the directory is derived, so moving the synth suite moves the
+# pairing with it. Everything else this run writes — log, reports, its copy of
+# the netlist — still lands in its own artefact directory.
+#
+# The other three runs deliberately leave `phys-run` off: one directory holds
+# one power half, so pairing them all would have them overwrite each other's
+# rows in turn. They publish into their own directories, per-instance rows
+# only, which is the shape `rb phys module` is talking about when it names
+# `rb synth` as the command that fills the missing half.
 runs:
   - name: "demo_tiny_alu_subsys_power_static"
-    desc: "Static-mode power on Nangate45 typ corner (OpenROAD defaults)"
+    desc: "Static-mode power on Nangate45 typ corner, paired into the synthesis' model"
     tool: "openroad"
     mode: "static"
     synth: "demo_tiny_alu_subsys_synth_nangate45"
     synth-path: "../../synth/demo_tiny_alu_subsys/synth.yaml"
+    phys-run: "demo_tiny_alu_subsys_synth_nangate45"
     constraints: "../../synth/demo_tiny_alu_subsys/constraints.sdc"
     platform: "nangate45_typ"
     reglvl: 1000
