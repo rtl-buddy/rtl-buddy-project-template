@@ -372,17 +372,28 @@ rtl-buddy/rtl_buddy#101.
 ### 5. Pre-existing: the interface port at the synthesis top
 
 Not introduced here, but it shows up in every log on this design and is worth
-naming so it is not mistaken for something this example did. Yosys cannot
-resolve `apb_intf` through `demo_tiny_alu_subsys_synth_top`:
+naming so it is not mistaken for something this example did. Yosys'
+`read_verilog` warns about `apb_intf` at `demo_tiny_alu_subsys_synth_top`:
 
 ```text
 Warning: Could not find interface instance for `bus' in `demo_tiny_alu_subsys_synth_top'
 Warning: Range select [5:0] out of bounds on signal `\apb.paddr': Setting all 6 result bits to undef.
 ```
 
-so the synthesized CSR address bus is undriven. It reproduces on `origin/main`
-with the pre-change RTL, and it is the same limitation `lint/cdc/cdc.yaml`
-documents when it puts `demo_tiny_alu_subsys_lint` on the pyslang frontend.
+These are **benign on this design** — the netlist is connected. The
+out-of-bounds select comes from a throwaway elaboration made before the
+interface port is derived; the derived module carries the full-width `paddr`
+and the correct slice into the CSR block, and the design is formally
+equivalent at its outputs to a `read_slang` elaboration of the same sources.
+The only undriven nets are `apb_intf`'s own `clk` / `rst_n` ports, which this
+subsystem never reads (it clocks off `apb_clk` / `apb_rst_n`).
+
+The general hazard behind the first warning is real, though: `read_verilog`
+drops an interface *instance's* own port connections, so a design that does
+read `bus.clk` would synthesize clockless. rtl-buddy/rtl_buddy#628 tracks
+gating on it; the warnings reproduce on `origin/main` with the pre-change RTL,
+and it is the same limitation `lint/cdc/cdc.yaml` documents when it puts
+`demo_tiny_alu_subsys_lint` on the pyslang frontend.
 
 ## After rtl-buddy/rtl_buddy#95
 
