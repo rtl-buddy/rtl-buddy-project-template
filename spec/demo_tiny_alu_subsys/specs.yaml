@@ -22,3 +22,5 @@ blocks:
         desc: "DONE_CNT increments by exactly N for N submitted ops"
       - id: "ACCEL-RESULT-MATCH"
         desc: "result.Y/flags match the Python golden (post-run replay)"
+      - id: "ACCEL-HIST-REPLAY"
+        desc: "Every result-history scratch-memory entry reads back with the right payload and sequence tag"

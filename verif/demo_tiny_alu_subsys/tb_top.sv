@@ -34,6 +34,8 @@ module tb_top;
   localparam logic [7:0] A_RESULT    = 8'h14;
   localparam logic [7:0] A_FLAGS     = 8'h18;
   localparam logic [7:0] A_FIFO_PUSH = 8'h1C;
+  localparam logic [7:0] A_HIST_PTR  = 8'h20;
+  localparam logic [7:0] A_HIST_DATA = 8'h24;
 
   // ────────── APB driver tasks ──────────
   task automatic apb_write(input [7:0] addr, input [31:0] data);
@@ -101,7 +103,8 @@ module tb_top;
 
   // ────────── cover labels matching ACCEL-* IDs ──────────
   bit cov_csr_write, cov_csr_read, cov_csr_direct, cov_fifo_push,
-      cov_fifo_full, cov_fifo_drain, cov_done_inc, cov_result_match;
+      cov_fifo_full, cov_fifo_drain, cov_done_inc, cov_result_match,
+      cov_hist_replay;
 
   // Wrapped in coverage_off/on: Verilator 5.050 ICEs in V3Localize
   // ("AstVarRef not under function") when --coverage-expr instruments
@@ -117,6 +120,7 @@ module tb_top;
   ACCEL_FIFO_DRAIN:   cover property (@(posedge apb_clk) cov_fifo_drain);
   ACCEL_DONE_INC:     cover property (@(posedge apb_clk) cov_done_inc);
   ACCEL_RESULT_MATCH: cover property (@(posedge apb_clk) cov_result_match);
+  ACCEL_HIST_REPLAY:  cover property (@(posedge apb_clk) cov_hist_replay);
   /* verilator coverage_on */
 
   always @(posedge apb_clk) begin
@@ -155,6 +159,19 @@ module tb_top;
       cov_result_match = 1'b1;
     end
     log_txn(op, a, b, sd[7:0], ref_zf, ref_cf, ref_nf, ref_vf);
+  endtask
+
+  // Read one entry of the result-history scratch memory.
+  //
+  // Both the memory read port and the hist_data CSR field are registered, so
+  // the entry addressed by a hist_ptr write is only visible two apb_clk edges
+  // later. An APB read transfer is longer than that on its own, but the first
+  // read after the pointer write is deliberately discarded so the sequence does
+  // not depend on the bus phase — the same thing a driver would do.
+  task automatic hist_read(input [3:0] idx, output [31:0] data);
+    apb_write(A_HIST_PTR, {28'b0, idx});
+    apb_read(A_HIST_DATA, data);
+    apb_read(A_HIST_DATA, data);
   endtask
 
   task automatic do_fifo_push(input [2:0] op, input [7:0] a, input [7:0] b);
@@ -242,6 +259,54 @@ module tb_top;
         end
         log_txn(3'((n_ops - 1) % 8), 8'((n_ops - 1) * 7), 8'((n_ops - 1) * 3 + 1),
                 sd[7:0], ref_zf, ref_cf, ref_nf, ref_vf);
+      end
+
+      // Exercises the memory path: four CSR-direct ops, then every entry read
+      // back out of the result-history scratch buffer and checked against the
+      // same reference model the live result is checked against. Entry N holds
+      // {12'b0, DONE_CNT at write time, Y, ZF, CF, NF, VF}, so the sequence tag
+      // is checked too — it is what proves the write pointer advanced and the
+      // memory is not simply returning the last word written.
+      "hist_replay": begin
+        n_ops = 4;
+        for (int i = 0; i < n_ops; i++)
+          do_csr_direct(3'(i), 8'(8'h21 + 8'(i)), 8'(8'h05 + 8'(i * 3)));
+
+        apb_read(A_STATUS, sd);
+        init_done_cnt = int'(sd[10:3]);
+        if (init_done_cnt !== n_ops)
+          `lvm_rpt_err(("DONE_CNT=%0d expected %0d", init_done_cnt, n_ops));
+
+        for (int i = 0; i < n_ops; i++) begin
+          logic [31:0] hd;
+          ref_compute(3'(i), 8'(8'h21 + 8'(i)), 8'(8'h05 + 8'(i * 3)),
+                      ref_y, ref_zf, ref_cf, ref_nf, ref_vf);
+          hist_read(4'(i), hd);
+          if (hd[11:4] !== ref_y) begin
+            mismatches = mismatches + 1;
+            `lvm_rpt_err(("hist[%0d] y mismatch dut=%h ref=%h", i, hd[11:4], ref_y));
+          end
+          if (hd[3:0] !== {ref_zf, ref_cf, ref_nf, ref_vf}) begin
+            mismatches = mismatches + 1;
+            `lvm_rpt_err(("hist[%0d] flags mismatch dut=%b ref=%b",
+                          i, hd[3:0], {ref_zf, ref_cf, ref_nf, ref_vf}));
+          end
+          if (hd[19:12] !== 8'(i)) begin
+            mismatches = mismatches + 1;
+            `lvm_rpt_err(("hist[%0d] sequence tag=%0d expected %0d", i, hd[19:12], i));
+          end
+          if (hd[31:20] !== 12'b0) begin
+            mismatches = mismatches + 1;
+            `lvm_rpt_err(("hist[%0d] reserved bits set: %h", i, hd[31:20]));
+          end
+          log_txn(3'(i), 8'(8'h21 + 8'(i)), 8'(8'h05 + 8'(i * 3)),
+                  hd[11:4], ref_zf, ref_cf, ref_nf, ref_vf);
+        end
+        if (mismatches == 0) begin
+          cov_hist_replay  = 1'b1;
+          cov_result_match = 1'b1;
+          cov_done_inc     = 1'b1;
+        end
       end
 
       default: `lvm_rpt_err(("unknown test %s", test_name));

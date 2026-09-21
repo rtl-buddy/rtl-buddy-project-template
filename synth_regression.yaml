@@ -10,3 +10,7 @@ synth-configs:
   - "synth/demo_synth_incdir/synth.yaml"
   - "synth/demo_slang_pkg/synth.yaml"   # reglvl 1000 — opt-in via --reg-level once yosys-slang is set up
   - "synth/demo_synth_macro/synth.yaml"   # reglvl 1000 on the OpenROAD run — needs the PDK and openroad
+  # All four runs are reglvl 1000: they need the sky130hd PDK and the OpenRAM
+  # macro from synth/demo_tiny_alu_subsys_hier/download_pdk.sh, and the two
+  # partition runs feed pnr/demo_tiny_alu_subsys_hier.
+  - "synth/demo_tiny_alu_subsys_hier/synth.yaml"

@@ -6,5 +6,6 @@
 demo_tiny_alu_subsys_csr_pkg.sv
 -v demo_tiny_alu_subsys_csr.sv
 -v demo_tiny_alu_subsys_compute.sv
+-v demo_tiny_alu_subsys_mem.sv
 -v demo_tiny_alu_subsys_top.sv
 demo_tiny_alu_subsys_synth_top.sv

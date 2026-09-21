@@ -13,7 +13,38 @@ models:
       - "-v demo_tiny_alu_subsys_compute.sv"
     spec: "../../spec/demo_tiny_alu_subsys/specs.yaml"
 
+  - name: "demo_tiny_alu_subsys_csr"
+    desc: "APB CSR block on its own — partition A of the sky130hd hierarchical flow"
+    filelist:
+      - "demo_tiny_alu_subsys_csr_pkg.sv"
+      - "-v demo_tiny_alu_subsys_csr.sv"
+    spec: "../../spec/demo_tiny_alu_subsys/specs.yaml"
+
   - name: "demo_tiny_alu_subsys_synth_top"
     desc: "Flat-port synthesis wrapper around demo_tiny_alu_subsys_top (used by rb synth)"
     filelist: ["-F demo_tiny_alu_subsys_synth.f"]
     spec: "../../spec/demo_tiny_alu_subsys/specs.yaml"
+
+  # ── sky130hd builds ────────────────────────────────────────────────────────
+  # The same two root modules as above, built three more ways. Only which
+  # modules arrive as source and which arrive as a macro changes, so each of
+  # these shares a root with a model already declared here and carries
+  # `graph: false`: one design, one hierarchy in `rb graph build`.
+
+  - name: "demo_tiny_alu_subsys_sky130"
+    desc: "Flat sky130hd build — every block is RTL except the OpenRAM SRAM macro"
+    filelist: ["-F demo_tiny_alu_subsys_sky130.f"]
+    top: "demo_tiny_alu_subsys_synth_top"
+    graph: false
+
+  - name: "demo_tiny_alu_subsys_sky130_asm"
+    desc: "Top-level assembly build — CSR and compute partitions and the SRAM are all macros"
+    filelist: ["-F demo_tiny_alu_subsys_sky130_asm.f"]
+    top: "demo_tiny_alu_subsys_synth_top"
+    graph: false
+
+  - name: "demo_tiny_alu_subsys_top_sram"
+    desc: "Simulation build with the OpenRAM behavioural model in place of the flop array"
+    filelist: ["-F demo_tiny_alu_subsys_sram_sim.f"]
+    top: "demo_tiny_alu_subsys_top"
+    graph: false

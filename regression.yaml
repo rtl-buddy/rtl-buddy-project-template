@@ -14,6 +14,10 @@ rtl-buddy-filetype: reg_config
 #                  pulp-platform AXI, ABV, demo_tiny_alu_subsys, demo_axi_2x2).
 #                  Run nightly via .github/workflows/nightly.yml (`-l 1000`).
 #   reglvl 4000  — VCS-targeted (demo_cdc_src_sync); skipped under Verilator.
+#   reglvl 5000  — needs downloaded collateral that no CI job fetches
+#                  (hist_replay_sram binds the OpenRAM behavioural model that
+#                  synth/demo_tiny_alu_subsys_hier/download_pdk.sh pulls into
+#                  the gitignored pdk/). Run it by hand after downloading.
 test-configs:
   - "verif/apb/tests.yaml"
   - "verif/ip_cdc_sync/tests.yaml"

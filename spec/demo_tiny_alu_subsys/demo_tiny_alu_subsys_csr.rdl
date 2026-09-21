@@ -53,6 +53,26 @@ reg fifo_push_r {
     field { sw = rw; hw = r; } B[8]  = 0;
 };
 
+reg hist_ptr_r {
+    desc = "Read pointer into the result-history scratch buffer. The buffer is a
+            16-entry window backed by an on-chip memory (a flop array in the
+            generic build, an OpenRAM SRAM macro in the sky130hd build); the
+            compute datapath's results are written into it from the apb_clk side
+            as they arrive, indexed by status.DONE_CNT[3:0].";
+
+    field { sw = rw; hw = r; desc = "Entry to present in hist_data."; } ADDR[4] = 0;
+};
+
+reg hist_data_r {
+    desc = "Result-history entry selected by hist_ptr.ADDR. Read-only window onto
+            the scratch memory: {12'b0, DONE_CNT[7:0] at write time, Y[7:0],
+            ZF, CF, NF, VF}. The memory read is registered and the CSR field
+            registers it again, so allow two apb_clk cycles after writing
+            hist_ptr before the entry is valid.";
+
+    field { sw = r; hw = w; } DATA[32] = 0;
+};
+
 addrmap demo_tiny_alu_subsys_csr {
     desc = "Tiny ALU accelerator CSR block (APB4, 32-bit data).";
     default regwidth = 32;
@@ -65,4 +85,6 @@ addrmap demo_tiny_alu_subsys_csr {
     result_r      result      @ 0x14;
     flags_r       flags       @ 0x18;
     fifo_push_r   fifo_push   @ 0x1C;
+    hist_ptr_r    hist_ptr    @ 0x20;
+    hist_data_r   hist_data   @ 0x24;
 };

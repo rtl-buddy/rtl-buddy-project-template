@@ -1,0 +1,49 @@
+rtl-buddy-filetype: power_config
+
+# Post-P&R power for the sky130hd hierarchical pipeclean: the flat reference
+# and the assembly, so the two can be compared the way their area and timing
+# are. Both read the routed ODB of the corresponding `rb pnr` run, so both need
+# that run to have completed.
+#
+#   rb power demo_tiny_alu_subsys_sky130_flat_power -c power/demo_tiny_alu_subsys_hier/power.yaml -l 1000
+#   rb power demo_tiny_alu_subsys_sky130_asm_power  -c power/demo_tiny_alu_subsys_hier/power.yaml -l 1000
+#
+# ## What these numbers do and do not include
+#
+# `power.yaml` has no `lib-paths` key, and the OpenROAD power backend reads
+# only the platform's Liberty and the PDK's two LEFs. A macro whose Liberty
+# arrives through a *P&R run's* `lib-paths` — which is every macro in this
+# example — is therefore in the design and in the instance report, but with no
+# library to characterise it, so it contributes exactly zero:
+#
+#   Macro                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
+#
+# For the flat run that hides the SRAM. For the assembly it hides the SRAM and
+# both hardened partitions, which between them are most of the design — so the
+# assembly's figure is the top-level glue's power and nothing else, and the two
+# runs are *not* comparable to each other as they stand.
+#
+# Both are still worth having: the flat run's standard-cell power is a real
+# number for the logic the assembly moved into macros, and the pair is the
+# concrete demonstration of the gap. See
+# ../../pnr/demo_tiny_alu_subsys_hier/README.md, "rtl_buddy gaps".
+runs:
+  - name: "demo_tiny_alu_subsys_sky130_flat_power"
+    desc: "Post-P&R static power of the flat sky130hd run (standard cells only; SRAM reports 0 W)"
+    tool: "openroad"
+    mode: "static"
+    netlist-source: "pnr"
+    pnr: "demo_tiny_alu_subsys_sky130_flat_pnr"
+    pnr-path: "../../pnr/demo_tiny_alu_subsys_hier/pnr.yaml"
+    platform: "sky130hd_tt"
+    reglvl: 1000
+
+  - name: "demo_tiny_alu_subsys_sky130_asm_power"
+    desc: "Post-P&R static power of the assembly (top-level glue only; all three macros report 0 W)"
+    tool: "openroad"
+    mode: "static"
+    netlist-source: "pnr"
+    pnr: "demo_tiny_alu_subsys_sky130_asm_pnr"
+    pnr-path: "../../pnr/demo_tiny_alu_subsys_hier/pnr.yaml"
+    platform: "sky130hd_tt"
+    reglvl: 1000

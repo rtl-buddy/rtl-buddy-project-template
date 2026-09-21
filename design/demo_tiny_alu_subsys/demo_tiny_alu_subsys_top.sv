@@ -63,7 +63,7 @@ module demo_tiny_alu_subsys_top (
     .s_apb_penable  (apb.penable),
     .s_apb_pwrite   (apb.pwrite),
     .s_apb_pprot    (apb.pprot),
-    .s_apb_paddr    (apb.paddr[4:0]),
+    .s_apb_paddr    (apb.paddr[5:0]),
     .s_apb_pwdata   (apb.pwdata),
     .s_apb_pstrb    (apb.pstrb),
     .s_apb_pready   (apb.pready),
@@ -182,6 +182,39 @@ module demo_tiny_alu_subsys_top (
     end
   end
 
+  // ────────── result-history scratch memory (apb_clk only) ──────────
+  // A 16-entry window of completed results, written from the apb side as each
+  // result lands and read back through the hist_ptr / hist_data CSR pair.
+  //
+  // The memory is a *technology wrapper*: demo_tiny_alu_subsys_mem is a flop
+  // array for simulation and for the Nangate45 flow, and the OpenRAM
+  // sky130_sram_1kbyte_1rw1r_32x256_8 macro when RB_SRAM_SKY130 is defined.
+  // Both ports are on apb_clk, so the memory — and, in the hierarchical flow,
+  // the hard macro that implements it — sits in a single clock domain at the
+  // top level, outside either hardened partition.
+  //
+  // Word layout: {12'b0, DONE_CNT[7:0] at write time, Y[7:0], ZF, CF, NF, VF}.
+  localparam int HIST_DEPTH = 16;
+
+  logic [31:0] hist_din, hist_dout0, hist_dout1;
+  assign hist_din = { 12'b0, done_cnt_q, result_dst_data_apb };
+
+  demo_tiny_alu_subsys_mem #(.DEPTH(HIST_DEPTH)) u_hist_mem (
+    .clk    (apb_clk),
+    // Port 0 — write side. Enabled only on the cycle a result arrives; the
+    // entry index is the pre-increment DONE_CNT, so entry N is result N.
+    .csb0   (~result_dst_valid_apb),
+    .web0   (1'b0),
+    .wmask0 (4'hF),
+    .addr0  ({4'b0, done_cnt_q[3:0]}),
+    .din0   (hist_din),
+    .dout0  (hist_dout0),
+    // Port 1 — read side, always selected, addressed by the CSR pointer.
+    .csb1   (1'b0),
+    .addr1  ({4'b0, hwif_out.hist_ptr.ADDR.value}),
+    .dout1  (hist_dout1)
+  );
+
   // ────────── apb-side BUSY tracking ──────────
   // Sticky between GO/PUSH and result return; OR'd with synced FIFO non-empty.
   logic       fifo_empty_in_apb;
@@ -207,11 +240,15 @@ module demo_tiny_alu_subsys_top (
     hwif_in.flags.CF.next          = latched_cf;
     hwif_in.flags.NF.next          = latched_nf;
     hwif_in.flags.VF.next          = latched_vf;
+    hwif_in.hist_data.DATA.next    = hist_dout1;
   end
 
   // Tie off unused
+  // hist_dout0 is the memory's port-0 read data. The design only ever writes
+  // through port 0, but the wrapper exposes the macro's full port set so the
+  // sky130 branch can bind every pin of the OpenRAM master.
   /* verilator lint_off UNUSED */
-  logic _unused = busy_cclk;
+  logic _unused = busy_cclk | (|hist_dout0);
   /* verilator lint_on UNUSED */
 
 endmodule
