@@ -6,15 +6,7 @@ dependencies = [
   "rtl_buddy[elab,graph-extract]==6.56.0",
   "rtl-buddy-cdc[slang]",
   "rtl-buddy-xeno[verible,slang]",
-  # rtl-buddy-axi-profiler is temporarily out of the resolution. rtl_buddy
-  # >=6.55.0 requires `pywellen>=0.25.6,<0.26` (the 0.25 random-access API
-  # port, rtl-buddy/rtl_buddy#267), while rtl-buddy-axi-profiler still pins
-  # `pywellen>=0.20.5,<0.25` deliberately (rtl-buddy/rtl-buddy-axi-profiler#52
-  # — the 0.25 rewrite breaks its ingest, masked as "signal not found"). The
-  # two bounds are disjoint, so `uv lock` has no solution with both. Restore
-  # this line (and re-lock) once the profiler's ingest is ported to the 0.25
-  # API; until then `rb axi-profile` is not available in this environment.
-  # "rtl-buddy-axi-profiler[notebook]",
+  "rtl-buddy-axi-profiler[notebook]",
   "cocotb==2.0.1",
   "pytest==8.4.2",
   "info-process",

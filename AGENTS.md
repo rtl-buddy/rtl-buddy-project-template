@@ -211,10 +211,7 @@ uv run rb --machine test basic_sc
 
 cd ../demo_axi_2x2
 uv run rb --machine test basic_traffic
-# axi-profile needs rtl-buddy-axi-profiler, which is temporarily out of
-# pyproject.toml (pywellen bound clash with rtl_buddy >= 6.55.0 — see the
-# comment there and rtl-buddy/rtl-buddy-axi-profiler#52).
-uv run rb --machine axi-profile run basic
+uv run rb --machine axi-profile run basic_traffic
 
 # from an FPV suite dir
 cd fpv/demo_abv/demo_abv_basic
