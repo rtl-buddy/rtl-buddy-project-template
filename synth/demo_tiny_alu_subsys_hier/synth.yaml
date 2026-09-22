@@ -1,0 +1,79 @@
+rtl-buddy-filetype: synth_config
+
+# Synthesis half of the sky130hd hierarchical-P&R pipeclean. Four runs, all
+# against the same design, all on the sky130hd typical corner:
+#
+#   ..._flat       the whole demo_tiny_alu_subsys, one netlist, SRAM as the
+#                  only hard macro. The reference the assembly is compared to.
+#   ..._csr        partition A on its own — the APB CSR block, apb_clk only.
+#   ..._compute    partition B on its own — the ALU datapath, cclk only.
+#   ..._asm        the top-level assembly: the same top module as ..._flat, but
+#                  both partitions blackboxed alongside the SRAM.
+#
+# Every run is reglvl 1000: none of them can do anything until
+# `./download_pdk.sh` has fetched the PDK and the macro. Invoke directly, e.g.
+#
+#   rb synth demo_tiny_alu_subsys_sky130_flat -c synth/demo_tiny_alu_subsys_hier/synth.yaml
+#
+# Needs rtl_buddy >= 6.56.0 — see
+# ../../pnr/demo_tiny_alu_subsys_hier/README.md.
+syntheses:
+
+  # ── flat reference ─────────────────────────────────────────────────────────
+  - name: "demo_tiny_alu_subsys_sky130_flat"
+    desc: "Flat sky130hd synthesis of demo_tiny_alu_subsys_synth_top, OpenRAM SRAM as the only macro"
+    model: "demo_tiny_alu_subsys_sky130"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "yosys"
+    platform: "sky130hd_tt"
+    constraints: "constraints_flat.sdc"
+    # The SRAM is a blackbox in the RTL; these give the backend its real views.
+    lib-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
+    lef-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
+    reglvl: 1000
+
+  # ── partition A: CSR block (apb_clk) ───────────────────────────────────────
+  - name: "demo_tiny_alu_subsys_sky130_csr"
+    desc: "sky130hd synthesis of the demo_tiny_alu_subsys_csr partition (apb_clk domain)"
+    model: "demo_tiny_alu_subsys_csr"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "yosys"
+    platform: "sky130hd_tt"
+    constraints: "constraints_csr.sdc"
+    reglvl: 1000
+
+  # ── partition B: compute datapath (cclk) ───────────────────────────────────
+  - name: "demo_tiny_alu_subsys_sky130_compute"
+    desc: "sky130hd synthesis of the demo_tiny_alu_subsys_compute partition (compute clock domain)"
+    model: "demo_tiny_alu_subsys_compute"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "yosys"
+    platform: "sky130hd_tt"
+    constraints: "constraints_compute.sdc"
+    reglvl: 1000
+
+  # ── top-level assembly ─────────────────────────────────────────────────────
+  # Same top module as the flat run. The difference is entirely in what the
+  # filelist hands over as RTL: here the two partitions arrive as blackboxes
+  # and the backend gets their abstracts instead, exactly as it gets the SRAM's
+  # vendor views. The abstracts are written by
+  # ../../pnr/demo_tiny_alu_subsys_hier/harden.sh out of each partition's routed
+  # result, so both partitions have to be placed and routed before this run.
+  - name: "demo_tiny_alu_subsys_sky130_asm"
+    desc: "sky130hd synthesis of the top-level assembly — both partitions and the SRAM as macros"
+    model: "demo_tiny_alu_subsys_sky130_asm"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "yosys"
+    platform: "sky130hd_tt"
+    constraints: "constraints_flat.sdc"
+    lib-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
+      - "../../pnr/demo_tiny_alu_subsys_hier/artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.lib"
+      - "../../pnr/demo_tiny_alu_subsys_hier/artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.lib"
+    lef-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
+      - "../../pnr/demo_tiny_alu_subsys_hier/artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.lef"
+      - "../../pnr/demo_tiny_alu_subsys_hier/artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.lef"
+    reglvl: 1000

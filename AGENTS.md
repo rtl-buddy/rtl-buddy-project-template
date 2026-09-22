@@ -21,10 +21,13 @@ Blocks shipped with this template fall into four categories. Preserve this categ
 - **Demo blocks** — `demo_*` end-to-end examples that exercise
   specific rtl_buddy capabilities (`demo_tiny_alu`,
   `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`,
-  `demo_tiny_alu_subsys`, `demo_cdc_src_sync`, the grouped
+  `demo_tiny_alu_subsys`, `demo_tiny_alu_subsys_hier`,
+  `demo_cdc_src_sync`, the grouped
   `demo_abv` family, `demo_axi_2x2`, and `demo_pulp_platform_axi`).
   Safe to delete when starting a new project, after removing their
-  regression/config references.
+  regression/config references. `demo_tiny_alu_subsys_hier` is not a
+  separate design — it is a second set of flow configs over
+  `demo_tiny_alu_subsys`, on sky130hd instead of Nangate45.
 - **Focused smoke suites** — small backend or tool smoke tests such as
   `icarus_smoke`, which are intentionally minimal and may not follow
   the `demo_*` naming pattern.
@@ -77,6 +80,9 @@ verif/icarus_smoke/                      # minimal Icarus builder-selection exam
 .github/workflows/icarus.yml             # dedicated Icarus CI coverage
 lint/cdc/cdc.yaml                        # CDC analyses, including slang and blackbox examples
 power/demo_tiny_alu_subsys/power.yaml    # `rb power` runs; the static one carries `phys-run` for a merged physical model
+pnr/demo_tiny_alu_subsys/                # `rb pnr` Nangate45 flat flow
+pnr/demo_tiny_alu_subsys_hier/           # sky130hd hierarchical P&R pipeclean (read its README first)
+pnr/sky130hd/                            # sky130hd PDN snippets, top-level and block-level
 fpga/demo_cdc_open/                      # openXC7 FPGA flow example
 fpv/demo_abv/                            # FPV and ABV examples
 pyproject.toml                           # uv-managed project environment and rtl_buddy dependency pin
@@ -205,7 +211,7 @@ uv run rb --machine test basic_sc
 
 cd ../demo_axi_2x2
 uv run rb --machine test basic_traffic
-uv run rb --machine axi-profile run basic
+uv run rb --machine axi-profile run basic_traffic
 
 # from an FPV suite dir
 cd fpv/demo_abv/demo_abv_basic

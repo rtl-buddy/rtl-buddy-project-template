@@ -261,12 +261,124 @@ cfg-pdks:
       - FILLCELL_X8
       - FILLCELL_X16
       - FILLCELL_X32
+    # No `pdn-config`: the Nangate45 demo flow has no power grid, which is one
+    # of the reasons the hierarchical pipeclean runs on sky130hd instead.
+
+  # SkyWater 130nm high-density standard cells. The second PDK in this
+  # template, and the one the hierarchical-P&R example
+  # (synth|pnr/demo_tiny_alu_subsys_hier/) runs on: it is a real silicon
+  # process with real hard macros, and it needs a PDN, which is exactly where
+  # a hierarchical flow's block/top power-pin alignment is tested.
+  #
+  # Values are ORFS' flow/platforms/sky130hd/config.mk, transcribed key by key.
+  # Fetch the files with `synth/demo_tiny_alu_subsys_hier/download_pdk.sh`.
+  - &sky130hd_common
+    name: "sky130hd"
+    site: "unithd"
+    corners:
+      tt: "pdk/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib"
+    tech-lef: "pdk/sky130hd/lef/sky130_fd_sc_hd.tlef"
+    macro-lef: "pdk/sky130hd/lef/sky130_fd_sc_hd_merged.lef"
+    cell-gds: "pdk/sky130hd/gds/sky130_fd_sc_hd.gds"
+    klayout-tech: "pdk/sky130hd/sky130hd.lyt"
+    klayout-props: "pdk/sky130hd/sky130hd.lyp"
+    # conb_1 drives both constants; ORFS TIEHI/TIELO_CELL_AND_PORT.
+    tie-hi: "sky130_fd_sc_hd__conb_1/HI"
+    tie-lo: "sky130_fd_sc_hd__conb_1/LO"
+    fill-cells:
+      - sky130_fd_sc_hd__fill_1
+      - sky130_fd_sc_hd__fill_2
+      - sky130_fd_sc_hd__fill_4
+      - sky130_fd_sc_hd__fill_8
+    # ORFS IO_PLACER_H / IO_PLACER_V. Sky130 has no `metal3`, so the default
+    # Nangate45 layer names are a hard error here, not a bad default.
+    pin-layers:
+      horizontal: "met3"
+      vertical: "met2"
+
+    # ── PDK flow parameterisation (rtl_buddy#625) ────────────────────────
+    # `placement`, `dont-use-cells` and `pdn-config` need rtl_buddy >= 6.55.0;
+    # the pin in pyproject.toml carries them.
+
+    # ORFS PLACE_DENSITY for sky130hd. The 0.70 that the flow used to spell
+    # out is calibrated for FreePDK45's 10-track cells; sky130hd's 9-track
+    # cells plus a large hard macro do not converge at it.
+    #
+    # `macro-halo` (µm of keep-out the shelf macro packer, rtl_buddy#632,
+    # leaves around each macro and between a macro and the core edge) is left
+    # at its 20 µm default: that is what keeps the PDN channels around the
+    # OpenRAM SRAM wide enough for `pdngen` to repair.
+    placement:
+      density: 0.60
+      padding: 1
+
+    # ORFS DONT_USE_CELLS. The *probe* cells carry metal on every layer and
+    # the *lpflow* cells belong to multi-power-domain flows; either one picked
+    # by synthesis or by timing repair is a cell this flow cannot legalise.
+    dont-use-cells:
+      - "sky130_fd_sc_hd__probe_p_8"
+      - "sky130_fd_sc_hd__probec_p_8"
+      - "sky130_fd_sc_hd__lpflow_bleeder_1"
+      - "sky130_fd_sc_hd__lpflow_clkbufkapwr_1"
+      - "sky130_fd_sc_hd__lpflow_clkbufkapwr_16"
+      - "sky130_fd_sc_hd__lpflow_clkbufkapwr_2"
+      - "sky130_fd_sc_hd__lpflow_clkbufkapwr_4"
+      - "sky130_fd_sc_hd__lpflow_clkbufkapwr_8"
+      - "sky130_fd_sc_hd__lpflow_clkinvkapwr_1"
+      - "sky130_fd_sc_hd__lpflow_clkinvkapwr_16"
+      - "sky130_fd_sc_hd__lpflow_clkinvkapwr_2"
+      - "sky130_fd_sc_hd__lpflow_clkinvkapwr_4"
+      - "sky130_fd_sc_hd__lpflow_clkinvkapwr_8"
+      - "sky130_fd_sc_hd__lpflow_decapkapwr_12"
+      - "sky130_fd_sc_hd__lpflow_decapkapwr_3"
+      - "sky130_fd_sc_hd__lpflow_decapkapwr_4"
+      - "sky130_fd_sc_hd__lpflow_decapkapwr_6"
+      - "sky130_fd_sc_hd__lpflow_decapkapwr_8"
+      - "sky130_fd_sc_hd__lpflow_inputiso0n_1"
+      - "sky130_fd_sc_hd__lpflow_inputiso0p_1"
+      - "sky130_fd_sc_hd__lpflow_inputiso1n_1"
+      - "sky130_fd_sc_hd__lpflow_inputiso1p_1"
+      - "sky130_fd_sc_hd__lpflow_inputisolatch_1"
+      - "sky130_fd_sc_hd__lpflow_isobufsrc_1"
+      - "sky130_fd_sc_hd__lpflow_isobufsrc_16"
+      - "sky130_fd_sc_hd__lpflow_isobufsrc_2"
+      - "sky130_fd_sc_hd__lpflow_isobufsrc_4"
+      - "sky130_fd_sc_hd__lpflow_isobufsrc_8"
+      - "sky130_fd_sc_hd__lpflow_isobufsrckapwr_16"
+      - "sky130_fd_sc_hd__lpflow_lsbuf_lh_hl_isowell_tap_1"
+      - "sky130_fd_sc_hd__lpflow_lsbuf_lh_hl_isowell_tap_2"
+      - "sky130_fd_sc_hd__lpflow_lsbuf_lh_hl_isowell_tap_4"
+      - "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_4"
+      - "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_1"
+      - "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_2"
+      - "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_4"
+
+    # ORFS PDN_TCL. Committed, unlike everything else this PDK entry names,
+    # because it is flow configuration rather than vendor data. It lives under
+    # pnr/ so it is not caught by the project's `**.tcl` gitignore rule.
+    pdn-config: "pnr/sky130hd/pdn.tcl"
+
+  # The same PDK, with the block-level power grid in place of the top-level
+  # one. Everything but `pdn-config` is merged from the entry above.
+  #
+  # A design being hardened for someone else to instantiate needs a different
+  # grid from a design that is the top: its straps stop at met4 and are exposed
+  # there, so the parent's met5 can cross it and via down. See
+  # pnr/sky130hd/pdn_block.tcl, which is where that convention is written out,
+  # and pnr/demo_tiny_alu_subsys_hier/README.md for what happens without it.
+  - <<: *sky130hd_common
+    name: "sky130hd_block"
+    pdn-config: "pnr/sky130hd/pdn_block.tcl"
 
 # Synth platforms — name + PDK + corner. Referenced by `platform:` in synth.yaml.
 cfg-synth-platforms:
   - name: "nangate45_typ"
     pdk: "nangate45"
     corner: "typ"
+
+  - name: "sky130hd_tt"
+    pdk: "sky130hd"
+    corner: "tt"
 
 # P&R platforms — name + PDK + STA corner + P&R-specific knobs.
 # Referenced by `platform:` in pnr.yaml.
@@ -278,6 +390,45 @@ cfg-pnr-platforms:
     routing-layers:
       signal: "metal2-metal8"
       clock: "metal4-metal8"
+
+  - name: "sky130hd_tt"
+    pdk: "sky130hd"
+    corner: "tt"
+    # A list, not one name (rtl_buddy#625): CTS picks a drive strength per
+    # stage, and a single buffer has to be strong enough for the worst sink
+    # group and is then far too strong everywhere else. The first entry is the
+    # root buffer (`-root_buf`).
+    #
+    # A list-valued `cts-buffer` breaks config load on rtl_buddy < 6.55.0 —
+    # it is a type change to an existing key — so this needs the pin in
+    # pyproject.toml, not just this example.
+    cts-buffer:
+      - "sky130_fd_sc_hd__clkbuf_4"
+      - "sky130_fd_sc_hd__clkbuf_8"
+      - "sky130_fd_sc_hd__clkbuf_16"
+    # Off deliberately. The OpenRAM macro's two clock pins sit at the same
+    # point in the layout, and the sink-clustering pass fails on coincident
+    # sinks with `[ERROR CTS-0080] Sink not found` (reported in rtl_buddy#101).
+    cts-sink-clustering: false
+    routing-layers:
+      signal: "met1-met5"
+      clock: "met3-met5"
+
+  # For runs that harden a block rather than build a top. Same corner and same
+  # CTS settings; the two differences are the PDK entry, which brings the
+  # block-level power grid, and the routing layers, which stop at met4 so met5
+  # is left clear for the parent that will instantiate this block as a macro.
+  - name: "sky130hd_tt_block"
+    pdk: "sky130hd_block"
+    corner: "tt"
+    cts-buffer:
+      - "sky130_fd_sc_hd__clkbuf_4"
+      - "sky130_fd_sc_hd__clkbuf_8"
+      - "sky130_fd_sc_hd__clkbuf_16"
+    cts-sink-clustering: false
+    routing-layers:
+      signal: "met1-met4"
+      clock: "met3-met4"
 # End synth / pnr configuration
 
 # Power analysis tool defaults — `tool:` in power.yaml selects the entry.

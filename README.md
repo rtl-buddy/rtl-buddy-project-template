@@ -52,6 +52,7 @@ naming convention surfaces the category in the directory name:
 | `demo_tiny_alu_cocotb` | cocotb peer of `demo_tiny_alu` driving the same DUT against the same golden  | [`verif/demo_tiny_alu_cocotb/`](verif/demo_tiny_alu_cocotb/)                                                                       |
 | `demo_tiny_alu_sc`     | SystemC + Verilator cosim peer of `demo_tiny_alu`, showing the same DUT driven from `sc_main()` | [`verif/demo_tiny_alu_sc/`](verif/demo_tiny_alu_sc/) |
 | `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the `rb pnr` Nangate45 flow | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
+| `demo_tiny_alu_subsys_hier` | The same design on **sky130hd**, hardened hierarchically: two partitions placed and routed on their own, then assembled at the top beside a real OpenRAM SRAM macro, with a PDN and `gds-mode: strict` | [`synth/demo_tiny_alu_subsys_hier/`](synth/demo_tiny_alu_subsys_hier/), [`pnr/demo_tiny_alu_subsys_hier/`](pnr/demo_tiny_alu_subsys_hier/) ([walk-through](pnr/demo_tiny_alu_subsys_hier/README.md)), [`power/demo_tiny_alu_subsys_hier/`](power/demo_tiny_alu_subsys_hier/) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 | `demo_abv_basic`    | Saturating up-counter with a bound SVA checker for `rb fpv` (bmc-proves no-overflow, cover-reaches saturation); also the `rb mut` reference block | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_basic.md)), [`spec/demo_abv/`](spec/demo_abv/), [`fpv/demo_abv/demo_abv_basic/`](fpv/demo_abv/demo_abv_basic/) |
 | `demo_abv_features`   | Assertion-Based Verification end-to-end — testbench-side SVA via `rb test` + `rb fpv` reporting **COI**, **dead-assume**, and slang-fronted **vacuity** (`1/2 vacuous`) on a tiny saturating counter | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_features.md)), [`spec/demo_abv/`](spec/demo_abv/), [`verif/demo_abv/demo_abv_features/`](verif/demo_abv/demo_abv_features/), [`fpv/demo_abv/demo_abv_features/`](fpv/demo_abv/demo_abv_features/) |
@@ -90,7 +91,7 @@ template the supported flows are:
 - **Coverview** for browser-based coverage dashboards
 - **PeakRDL** for SystemRDL → SystemVerilog register block generation
 - **SymbiYosys (`sby`)** for `rb fpv` formal property verification — `demo_abv_basic` and `demo_abv_features` + `fpv_regression.yaml` exercise the flow end-to-end (vacuity / COI / dead-assume reporting via the slang-fronted variant)
-- **AXI profiler wiring** via the `demo_axi_2x2` manifest, attaching the `axi-perf` overlay to the real `tb_axi_2x2 → dut` hierarchy, ready for `rb axi-profile` once `rtl-buddy-axi-profiler` is installed
+- **AXI profiler wiring** via the `demo_axi_2x2` manifest, attaching the `axi-perf` overlay to the real `tb_axi_2x2 → dut` hierarchy, ready for `rb axi-profile` (`rtl-buddy-axi-profiler` >= 0.2.0, the pywellen 0.25 port from rtl-buddy/rtl-buddy-axi-profiler#60)
 
 ## Setup
 
@@ -173,12 +174,16 @@ uv run rb skill install --project
 ├── synth/
 │   ├── demo_tiny_alu/       # demo — Yosys synth of the ALU leaf (generic + Nangate45)
 │   ├── demo_tiny_alu_subsys/     # demo — Yosys synth of the system block (generic + Nangate45)
+│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd: flat, two partitions, and the assembly
 │   └── demo_cdc_src_sync/  # demo — Yosys synth of the source-sync chain
 ├── power/
-│   └── demo_tiny_alu_subsys/     # demo — `rb power` runs (static / synthetic / SAIF / post-P&R);
-│                                 #        the static one is `phys-run`-paired into the synthesis' model
+│   ├── demo_tiny_alu_subsys/     # demo — `rb power` runs (static / synthetic / SAIF / post-P&R);
+│   │                             #        the static one is `phys-run`-paired into the synthesis' model
+│   └── demo_tiny_alu_subsys_hier/ # demo — post-P&R power, sky130hd flat vs assembled
 ├── pnr/
-│   └── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
+│   ├── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
+│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R + harden.sh (see its README)
+│   └── sky130hd/                 # sky130hd PDN snippets: pdn.tcl (top) + pdn_block.tcl (block)
 ├── fpv/
 │   ├── demo_abv_basic/   # demo — `rb fpv` saturating counter (bmc + cover)
 │   └── demo_abv_features/  # demo — slang-fronted `|->` properties exercising vacuity / COI / dead-assume
@@ -899,6 +904,39 @@ uv run rb pnr demo_tiny_alu_subsys_pnr_nangate45 \
 Outputs land in `pnr/demo_tiny_alu_subsys/artefacts/<run>/`. Requires a
 local `openroad` build (referenced via `cfg-pnr-tools` if outside PATH);
 KLayout is optional and only needed for `--gds`/`--png`.
+
+### Hierarchical P&R on sky130hd
+
+[`pnr/demo_tiny_alu_subsys_hier/`](pnr/demo_tiny_alu_subsys_hier/) takes the
+same design through a **hierarchical** flow on the second PDK this project
+declares. `demo_tiny_alu_subsys_csr` and `demo_tiny_alu_subsys_compute` are
+each placed and routed on their own clock, turned into an abstract LEF +
+Liberty + GDS, and then instantiated as hard macros in a top-level run that
+also carries a real OpenRAM SRAM — three macros, one power grid,
+`gds-mode: strict` with nothing allowed to be empty.
+
+```bash
+./synth/demo_tiny_alu_subsys_hier/download_pdk.sh     # sky130hd + the OpenRAM macro
+```
+
+[`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md)
+is the walk-through: every command in order, a flat-vs-assembled results table,
+the block-level PDN convention a hardened block has to follow, and the
+rtl_buddy gaps the exercise found — most of which it also closed
+(rtl-buddy/rtl_buddy#625, #630, #632).
+
+The hardening step is a project-level script
+(`pnr/demo_tiny_alu_subsys_hier/harden.sh`) and the abstracts are wired into
+the assembly by hand through `lef-paths` / `lib-paths` / `gds-paths`, because
+`rb pnr` has no `harden:` or `blocks:` keys yet
+(rtl-buddy/rtl_buddy#95). Switching to them will be a config-only change; the
+README shows what that config looks like.
+
+This example needs rtl_buddy >= 6.56.0 — the `cfg-pdks.pdn-config`,
+`.placement` and `.dont-use-cells` keys, a list-valued
+`cfg-pnr-platforms.cts-buffer` (rtl-buddy/rtl_buddy#625), the size-aware macro
+packer (rtl-buddy/rtl_buddy#632) and macro Liberty inheritance in `rb power`
+(rtl-buddy/rtl_buddy#630). It is the version this project pins.
 
 ---
 

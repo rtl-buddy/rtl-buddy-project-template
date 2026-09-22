@@ -6,8 +6,8 @@
 package demo_tiny_alu_subsys_csr_pkg;
 
     localparam DEMO_TINY_ALU_SUBSYS_CSR_DATA_WIDTH = 32;
-    localparam DEMO_TINY_ALU_SUBSYS_CSR_MIN_ADDR_WIDTH = 5;
-    localparam DEMO_TINY_ALU_SUBSYS_CSR_SIZE = 'h20;
+    localparam DEMO_TINY_ALU_SUBSYS_CSR_MIN_ADDR_WIDTH = 6;
+    localparam DEMO_TINY_ALU_SUBSYS_CSR_SIZE = 'h28;
 
     typedef struct {
         logic next;
@@ -64,9 +64,18 @@ package demo_tiny_alu_subsys_csr_pkg;
     } flags_r__in_t;
 
     typedef struct {
+        logic [31:0] next;
+    } hist_data_r__DATA__in_t;
+
+    typedef struct {
+        hist_data_r__DATA__in_t DATA;
+    } hist_data_r__in_t;
+
+    typedef struct {
         status_r__in_t status;
         result_r__in_t result;
         flags_r__in_t flags;
+        hist_data_r__in_t hist_data;
     } demo_tiny_alu_subsys_csr__in_t;
 
     typedef struct {
@@ -130,10 +139,19 @@ package demo_tiny_alu_subsys_csr_pkg;
     } fifo_push_r__out_t;
 
     typedef struct {
+        logic [3:0] value;
+    } hist_ptr_r__ADDR__out_t;
+
+    typedef struct {
+        hist_ptr_r__ADDR__out_t ADDR;
+    } hist_ptr_r__out_t;
+
+    typedef struct {
         ctrl_r__out_t ctrl;
         op_r__out_t op;
         operand_a_r__out_t operand_a;
         operand_b_r__out_t operand_b;
         fifo_push_r__out_t fifo_push;
+        hist_ptr_r__out_t hist_ptr;
     } demo_tiny_alu_subsys_csr__out_t;
 endpackage

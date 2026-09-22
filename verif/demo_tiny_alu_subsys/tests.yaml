@@ -40,3 +40,40 @@ tests:
       - "ACCEL-FIFO-DRAIN"
       - "ACCEL-RESULT-MATCH"
       - "ACCEL-DONE-INC"
+
+  - name: "hist_replay"
+    desc: "Result-history scratch memory: 4 CSR-direct ops, every entry read back through hist_ptr/hist_data"
+    reglvl: 1000  # deferred to the full/nightly regression (-l 1000)
+    plusargs:
+      TEST: hist_replay
+      lvm_verbosity: 2
+    model: "demo_tiny_alu_subsys_top"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    testbench: "tb_top"
+    covers:
+      - "ACCEL-CSR-WRITE"
+      - "ACCEL-CSR-READ"
+      - "ACCEL-CSR-DIRECT-OP"
+      - "ACCEL-RESULT-MATCH"
+      - "ACCEL-DONE-INC"
+      - "ACCEL-HIST-REPLAY"
+
+  # Same stimulus against the OpenRAM behavioural model instead of the generic
+  # flop array — the check that the sky130hd build of the memory wrapper binds
+  # the macro correctly and that the design's use of it (active-low csb/web,
+  # byte mask, registered read) matches the vendor's model. Needs
+  # synth/demo_tiny_alu_subsys_hier/download_pdk.sh to have run.
+  - name: "hist_replay_sram"
+    desc: "hist_replay against the OpenRAM sky130_sram_1kbyte_1rw1r_32x256_8 behavioural model"
+    # Above the nightly tier (-l 1000) deliberately: the vendor model is not
+    # vendored, so without ./synth/demo_tiny_alu_subsys_hier/download_pdk.sh
+    # this is a compile FAIL rather than a SKIP.
+    reglvl: 5000
+    plusargs:
+      TEST: hist_replay
+      lvm_verbosity: 2
+    model: "demo_tiny_alu_subsys_top_sram"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    testbench: "tb_top"
+    covers:
+      - "ACCEL-HIST-REPLAY"

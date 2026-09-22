@@ -11,7 +11,7 @@ module demo_tiny_alu_subsys_csr (
         input wire s_apb_penable,
         input wire s_apb_pwrite,
         input wire [2:0] s_apb_pprot,
-        input wire [4:0] s_apb_paddr,
+        input wire [5:0] s_apb_paddr,
         input wire [31:0] s_apb_pwdata,
         input wire [3:0] s_apb_pstrb,
         output logic s_apb_pready,
@@ -27,7 +27,7 @@ module demo_tiny_alu_subsys_csr (
     //--------------------------------------------------------------------------
     logic cpuif_req;
     logic cpuif_req_is_wr;
-    logic [4:0] cpuif_addr;
+    logic [5:0] cpuif_addr;
     logic [31:0] cpuif_wr_data;
     logic [31:0] cpuif_wr_biten;
     logic cpuif_req_stall_wr;
@@ -56,7 +56,7 @@ module demo_tiny_alu_subsys_csr (
                     is_active <= '1;
                     cpuif_req <= '1;
                     cpuif_req_is_wr <= s_apb_pwrite;
-                    cpuif_addr <= {s_apb_paddr[4:2], 2'b0};
+                    cpuif_addr <= {s_apb_paddr[5:2], 2'b0};
                     cpuif_wr_data <= s_apb_pwdata;
                     for(int i=0; i<4; i++) begin
                         cpuif_wr_biten[i*8 +: 8] <= {8{s_apb_pstrb[i]}};
@@ -97,10 +97,12 @@ module demo_tiny_alu_subsys_csr (
         logic result;
         logic flags;
         logic fifo_push;
+        logic hist_ptr;
+        logic hist_data;
     } decoded_reg_strb_t;
     decoded_reg_strb_t decoded_reg_strb;
     logic decoded_err;
-    logic [4:0] decoded_addr;
+    logic [5:0] decoded_addr;
     logic decoded_req;
     logic decoded_req_is_wr;
     logic [31:0] decoded_wr_data;
@@ -111,14 +113,16 @@ module demo_tiny_alu_subsys_csr (
         automatic logic is_valid_rw;
         is_valid_addr = '1; // No valid address check
         is_valid_rw = '1; // No valid RW check
-        decoded_reg_strb.ctrl = cpuif_req_masked & (cpuif_addr == 5'h0);
-        decoded_reg_strb.status = cpuif_req_masked & (cpuif_addr == 5'h4) & !cpuif_req_is_wr;
-        decoded_reg_strb.op = cpuif_req_masked & (cpuif_addr == 5'h8);
-        decoded_reg_strb.operand_a = cpuif_req_masked & (cpuif_addr == 5'hc);
-        decoded_reg_strb.operand_b = cpuif_req_masked & (cpuif_addr == 5'h10);
-        decoded_reg_strb.result = cpuif_req_masked & (cpuif_addr == 5'h14) & !cpuif_req_is_wr;
-        decoded_reg_strb.flags = cpuif_req_masked & (cpuif_addr == 5'h18) & !cpuif_req_is_wr;
-        decoded_reg_strb.fifo_push = cpuif_req_masked & (cpuif_addr == 5'h1c);
+        decoded_reg_strb.ctrl = cpuif_req_masked & (cpuif_addr == 6'h0);
+        decoded_reg_strb.status = cpuif_req_masked & (cpuif_addr == 6'h4) & !cpuif_req_is_wr;
+        decoded_reg_strb.op = cpuif_req_masked & (cpuif_addr == 6'h8);
+        decoded_reg_strb.operand_a = cpuif_req_masked & (cpuif_addr == 6'hc);
+        decoded_reg_strb.operand_b = cpuif_req_masked & (cpuif_addr == 6'h10);
+        decoded_reg_strb.result = cpuif_req_masked & (cpuif_addr == 6'h14) & !cpuif_req_is_wr;
+        decoded_reg_strb.flags = cpuif_req_masked & (cpuif_addr == 6'h18) & !cpuif_req_is_wr;
+        decoded_reg_strb.fifo_push = cpuif_req_masked & (cpuif_addr == 6'h1c);
+        decoded_reg_strb.hist_ptr = cpuif_req_masked & (cpuif_addr == 6'h20);
+        decoded_reg_strb.hist_data = cpuif_req_masked & (cpuif_addr == 6'h24) & !cpuif_req_is_wr;
         decoded_err = '0;
     end
 
@@ -179,6 +183,12 @@ module demo_tiny_alu_subsys_csr (
                 logic load_next;
             } B;
         } fifo_push;
+        struct {
+            struct {
+                logic [3:0] next;
+                logic load_next;
+            } ADDR;
+        } hist_ptr;
     } field_combo_t;
     field_combo_t field_combo;
 
@@ -220,6 +230,11 @@ module demo_tiny_alu_subsys_csr (
                 logic [7:0] value;
             } B;
         } fifo_push;
+        struct {
+            struct {
+                logic [3:0] value;
+            } ADDR;
+        } hist_ptr;
     } field_storage_t;
     field_storage_t field_storage;
 
@@ -436,6 +451,29 @@ module demo_tiny_alu_subsys_csr (
         end
     end
     assign hwif_out.fifo_push.B.value = field_storage.fifo_push.B.value;
+    // Field: demo_tiny_alu_subsys_csr.hist_ptr.ADDR
+    always_comb begin
+        automatic logic [3:0] next_c;
+        automatic logic load_next_c;
+        next_c = field_storage.hist_ptr.ADDR.value;
+        load_next_c = '0;
+        if(decoded_reg_strb.hist_ptr && decoded_req_is_wr) begin // SW write
+            next_c = (field_storage.hist_ptr.ADDR.value & ~decoded_wr_biten[3:0]) | (decoded_wr_data[3:0] & decoded_wr_biten[3:0]);
+            load_next_c = '1;
+        end
+        field_combo.hist_ptr.ADDR.next = next_c;
+        field_combo.hist_ptr.ADDR.load_next = load_next_c;
+    end
+    always_ff @(posedge clk) begin
+        if(~rst_n) begin
+            field_storage.hist_ptr.ADDR.value <= 4'h0;
+        end else begin
+            if(field_combo.hist_ptr.ADDR.load_next) begin
+                field_storage.hist_ptr.ADDR.value <= field_combo.hist_ptr.ADDR.next;
+            end
+        end
+    end
+    assign hwif_out.hist_ptr.ADDR.value = field_storage.hist_ptr.ADDR.value;
 
     //--------------------------------------------------------------------------
     // Write response
@@ -448,7 +486,7 @@ module demo_tiny_alu_subsys_csr (
     // Readback
     //--------------------------------------------------------------------------
 
-    logic [4:0] rd_mux_addr;
+    logic [5:0] rd_mux_addr;
     assign rd_mux_addr = decoded_addr;
 
     logic readback_err;
@@ -457,38 +495,44 @@ module demo_tiny_alu_subsys_csr (
     always_comb begin
         automatic logic [31:0] readback_data_var;
         readback_data_var = '0;
-        if(rd_mux_addr == 5'h0) begin
+        if(rd_mux_addr == 6'h0) begin
             readback_data_var[0] = field_storage.ctrl.SRC.value;
             readback_data_var[1] = field_storage.ctrl.GO.value;
         end
-        if(rd_mux_addr == 5'h4) begin
+        if(rd_mux_addr == 6'h4) begin
             readback_data_var[0] = hwif_in.status.BUSY.next;
             readback_data_var[1] = hwif_in.status.FIFO_FULL.next;
             readback_data_var[2] = hwif_in.status.FIFO_EMPTY.next;
             readback_data_var[10:3] = hwif_in.status.DONE_CNT.next;
         end
-        if(rd_mux_addr == 5'h8) begin
+        if(rd_mux_addr == 6'h8) begin
             readback_data_var[2:0] = field_storage.op.OP.value;
         end
-        if(rd_mux_addr == 5'hc) begin
+        if(rd_mux_addr == 6'hc) begin
             readback_data_var[7:0] = field_storage.operand_a.A.value;
         end
-        if(rd_mux_addr == 5'h10) begin
+        if(rd_mux_addr == 6'h10) begin
             readback_data_var[7:0] = field_storage.operand_b.B.value;
         end
-        if(rd_mux_addr == 5'h14) begin
+        if(rd_mux_addr == 6'h14) begin
             readback_data_var[7:0] = hwif_in.result.Y.next;
         end
-        if(rd_mux_addr == 5'h18) begin
+        if(rd_mux_addr == 6'h18) begin
             readback_data_var[0] = hwif_in.flags.ZF.next;
             readback_data_var[1] = hwif_in.flags.CF.next;
             readback_data_var[2] = hwif_in.flags.NF.next;
             readback_data_var[3] = hwif_in.flags.VF.next;
         end
-        if(rd_mux_addr == 5'h1c) begin
+        if(rd_mux_addr == 6'h1c) begin
             readback_data_var[3:1] = field_storage.fifo_push.OP.value;
             readback_data_var[11:4] = field_storage.fifo_push.A.value;
             readback_data_var[19:12] = field_storage.fifo_push.B.value;
+        end
+        if(rd_mux_addr == 6'h20) begin
+            readback_data_var[3:0] = field_storage.hist_ptr.ADDR.value;
+        end
+        if(rd_mux_addr == 6'h24) begin
+            readback_data_var[31:0] = hwif_in.hist_data.DATA.next;
         end
         readback_data = readback_data_var;
         readback_done = decoded_req & ~decoded_req_is_wr;

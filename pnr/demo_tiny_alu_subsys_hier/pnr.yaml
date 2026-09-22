@@ -1,0 +1,127 @@
+# RTL-Buddy P&R Configuration File
+rtl-buddy-filetype: pnr_config
+
+# P&R half of the sky130hd hierarchical pipeclean. Four runs in two groups:
+#
+#   ..._flat_pnr       the reference. One flat run of the whole design, with the
+#                      OpenRAM SRAM as its only hard macro.
+#
+#   ..._csr_pnr        partition A, hardened on its own clock.
+#   ..._compute_pnr    partition B, hardened on its own clock.
+#   ..._asm_pnr        the assembly. Places and routes the top with both
+#                      partitions and the SRAM as hard macros, and ties all
+#                      three into the top-level PDN.
+#
+# Run order is flat (any time), then csr and compute, then harden.sh on each,
+# then the assembly. See README.md for the full walk-through.
+#
+# Everything is reglvl 1000 — these need the downloaded PDK, the downloaded
+# macro, openroad and klayout. Invoke directly, e.g.
+#
+#   rb pnr demo_tiny_alu_subsys_sky130_flat_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml --gds --png
+#
+# Needs rtl_buddy >= 6.56.0. Older releases either ignore the `pdn-config`,
+# `placement` and `dont-use-cells` keys in root_config.yaml's sky130hd entry —
+# producing a layout with no power grid at all — or refuse to load
+# root_config.yaml because `cts-buffer` there is a list.
+runs:
+
+  # ── flat reference ─────────────────────────────────────────────────────────
+  - name: "demo_tiny_alu_subsys_sky130_flat_pnr"
+    desc: "Flat sky130hd P&R of demo_tiny_alu_subsys, OpenRAM SRAM as the only macro"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_sky130_flat"
+    synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_hier/constraints_flat.sdc"
+    platform: "sky130hd_tt"
+    floorplan:
+      utilization: 0.45
+      aspect: 1.0
+      core-margin: 10.0
+    lef-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
+    lib-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
+    gds-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.gds"
+    # Nothing here is a placeholder: the SRAM's real GDS is above, so a cell
+    # with no layout would be a bug, not a preview.
+    gds-mode: strict
+    reglvl: 1000
+
+  # ── partition A: CSR block ─────────────────────────────────────────────────
+  # Hardened on apb_clk with its own SDC and its own floorplan. `harden.sh`
+  # turns this run's routed result into abstract/demo_tiny_alu_subsys_csr.{lef,lib,gds}.
+  - name: "demo_tiny_alu_subsys_sky130_csr_pnr"
+    desc: "Harden the demo_tiny_alu_subsys_csr partition (apb_clk)"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_sky130_csr"
+    synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_hier/constraints_csr.sdc"
+    # Not sky130hd_tt: a block that a larger design will instantiate needs the
+    # block-level power grid (straps exposed on met4, nothing on met5) and
+    # block-level routing layers. See pnr/sky130hd/pdn_block.tcl.
+    platform: "sky130hd_tt_block"
+    floorplan:
+      utilization: 0.40
+      aspect: 1.0
+      core-margin: 5.0
+    # A hardened block with a hole in its layout is never acceptable — it is
+    # about to be streamed into a parent.
+    gds-mode: strict
+    reglvl: 1000
+
+  # ── partition B: compute datapath ──────────────────────────────────────────
+  - name: "demo_tiny_alu_subsys_sky130_compute_pnr"
+    desc: "Harden the demo_tiny_alu_subsys_compute partition (compute clock)"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_sky130_compute"
+    synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_hier/constraints_compute.sdc"
+    platform: "sky130hd_tt_block"
+    floorplan:
+      utilization: 0.40
+      aspect: 1.0
+      core-margin: 5.0
+    gds-mode: strict
+    reglvl: 1000
+
+  # ── top-level assembly ─────────────────────────────────────────────────────
+  # The three macro views are wired by hand here. This is the part rtl_buddy#95
+  # replaces with a `blocks:` list — see README.md — and the reason it is a
+  # config-only change is that the paths below are exactly what `blocks:` would
+  # resolve for itself out of each partition's abstract directory.
+  - name: "demo_tiny_alu_subsys_sky130_asm_pnr"
+    desc: "Assemble the top from two hardened partitions plus the third-party SRAM"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_sky130_asm"
+    synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_hier/constraints_flat.sdc"
+    platform: "sky130hd_tt"
+    # The same floorplan as the flat reference. The size-aware shelf packer
+    # (rtl_buddy#632) packs the three macros from the bottom-left corner
+    # instead of giving each one an SRAM-sized slot in a rectangular grid, so
+    # the assembly no longer needs a wide flat strip to hold them. The channel
+    # widths that `pdngen` needs come from `placement.macro-halo` (20 µm by
+    # default; see root_config.yaml), not from an inflated core.
+    floorplan:
+      utilization: 0.45
+      aspect: 1.0
+      core-margin: 10.0
+    lef-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
+      - "artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.lef"
+      - "artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.lef"
+    lib-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
+      - "artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.lib"
+      - "artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.lib"
+    gds-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.gds"
+      - "artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.gds"
+      - "artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.gds"
+    # The acceptance criterion for the whole example. All three macro layouts
+    # are real, so `strict` must pass with no `gds-allow-empty` entries at all:
+    # an empty cell here would mean a hardened partition streamed out as a hole.
+    gds-mode: strict
+    reglvl: 1000
