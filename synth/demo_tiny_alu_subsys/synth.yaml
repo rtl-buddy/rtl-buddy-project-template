@@ -4,6 +4,51 @@ rtl-buddy-filetype: synth_config
 # the PeakRDL-generated CSR + interface + CDC primitives all elaborate and
 # synthesize together. Tech-mapped runs follow the sandbox pattern; promote
 # reglvl when adding a Liberty-mapped variant.
+#
+# EXPECTED WARNINGS — both runs below elaborate with the default `verilog`
+# frontend, which cannot bind the `apb_intf` instance in
+# demo_tiny_alu_subsys_synth_top to the interface port of
+# demo_tiny_alu_subsys_top. Yosys falls back to a derived
+# `demo_tiny_alu_subsys_top$interfaces$...apb_intf` module and logs, in
+# artefacts/<run>/synth.log:
+#
+#   Warning: Identifier `\bus.paddr' is implicitly declared.
+#   Warning: Range select [4:0] out of bounds on signal `\apb.paddr': ...
+#   Warning: Could not find interface instance for `bus' in
+#            `demo_tiny_alu_subsys_synth_top'
+#   Warning: Wire demo_tiny_alu_subsys_synth_top.\bus.clk is used but has
+#            no driver.
+#
+# None of these corrupts THIS design, and the netlist was checked rather
+# than assumed:
+#
+#   * The APB members do reach the CSR. synth_netlist.v carries
+#     `.\apb.paddr (paddr)` on the u_inner instance and
+#     `.s_apb_paddr(\apb.paddr [4:0])` on u_csr, with s_apb_paddr[4:2]
+#     feeding the real address decode. The out-of-bounds range select
+#     comes from a throwaway elaboration of the inner module made BEFORE
+#     its interface port is derived; the derived module has the correct
+#     [31:0] width and the correct [4:0] slice.
+#   * Only `bus.clk` / `bus.rst_n` are lost (tied to 1'hx). They are the
+#     interface instance's own ports, and nothing reads them — the
+#     subsystem clocks off its own apb_clk / apb_rst_n ports, never
+#     apb.clk.
+#   * Equivalence against a read_slang elaboration of the same sources
+#     (yosys equiv_make/equiv_simple/equiv_induct) proves every top-level
+#     output — prdata, pready, pslverr — equivalent. Nangate45 mapping
+#     lands at 1377 cells / 3140.93 um2 via read_verilog vs 1367 cells /
+#     3135.34 um2 via read_slang; the difference is hierarchy retention,
+#     not missing logic.
+#
+# The hazard the warning names is real in general — an interface whose own
+# clk/rst_n ports ARE read by the subtree loses them silently — so do not
+# copy this pattern without checking the netlist, and prefer
+# `tool_overrides.yosys.frontend: "slang"` (see synth/demo_slang_pkg/) when
+# yosys-slang is available. Tracked upstream as rtl_buddy#628; since
+# rtl_buddy 6.56.0 (rtl_buddy#629) the `unresolved-interfaces` synth gate
+# also reports the unbound instance itself, at `warn` by default — leave it
+# there for this design, or set `error` on runs where the interface's own
+# clk/rst_n are consumed.
 syntheses:
   - name: "demo_tiny_alu_subsys_synth_generic"
     desc: "Tech-independent Yosys synthesis of demo_tiny_alu_subsys_synth_top (flat-port wrapper)"
