@@ -30,12 +30,18 @@ third-party macro side by side.
 ## What you need
 
 - `openroad` and `klayout` on `PATH`, and `yosys`.
-- An **rtl_buddy carrying rtl-buddy/rtl_buddy#101** — the flow-parameterisation
-  keys `cfg-pdks.placement`, `cfg-pdks.dont-use-cells` and
-  `cfg-pdks.pdn-config`. An rtl_buddy without them loads `root_config.yaml`
-  fine and silently ignores all three, which means **no power grid at all** in
-  the resulting layout. The runs here still complete; what they produce is not
-  this example. The pinned version in `pyproject.toml` is one of those.
+- **rtl_buddy >= 6.56.0**, which is what `pyproject.toml` pins. Four things in
+  this example need it:
+  - `cfg-pdks.placement`, `cfg-pdks.dont-use-cells` and `cfg-pdks.pdn-config`
+    (rtl-buddy/rtl_buddy#625). An older rtl_buddy loads `root_config.yaml`
+    fine and silently ignores all three — which means **no power grid at all**
+    in the resulting layout.
+  - a list-valued `cfg-pnr-platforms.cts-buffer` (also
+    rtl-buddy/rtl_buddy#625), which an older rtl_buddy refuses to load at all.
+  - the size-aware shelf macro packer (rtl-buddy/rtl_buddy#632), which is what
+    lets the assembly use the flat run's floorplan.
+  - macro Liberty inheritance in `rb power` (rtl-buddy/rtl_buddy#630), without
+    which every macro reports 0 W.
 - The PDK and the macro, which are not vendored:
 
 ```sh
@@ -129,43 +135,60 @@ rb power demo_tiny_alu_subsys_sky130_flat_power -c power/demo_tiny_alu_subsys_hi
 rb power demo_tiny_alu_subsys_sky130_asm_power  -c power/demo_tiny_alu_subsys_hier/power.yaml -l 1000
 ```
 
-Read `power/demo_tiny_alu_subsys_hier/power.yaml` before reading the numbers:
-`rb power` cannot be given a macro's Liberty, so every macro reports 0 W.
+Neither run names a `lib-paths`: since rtl-buddy/rtl_buddy#630 a
+`netlist-source: pnr` power run inherits the macro Liberty from the P&R run it
+reads, so the SRAM and — in the assembly — both hardened partitions are
+characterised rather than counted as zero, and the two totals are comparable.
+A macro with no library at all is now the `power.missing_macro_inputs` ERROR.
 
 ## Results — flat vs assembled
 
-Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8, rtl_buddy at
-`main` plus the rtl_buddy#101 branch, on the PDK revisions
+Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8 and the released
+rtl_buddy 6.56.0 wheel this project pins, on the PDK revisions
 `download_pdk.sh` pins. `apb_clk` 20 ns, `cclk` 25 ns.
 
 | | flat | csr partition | compute partition | **assembled** |
 |---|---|---|---|---|
 | verdict | PASS | PASS | PASS | **PASS** |
 | standard-cell instances | 1237 | 383 | 299 | 548 |
-| design area (µm²) | 207 481 | 3 327 | 2 579 | **219 521** |
-| core area (µm²) | 456 758 | 7 727 | 6 241 | **872 086** |
-| core utilization | 45.4% | 43.1% | 41.3% | 25.2% |
-| setup WNS (ns) | +3.99 | +11.00 | +13.59 | **+3.97** |
+| die (µm) | 697.4 × 697.4 | 98.9 × 98.9 | 89.5 × 89.5 | **717.0 × 717.0** |
+| design area (µm²) | 207 690 | 3 337 | 2 599 | **219 876** |
+| core area (µm²) | 456 758 | 7 727 | 6 241 | **483 051** |
+| core utilization | 45.5% | 43.2% | 41.6% | **45.5%** |
+| setup WNS (ns) | +3.68 | +11.00 | +13.59 | **+3.76** |
 | setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** |
-| hold WNS (ns) | +0.35 | +0.47 | +0.62 | **+0.29** |
+| hold WNS (ns) | +0.27 | +0.47 | +0.62 | **+0.28** |
 | DRCs | 0 | 0 | 0 | **0** |
 | `check_power_grid` VDD/VSS | connected | connected | connected | **connected** |
 | GDS | `complete: true` | `complete: true` | `complete: true` | **`complete: true`** |
-| static power (mW) | 1.42 | — | — | 1.80 |
+| static power (mW) | 3.44 | — | — | **3.12** |
+| of which the SRAM (mW) | 1.93 | — | — | **1.93** |
 
 Reading it:
 
-- **Timing is essentially identical.** Setup WNS differs by 0.02 ns on a 20 ns
+- **Timing is essentially identical.** Setup WNS differs by 0.08 ns on a 20 ns
   period, and the worst path is the same one in both — the SRAM's `dout1` out
-  to `prdata`, which no partitioning moves. Hold WNS is 0.06 ns tighter
-  assembled. TNS is zero both ways.
-- **Design area is +5.8%** assembled (219 521 vs 207 481 µm²). That is the
+  to `prdata[9]`, which no partitioning moves. Hold WNS is within 0.01 ns. TNS
+  is zero both ways.
+- **Design area is +5.9%** assembled (219 876 vs 207 690 µm²). That is the
   partitions' own core-margin and filler being counted at their hardened size
   rather than as loose cells.
-- **Core area is +91%**, and none of that is the design — see the macro-placer
-  gap below. The assembly's die is a 1 624 × 565 µm strip because that is the
-  only shape the automatic macro grid accepts for these three macros.
-- **Power is not comparable** as measured, for the reason in `power.yaml`.
+- **Core area is +5.7%** (483 051 vs 456 758 µm²) — the assembly uses the same
+  `utilization: 0.45, aspect: 1.0, core-margin: 10.0` floorplan as the flat
+  reference. The size-aware shelf packer (rtl-buddy/rtl_buddy#632) packs the
+  three macros from the bottom-left corner at their real sizes, so the
+  floorplan follows the design rather than the placer. The first draft of this
+  example needed a 1 624 × 565 µm strip and 872 086 µm² of core — 91% more than
+  the flat run — to get the same three macros placed and PDN'd.
+- **Power is comparable, with one caveat.** The SRAM reports the same 1.93 mW
+  in both runs, because a `netlist-source: pnr` power run now inherits the P&R
+  run's macro Liberty (rtl-buddy/rtl_buddy#630). The two hardened partitions
+  still contribute 0 W: `write_timing_model` emits timing arcs and no power
+  tables, so their abstracts have nothing to characterise. The assembly's
+  3.12 mW is therefore the top-level glue plus the SRAM, and the 0.32 mW it
+  sits below the flat run is the partitions' own cell power, unmodelled. Both
+  runs are free of `power.missing_macro_inputs` and
+  `power.unpowered_instances`.
 
 ## Step-0 spike findings
 
@@ -204,13 +227,18 @@ what rules out a model that is simply optimistic.
 
 | path | flat | assembled | delta |
 |---|---|---|---|
-| worst setup overall | +3.99 (`u_sram/dout1[5]` → `prdata[5]`) | +3.97 (`u_sram/dout1[9]` → `prdata[9]`) | −0.02 |
-| `psel` → CSR boundary | +15.11 (to an internal `dfxtp_1` D pin) | +15.79 (to `u_csr/s_apb_psel`) | +0.68 |
-| async FIFO → compute boundary | +21.24 (to an internal D pin) | +21.11 (to `u_compute/fifo_rd_data[18]`) | −0.13 |
-| worst hold | +0.31 | +0.29 | −0.02 |
+| worst setup overall | +3.68 (`u_sram` → `prdata[9]`) | +3.76 (`u_sram` → `prdata[9]`) | +0.08 |
+| `psel` → CSR boundary | +15.35 (to an internal D pin) | +15.72 (to the `u_csr` macro) | +0.37 |
+| async FIFO → compute boundary | +21.25 (to an internal D pin) | +20.81 (to the `u_compute` macro) | −0.44 |
+| worst hold | +0.27 | +0.28 | +0.01 |
 
-The CSR input check comes out 0.68 ns *less* pessimistic than the flat path it
-stands for, and the compute input check 0.13 ns *more*. Both are around 3% of
+Reproduce either column by reading the run's `*.routed.odb` and `*.routed.sdc`
+back into OpenROAD with the `read_liberty` lines from its own `pnr.tcl`, then
+`set_propagated_clock [all_clocks]` and `estimate_parasitics -global_routing`
+before `report_checks` — the same conditions the flow's own final STA uses.
+
+The CSR input check comes out 0.37 ns *less* pessimistic than the flat path it
+stands for, and the compute input check 0.44 ns *more*. Both are under 2% of
 the period, and the sign changes between blocks, so this looks like extraction
 noise rather than a systematic bias. On a design with real margin pressure the
 policy question in step 0 — fail the hardening run versus warn with a result
@@ -278,98 +306,46 @@ Yes. `def2stream.report.json` says `"complete": true` with
 carries all three macros:
 
 ```text
-sky130_sram_1kbyte_1rw1r_32x256_8: own_shapes=20517 child_insts=6085 bbox=(0,0;479.78,397.5)
-demo_tiny_alu_subsys_csr:          own_shapes=4120  child_insts=4718 bbox=(0,0;98.94,98.94)
-demo_tiny_alu_subsys_compute:      own_shapes=2734  child_insts=3649 bbox=(0,0;89.47,89.47)
-demo_tiny_alu_subsys_synth_top:    own_shapes=27815 child_insts=102819 bbox=(0,0;1623.675,565.25)
+sky130_sram_1kbyte_1rw1r_32x256_8: own_shapes=20517 child_insts=6085  bbox=(0,0;479.78,397.5)
+demo_tiny_alu_subsys_csr:          own_shapes=4168  child_insts=4754  bbox=(0,0;98.94,98.94)
+demo_tiny_alu_subsys_compute:      own_shapes=2671  child_insts=3607  bbox=(0,0;89.47,89.47)
+demo_tiny_alu_subsys_synth_top:    own_shapes=17301 child_insts=46916 bbox=(0,0;716.98,716.98)
 ```
 
 ## rtl_buddy gaps
 
-Each of these was hit on this example and worked around in **configuration
-only** — nothing in rtl_buddy was modified.
+### Fixed since this example was first drafted
 
-### 1. Macro grid placement gives every macro a slot sized for the largest
+The first draft of this example carried four gaps, all worked around in
+configuration. Three of them are gone in rtl_buddy 6.56.0 and the fourth is
+moot now the pin is on it — the git history of this directory shows the
+work-arounds they needed:
 
-`pnr/flow.tcl.template`'s automatic grid (rtl-buddy/rtl_buddy#610) searches for
-a rectangular grid in which `max_macro_w <= core_w / cols` and
-`max_macro_h <= core_h / rows`, with the maxima taken over *all* macros. With
-three macros of 479.78 × 397.50, 98.94 × 98.94 and 89.47 × 89.47 that is:
+- **Macro placement gave every macro a slot sized for the largest.** The old
+  rectangular grid refused `utilization: 0.45, aspect: 1.0` outright ("macros
+  do not fit any rectangular grid in the floorplan core") and forced a 1 × 3
+  strip, and the thin channels that left around the SRAM then defeated
+  `pdngen` (`[ERROR PDN-0179] Unable to repair all channels`). The size-aware
+  shelf packer (rtl-buddy/rtl_buddy#632) packs macros from the bottom-left
+  corner at their real sizes and keeps `placement.macro-halo` (20 µm by
+  default) of clearance around each, which is what the PDN channels need. The
+  assembly now uses the flat run's floorplan; see the table above for what
+  that saved.
+- **`rb power` could not be given a macro's Liberty**, so every macro reported
+  exactly 0 W and the flat and assembled totals were not comparable.
+  rtl-buddy/rtl_buddy#630 makes a `netlist-source: pnr` power run inherit the
+  macro Liberty from the P&R run it reads (and lets a power run add its own
+  `lib-paths`), with `power.missing_macro_inputs` as a hard ERROR when a macro
+  has no library at all. The SRAM now reports real power (1.93 mW, both ways).
+  What is left is not rtl_buddy's: a `write_timing_model` abstract carries no
+  power tables, so a hardened partition is still 0 W in its parent's report.
+- **`cts-buffer` as a list was a load-time break.** rtl-buddy/rtl_buddy#625
+  widens `cfg-pnr-platforms.cts-buffer` to a list (first entry = `-root_buf`);
+  before that pin, a list-valued key made `root_config.yaml` refuse to load for
+  *every* flow in the repo, so the single-name form was kept with the list in a
+  comment. `root_config.yaml` now carries the list.
 
-```text
-3 rows x 1 col   core >= 479.78 x 1192.50
-2 x 2            core >= 959.56 x  795.00     762 850 um^2
-1 row x 3 cols   core >= 1439.34 x 397.50     572 140 um^2
-```
-
-At the natural `utilization: 0.45, aspect: 1.0` the core is 695 × 695 µm and
-the run fails at macro placement with
-
-```text
-Error: pnr.tcl, 125 macros do not fit any rectangular grid in the floorplan core
-```
-
-Repro: the assembly run with `floorplan: {utilization: 0.45, aspect: 1.0}`.
-
-### 2. …and the resulting channels are too thin for `pdngen`
-
-Taking the cheapest grid from (1) literally — `utilization: 0.36, aspect: 0.28`,
-core 1 470 × 412 µm — places the SRAM with about 7 µm of core above and below
-it, and PDN cannot get a met4 strap through:
-
-```text
-[WARNING PDN-0178] Remaining channel (972.7900, 416.6700) - (1482.5800, 421.8400) on met4 for nets: VSS
-[ERROR PDN-0179] Unable to repair all channels.
-```
-
-The committed floorplan is `utilization: 0.25, aspect: 0.34` — core
-1 601 × 545 µm — which leaves roughly 73 µm of channel above and below the
-SRAM and about 27 µm either side. That is **91% more core area than the flat
-run needs** for the same design, all of it spent on the placer's equal-slot
-rule.
-
-Both of these are what rtl-buddy/rtl_buddy#95 step 5 (`macro-placement: rtl-mp`)
-and rtl-buddy/rtl_buddy#105 (macro anchor / halo / orientation) are for. A
-per-macro anchor would let this floorplan be the flat run's.
-
-### 3. `rb power` cannot be given a macro's Liberty
-
-`power.yaml` has no `lib-paths`, and the OpenROAD power backend emits only the
-platform's Liberty and the PDK's two LEFs. A macro whose Liberty reaches P&R
-through the run's `lib-paths` is in the design, and in
-`power_instances.rpt`, with zero power:
-
-```text
-Macro                  0.00e+00   0.00e+00   0.00e+00   0.00e+00   0.0%
-```
-
-```text
-   0.00e+00   0.00e+00   0.00e+00   0.00e+00 u_inner/u_hist_mem/u_sram
-```
-
-Repro: `rb power demo_tiny_alu_subsys_sky130_flat_power -c power/demo_tiny_alu_subsys_hier/power.yaml -l 1000`,
-then read `power.rpt`. This is not specific to hierarchical P&R — it affects
-any design with a hard macro, including `demo_synth_macro`.
-
-### 4. `cts-buffer` as a list is a load-time break, not a graceful one
-
-rtl-buddy/rtl_buddy#101 widens `cfg-pnr-platforms.cts-buffer` to accept a list.
-The new `cfg-pdks` keys are ignored by an rtl_buddy that does not know them, so
-only the runs that need them are affected; a list-valued `cts-buffer`, being a
-type change to a key that already exists, makes `root_config.yaml` refuse to
-load *at all*:
-
-```text
-Method rtl_buddy.config.pnr_platform.PnrPlatformConfigFile.__init__() parameter
-cts-buffer=[...] violates type hint <class 'str'>
-```
-
-That takes every flow in the repo down, not just this example, so
-`root_config.yaml` keeps the single-name form with the list written out in a
-comment beside it. Switch once the pin is on a release carrying
-rtl-buddy/rtl_buddy#101.
-
-### 5. Pre-existing: the interface port at the synthesis top
+### 1. Pre-existing: the interface port at the synthesis top
 
 Not introduced here, but it shows up in every log on this design and is worth
 naming so it is not mistaken for something this example did. Yosys'
@@ -380,19 +356,35 @@ Warning: Could not find interface instance for `bus' in `demo_tiny_alu_subsys_sy
 Warning: Range select [5:0] out of bounds on signal `\apb.paddr': Setting all 6 result bits to undef.
 ```
 
-These are **benign on this design** — the netlist is connected. The
-out-of-bounds select comes from a throwaway elaboration made before the
-interface port is derived; the derived module carries the full-width `paddr`
-and the correct slice into the CSR block, and the design is formally
-equivalent at its outputs to a `read_slang` elaboration of the same sources.
-The only undriven nets are `apb_intf`'s own `clk` / `rst_n` ports, which this
-subsystem never reads (it clocks off `apb_clk` / `apb_rst_n`).
+Since rtl-buddy/rtl_buddy#629 rtl_buddy classifies that warning itself, through
+the `unresolved-interfaces` synth gate (`cfg-synth-tools`, `error` / `warn` /
+`allow`, default `warn`). **It fires on the flat and assembly runs here**, once
+per unbound instance:
 
-The general hazard behind the first warning is real, though: `read_verilog`
-drops an interface *instance's* own port connections, so a design that does
-read `bus.clk` would synthesize clockless. rtl-buddy/rtl_buddy#628 tracks
-gating on it; the warnings reproduce on `origin/main` with the pre-change RTL,
-and it is the same limitation `lint/cdc/cdc.yaml` documents when it puts
+```text
+WARNING  interface instance demo_tiny_alu_subsys_synth_top.bus could not be
+         bound to the interface port it is passed to; its own port connections
+         are dropped from the netlist, leaving any clock or reset it carries
+         undriven. frontend: slang binds it correctly
+```
+
+The default is deliberately left alone. The warning is **benign on this
+design** — the netlist is connected. The out-of-bounds select comes from a
+throwaway elaboration made before the interface port is derived; the derived
+module carries the full-width `paddr` and the correct slice into the CSR block,
+and the design is formally equivalent at its outputs to a `read_slang`
+elaboration of the same sources. The only undriven nets are `apb_intf`'s own
+`clk` / `rst_n` ports, which this subsystem never reads (it clocks off
+`apb_clk` / `apb_rst_n`).
+
+The general hazard behind the warning is real, though: `read_verilog` drops an
+interface *instance's* own port connections, so a design that does read
+`bus.clk` would synthesize clockless. That is exactly what the gate is for —
+a project whose design reads through an interface instance should set
+`unresolved-interfaces: error` (or move that run to `frontend: slang`, which
+binds it correctly). rtl-buddy/rtl_buddy#628 tracks the remaining work; the
+warnings reproduce on `origin/main` with the pre-change RTL, and it is the same
+limitation `lint/cdc/cdc.yaml` documents when it puts
 `demo_tiny_alu_subsys_lint` on the pyslang frontend.
 
 ## After rtl-buddy/rtl_buddy#95

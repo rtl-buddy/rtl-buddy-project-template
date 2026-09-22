@@ -296,13 +296,18 @@ cfg-pdks:
       horizontal: "met3"
       vertical: "met2"
 
-    # ── rtl_buddy#101 flow parameterisation ──────────────────────────────
-    # Requires an rtl_buddy release carrying the PR for rtl_buddy#101; the
-    # version this project pins does not have these keys yet.
+    # ── PDK flow parameterisation (rtl_buddy#625) ────────────────────────
+    # `placement`, `dont-use-cells` and `pdn-config` need rtl_buddy >= 6.55.0;
+    # the pin in pyproject.toml carries them.
 
     # ORFS PLACE_DENSITY for sky130hd. The 0.70 that the flow used to spell
     # out is calibrated for FreePDK45's 10-track cells; sky130hd's 9-track
     # cells plus a large hard macro do not converge at it.
+    #
+    # `macro-halo` (µm of keep-out the shelf macro packer, rtl_buddy#632,
+    # leaves around each macro and between a macro and the core edge) is left
+    # at its 20 µm default: that is what keeps the PDN channels around the
+    # OpenRAM SRAM wide enough for `pdngen` to repair.
     placement:
       density: 0.60
       padding: 1
@@ -389,26 +394,18 @@ cfg-pnr-platforms:
   - name: "sky130hd_tt"
     pdk: "sky130hd"
     corner: "tt"
-    # A list, not one name (rtl_buddy#101): CTS picks a drive strength per
+    # A list, not one name (rtl_buddy#625): CTS picks a drive strength per
     # stage, and a single buffer has to be strong enough for the worst sink
-    # group and is then far too strong everywhere else.
-    # rtl_buddy#101 also widens this key to accept a list, so CTS can pick a
-    # drive strength per stage instead of using one buffer everywhere:
+    # group and is then far too strong everywhere else. The first entry is the
+    # root buffer (`-root_buf`).
     #
-    #   cts-buffer:
-    #     - "sky130_fd_sc_hd__clkbuf_4"
-    #     - "sky130_fd_sc_hd__clkbuf_8"
-    #     - "sky130_fd_sc_hd__clkbuf_16"
-    #
-    # Left in the single-name form deliberately. Unlike the new `placement:`,
-    # `dont-use-cells:` and `pdn-config:` keys above — which an rtl_buddy that
-    # does not know them simply ignores, so only the sky130hd runs that need
-    # them are affected — a list here is a *type* change to a key that already
-    # exists, and the version this project pins refuses to load
-    # root_config.yaml at all when it sees one. That would take every flow in
-    # the repo down, not just this example. Switch to the list once the pin is
-    # on a release carrying rtl_buddy#101.
-    cts-buffer: "sky130_fd_sc_hd__clkbuf_4"
+    # A list-valued `cts-buffer` breaks config load on rtl_buddy < 6.55.0 —
+    # it is a type change to an existing key — so this needs the pin in
+    # pyproject.toml, not just this example.
+    cts-buffer:
+      - "sky130_fd_sc_hd__clkbuf_4"
+      - "sky130_fd_sc_hd__clkbuf_8"
+      - "sky130_fd_sc_hd__clkbuf_16"
     # Off deliberately. The OpenRAM macro's two clock pins sit at the same
     # point in the layout, and the sink-clustering pass fails on coincident
     # sinks with `[ERROR CTS-0080] Sink not found` (reported in rtl_buddy#101).
@@ -424,7 +421,10 @@ cfg-pnr-platforms:
   - name: "sky130hd_tt_block"
     pdk: "sky130hd_block"
     corner: "tt"
-    cts-buffer: "sky130_fd_sc_hd__clkbuf_4"
+    cts-buffer:
+      - "sky130_fd_sc_hd__clkbuf_4"
+      - "sky130_fd_sc_hd__clkbuf_8"
+      - "sky130_fd_sc_hd__clkbuf_16"
     cts-sink-clustering: false
     routing-layers:
       signal: "met1-met4"

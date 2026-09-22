@@ -20,10 +20,10 @@ rtl-buddy-filetype: pnr_config
 #
 #   rb pnr demo_tiny_alu_subsys_sky130_flat_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml --gds --png
 #
-# Needs rtl_buddy with the rtl_buddy#101 PDK flow parameters. Without them the
-# `pdn-config`, `placement` and `dont-use-cells` keys in root_config.yaml's
-# sky130hd entry are silently ignored, and these runs produce a layout with no
-# power grid at all.
+# Needs rtl_buddy >= 6.56.0. Older releases either ignore the `pdn-config`,
+# `placement` and `dont-use-cells` keys in root_config.yaml's sky130hd entry —
+# producing a layout with no power grid at all — or refuse to load
+# root_config.yaml because `cts-buffer` there is a list.
 runs:
 
   # ── flat reference ─────────────────────────────────────────────────────────
@@ -98,37 +98,15 @@ runs:
     synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
     constraints: "../../synth/demo_tiny_alu_subsys_hier/constraints_flat.sdc"
     platform: "sky130hd_tt"
-    # This floorplan is dictated by the macro placer, not by the design.
-    #
-    # rtl_buddy's automatic grid placement (rtl_buddy#610) lays the macros out
-    # on a rectangular grid whose every slot is sized for the *largest* macro,
-    # and refuses the floorplan outright — "macros do not fit any rectangular
-    # grid in the floorplan core" — if no grid fits. Here the three macros are
-    # 479.78 x 397.50 (SRAM), 98.94 x 98.94 (CSR) and 89.47 x 89.47 (compute),
-    # so every slot has to be SRAM-sized whatever else is in it:
-    #
-    #   3 rows x 1 col  needs a core >= 479.78 x 1192.50
-    #   2 x 2           needs a core >= 959.56 x  795.00   (762 850 um^2)
-    #   1 row x 3 cols  needs a core >= 1439.34 x 397.50   (572 140 um^2)
-    #
-    # The 1x3 strip is the cheapest of the three, which is why the aspect ratio
-    # is 0.34 rather than the flat run's 1.0: at any squarer shape the run
-    # fails in macro placement with that error.
-    #
-    # The utilization is then 0.25 rather than 0.45 for a second reason. Taking
-    # the 1x3 minimum literally (0.36 / 0.28, core 1470 x 412) leaves about
-    # 7 um of core above and below the SRAM, and `pdngen` cannot get a met4
-    # strap through a channel that thin:
-    #
-    #   [ERROR PDN-0179] Unable to repair all channels.
-    #
-    # 0.25 / 0.34 gives a 1601 x 545 core — roughly 73 um of channel above and
-    # below the SRAM and 27 um either side — and routes clean. That is 91% more
-    # core area than the flat reference needs for the same design, all of it
-    # spent on the placer's equal-slot rule. See README.md, "rtl_buddy gaps".
+    # The same floorplan as the flat reference. The size-aware shelf packer
+    # (rtl_buddy#632) packs the three macros from the bottom-left corner
+    # instead of giving each one an SRAM-sized slot in a rectangular grid, so
+    # the assembly no longer needs a wide flat strip to hold them. The channel
+    # widths that `pdngen` needs come from `placement.macro-halo` (20 µm by
+    # default; see root_config.yaml), not from an inflated core.
     floorplan:
-      utilization: 0.25
-      aspect: 0.34
+      utilization: 0.45
+      aspect: 1.0
       core-margin: 10.0
     lef-paths:
       - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"

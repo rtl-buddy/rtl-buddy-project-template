@@ -91,7 +91,7 @@ template the supported flows are:
 - **Coverview** for browser-based coverage dashboards
 - **PeakRDL** for SystemRDL → SystemVerilog register block generation
 - **SymbiYosys (`sby`)** for `rb fpv` formal property verification — `demo_abv_basic` and `demo_abv_features` + `fpv_regression.yaml` exercise the flow end-to-end (vacuity / COI / dead-assume reporting via the slang-fronted variant)
-- **AXI profiler wiring** via the `demo_axi_2x2` manifest, attaching the `axi-perf` overlay to the real `tb_axi_2x2 → dut` hierarchy, ready for `rb axi-profile` once `rtl-buddy-axi-profiler` is installed
+- **AXI profiler wiring** via the `demo_axi_2x2` manifest, attaching the `axi-perf` overlay to the real `tb_axi_2x2 → dut` hierarchy, ready for `rb axi-profile` once `rtl-buddy-axi-profiler` is installed — it is currently **out of this project's dependency list**, because rtl_buddy >= 6.55.0 needs `pywellen >= 0.25.6` while the profiler still pins `pywellen < 0.25` (rtl-buddy/rtl-buddy-axi-profiler#52); see the comment in `pyproject.toml`
 
 ## Setup
 
@@ -922,7 +922,8 @@ also carries a real OpenRAM SRAM — three macros, one power grid,
 [`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md)
 is the walk-through: every command in order, a flat-vs-assembled results table,
 the block-level PDN convention a hardened block has to follow, and the
-rtl_buddy gaps the exercise found.
+rtl_buddy gaps the exercise found — most of which it also closed
+(rtl-buddy/rtl_buddy#625, #630, #632).
 
 The hardening step is a project-level script
 (`pnr/demo_tiny_alu_subsys_hier/harden.sh`) and the abstracts are wired into
@@ -931,9 +932,11 @@ the assembly by hand through `lef-paths` / `lib-paths` / `gds-paths`, because
 (rtl-buddy/rtl_buddy#95). Switching to them will be a config-only change; the
 README shows what that config looks like.
 
-This example needs an rtl_buddy carrying rtl-buddy/rtl_buddy#101 — the
-`cfg-pdks.pdn-config`, `.placement` and `.dont-use-cells` keys. Without it the
-runs still complete, but with no power grid.
+This example needs rtl_buddy >= 6.56.0 — the `cfg-pdks.pdn-config`,
+`.placement` and `.dont-use-cells` keys, a list-valued
+`cfg-pnr-platforms.cts-buffer` (rtl-buddy/rtl_buddy#625), the size-aware macro
+packer (rtl-buddy/rtl_buddy#632) and macro Liberty inheritance in `rb power`
+(rtl-buddy/rtl_buddy#630). It is the version this project pins.
 
 ---
 
