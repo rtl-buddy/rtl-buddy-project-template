@@ -129,9 +129,12 @@ jobs:
         # single multi-test DUT, to exercise the per-test -> merge -> lcov
         # HTML flow without re-covering the whole project. verilator-test
         # already runs the full regression.yaml on every push.
+        # --coverage-source-summary exercises the source-point figures
+        # (rtl_buddy >= 6.58); a failed raw merge exits 1 and fails here.
         run: |
           uv run rtl-buddy --machine -B verilator -M cov regression \
-            -c regression_cov_ci.yaml --coverage-merge --coverage-html
+            -c regression_cov_ci.yaml --coverage-merge --coverage-html \
+            --coverage-source-summary
 
       - name: Upload merged LCOV HTML
         if: always()

@@ -497,14 +497,31 @@ into a Coverview zip for the browser dashboard.
   controls the dashboard title and table type.
 - **Loop with spec**: `tests.yaml` `covers:` IDs are listed in the
   generated DV report and validated by `rb spec check-coverage`.
+- **Source-point figures**: `--coverage-source-summary` (rtl_buddy
+  >= 6.58) appends the run's coverage scored per *source point* beside
+  the per-elaboration figure. A module elaborated under two parameter
+  sets counts each point twice per elaboration but once per source
+  point. `demo_tiny_alu` has one elaboration, so the two coincide;
+  `demo_tiny_alu_subsys` has several and they differ (branch 146/186
+  by source point vs 154/194 per elaboration). `rb cov summary`
+  prints both as `run` and `run (source)` rows, and `--by-source`
+  ranks the coldest files on the collapsed figure.
+- **Failed merges are loud**: when `verilator_coverage --write` dies,
+  the metrics it alone supplies (toggle, expression, functional) read
+  `FAIL` — measurement lost — rather than `UNSP`, which still means
+  "not instrumented". `cov_dir/manifest.json` records
+  `merge_failed` / `failed_metrics`, and the run exits 1 after writing
+  everything it did produce.
 
 ### Try it
 
 ```bash
 uv run rb -M cov regression -c regression.yaml -l 1000 \
-    --coverage-merge --coverage-html --coverage-coverview
+    --coverage-merge --coverage-html --coverage-coverview \
+    --coverage-source-summary
 # Outputs land at the directory you run from. From repo root:
 open coverage_merge.html
+uv run rb cov summary           # run + run (source) rows, coldest files
 ```
 
 When invoked from a suite directory the merged artefacts land in
@@ -513,7 +530,8 @@ that suite instead. Coverview viewer setup: see
 
 The `verilator-coverage` job in
 [`.github/workflows/verilator.yml`](.github/workflows/verilator.yml)
-runs the same `-M cov regression --coverage-merge --coverage-html` on
+runs the same `-M cov regression --coverage-merge --coverage-html
+--coverage-source-summary` on
 every push and uploads the merged HTML report (`coverage-html`) and
 LCOV data (`coverage-data`) as workflow artifacts, so browsing
 coverage from a PR is one download away.
