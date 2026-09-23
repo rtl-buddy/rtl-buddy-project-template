@@ -39,8 +39,15 @@ From the repo root:
 
 ```bash
 uv run rb -M cov regression -c regression.yaml \
-  --coverage-merge --coverage-html --coverage-coverview
+  --coverage-merge --coverage-html --coverage-coverview \
+  --coverage-source-summary
 ```
+
+`--coverage-source-summary` (rtl_buddy >= 6.58) adds
+`Coverage source points <metric>:` lines scoring each source point once,
+with the per-elaboration figure in brackets. They differ only where a
+module is elaborated more than once (e.g. `demo_tiny_alu_subsys`); for
+`demo_tiny_alu` alone they coincide.
 
 ## Where outputs land
 
@@ -50,6 +57,29 @@ When you run from the repo root, the merged outputs are written there:
 - `cov_dir/coverage_merged.dat` — merged raw coverage database
 - `cov_dir/coverage_merged.info` — LCOV info file
 - `coverage_merge.html/` — HTML coverage report when `--coverage-html` is used
+- `cov_dir/manifest.json` — run manifest: `totals` (per elaboration),
+  `source_totals` (per source point), and the merge verdict
+  `merge_failed` / `failed_metrics`
+
+## Reading a failed merge
+
+The summary line uses two different "no number" tokens:
+
+| Token | Meaning |
+|-------|---------|
+| `UNSP` | Not instrumented — this build never measured the metric. |
+| `FAIL` | Measured, then lost: `verilator_coverage --write` (the only source for toggle, expression, and functional coverage) failed. |
+
+```text
+Merged Coverage: L:0.92 B:0.95 T:FAIL F:FAIL
+```
+
+A failed merge sets `merge_failed: true` and lists the lost metrics in
+`failed_metrics` in `cov_dir/manifest.json`, and the run **exits 1** —
+after results, the coverage model, and the manifest are written, so
+nothing already produced is lost. Line and branch still report, since
+they come from the per-test LCOV exports. Check `merge_failed` before
+comparing manifest `totals` against the console summary.
 
 If you invoke the same command from a suite directory instead, the
 outputs land in that directory.

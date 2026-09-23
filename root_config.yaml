@@ -539,6 +539,20 @@ cfg-dispatch:
     time: "00:30:00"        # QUOTE time values — an unquoted 4:00:00 is
                             # YAML sexagesimal (14400), which Slurm reads as
                             # minutes. rtl_buddy rejects the unquoted form.
+    # Per-builder-mode overrides (rtl_buddy >= 6.57), layered over the
+    # resolved base for the run's effective `-M`. A `-M cov` build carries
+    # per-point counters and routinely needs about an order of magnitude
+    # more memory than the same sim under `-M reg`; a mode no block names
+    # (here `reg`) reserves exactly the base. Mode blocks are strict — an
+    # unknown key, a nested `modes:`, or `parallel` inside one is a load
+    # error — while an unknown key in the base block above is still dropped
+    # silently (rtl-buddy/rtl_buddy#652), so spell base keys carefully.
+    modes:
+      cov:
+        mem: 16G
+        time: "01:00:00"
+      debug:
+        mem: 8G
 
   # The shared build usually needs more than the sims it precedes; give the
   # dispatched build job its own reservation. Sharing is builder-generic
@@ -552,6 +566,19 @@ cfg-dispatch:
     cpus: 4
     mem: 8G
     time: "01:00:00"
+    # A coverage build is its own compile key, and its instrumented
+    # verilation holds the peak RSS of the whole compile. Under Slurm a
+    # Verilator suite verilates in its own `rb-verilate-<hash>` job, whose
+    # mem/time inherit this block's mode-resolved values, and the mode block
+    # below raises that job alone to 24G under `-M cov`. The C++ build job
+    # still moves too — to 16G — because `cfg-dispatch.resources` is the
+    # least specific layer of the compile reservation as well, so its
+    # `modes.cov` beats this block's base 8G (any mode block beats every
+    # base field, here as in tests.yaml). Same strictness as above.
+    modes:
+      cov:
+        verilate:
+          mem: 24G
 
   # Extra flags passed to sbatch verbatim (partition, account, QOS, ...).
   # sbatch-args:
