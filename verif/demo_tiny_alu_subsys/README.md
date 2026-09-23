@@ -7,8 +7,8 @@ against an inline SV reference that mirrors the sandbox alu spec.
 
 ## Why this suite exists
 
-The leaf-level sandbox suites ([`verif/demo_tiny_alu/`](../sandbox/) and
-[`verif/demo_tiny_alu_cocotb/`](../sandbox_cocotb/)) prove the alu in
+The leaf-level tiny ALU suites ([`verif/demo_tiny_alu/`](../demo_tiny_alu/) and
+[`verif/demo_tiny_alu_cocotb/`](../demo_tiny_alu_cocotb/)) prove the ALU in
 isolation. This suite proves the accelerator built up from the IPs:
 
 - [`design/apb/apb_intf.sv`](../../design/apb/apb_intf.sv)

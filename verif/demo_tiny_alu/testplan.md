@@ -45,7 +45,7 @@ uv run python build_report.py              # visualize report/<test>.md (no re-c
 ## Cross-suite reference
 
 For the same DUT driven from cocotb against the same Python golden,
-see [`verif/demo_tiny_alu_cocotb/`](../sandbox_cocotb/). Both suites consume
+see [`verif/demo_tiny_alu_cocotb/`](../demo_tiny_alu_cocotb/). Both suites consume
 [`spec/demo_tiny_alu/tiny_alu_model.py`](../../spec/demo_tiny_alu/tiny_alu_model.py) —
 the SV side via `preproc.py` (generates expected results offline), the
 cocotb side live every cycle. Drift in either direction surfaces from

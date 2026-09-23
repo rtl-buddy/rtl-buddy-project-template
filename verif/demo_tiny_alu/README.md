@@ -1,7 +1,7 @@
 # `verif/demo_tiny_alu/` — SV/LVM Suite (vector-driven from Python golden)
 
 The SV-side demonstrator suite for the sandbox tiny ALU. Pairs with
-[`verif/demo_tiny_alu_cocotb/`](../sandbox_cocotb/), which runs the **same
+[`verif/demo_tiny_alu_cocotb/`](../demo_tiny_alu_cocotb/), which runs the **same
 DUT** against the **same Python golden**
 ([`spec/demo_tiny_alu/tiny_alu_model.py`](../../spec/demo_tiny_alu/tiny_alu_model.py))
 from cocotb.

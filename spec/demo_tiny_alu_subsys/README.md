@@ -2,7 +2,7 @@
 
 The "system-level" demonstrator. Composes:
 
-- [`design/demo_tiny_alu/alu.sv`](../../design/demo_tiny_alu/alu.sv) — the leaf compute
+- [`design/demo_tiny_alu/demo_tiny_alu.sv`](../../design/demo_tiny_alu/demo_tiny_alu.sv) — the leaf compute
 - [`design/apb/`](../../design/apb/) — APB SV interface
 - [`design/common/`](../../design/common/) — `ip_cdc_sync`, `ip_cdc_handshake`, `ip_async_fifo`
 - [`demo_tiny_alu_subsys_csr.rdl`](demo_tiny_alu_subsys_csr.rdl) — PeakRDL CSR description (compiled to SV by the design-side regen script)
