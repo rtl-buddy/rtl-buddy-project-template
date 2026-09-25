@@ -358,6 +358,14 @@ cfg-pdks:
     # pnr/ so it is not caught by the project's `**.tcl` gitignore rule.
     pdn-config: "pnr/sky130hd/pdn.tcl"
 
+    # ORFS RCX_RULES. With it set, `rb pnr` runs OpenRCX after fill, writes
+    # `<top>.routed.spef` and times its final reports on it, and `rb power`
+    # with `netlist-source: pnr` reads that SPEF instead of re-estimating
+    # parasitics from the global routes (rtl_buddy#101). Fetched by
+    # download_pdk.sh with the rest of the PDK. An older rtl_buddy ignores
+    # the key and keeps the estimate.
+    rcx-rules: "pdk/sky130hd/rcx_patterns.rules"
+
   # The same PDK, with the block-level power grid in place of the top-level
   # one. Everything but `pdn-config` is merged from the entry above.
   #
