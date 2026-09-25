@@ -321,8 +321,9 @@ cfg-pdks:
     # the *lpflow* cells belong to multi-power-domain flows; either one picked
     # by synthesis or by timing repair is a cell this flow cannot legalise.
     dont-use-cells:
-      - "sky130_fd_sc_hd__probe_p_8"
-      - "sky130_fd_sc_hd__probec_p_8"
+      # One pattern for every probe cell (probe_p_8, probec_p_8), so a probe
+      # variant a later library adds is excluded too (rtl_buddy#656).
+      - "sky130_fd_sc_hd__probe*"
       - "sky130_fd_sc_hd__lpflow_bleeder_1"
       - "sky130_fd_sc_hd__lpflow_clkbufkapwr_1"
       - "sky130_fd_sc_hd__lpflow_clkbufkapwr_16"
