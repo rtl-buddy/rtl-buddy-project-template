@@ -275,8 +275,13 @@ cfg-pdks:
   - &sky130hd_common
     name: "sky130hd"
     site: "unithd"
+    # `tt` stays first: it is the default corner of anything that names none.
+    # `ss` / `ff` are only read by the multi-corner `sky130hd_mc` platform
+    # below; they are OpenROAD's own sky130hd test views (see download_pdk.sh).
     corners:
       tt: "pdk/sky130hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib"
+      ss: "pdk/sky130hd/lib/sky130_fd_sc_hd__ss_n40C_1v40.lib"
+      ff: "pdk/sky130hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib"
     tech-lef: "pdk/sky130hd/lef/sky130_fd_sc_hd.tlef"
     macro-lef: "pdk/sky130hd/lef/sky130_fd_sc_hd_merged.lef"
     cell-gds: "pdk/sky130hd/gds/sky130_fd_sc_hd.gds"
@@ -316,8 +321,9 @@ cfg-pdks:
     # the *lpflow* cells belong to multi-power-domain flows; either one picked
     # by synthesis or by timing repair is a cell this flow cannot legalise.
     dont-use-cells:
-      - "sky130_fd_sc_hd__probe_p_8"
-      - "sky130_fd_sc_hd__probec_p_8"
+      # One pattern for every probe cell (probe_p_8, probec_p_8), so a probe
+      # variant a later library adds is excluded too (rtl_buddy#656).
+      - "sky130_fd_sc_hd__probe*"
       - "sky130_fd_sc_hd__lpflow_bleeder_1"
       - "sky130_fd_sc_hd__lpflow_clkbufkapwr_1"
       - "sky130_fd_sc_hd__lpflow_clkbufkapwr_16"
@@ -357,6 +363,14 @@ cfg-pdks:
     # because it is flow configuration rather than vendor data. It lives under
     # pnr/ so it is not caught by the project's `**.tcl` gitignore rule.
     pdn-config: "pnr/sky130hd/pdn.tcl"
+
+    # ORFS RCX_RULES. With it set, `rb pnr` runs OpenRCX after fill, writes
+    # `<top>.routed.spef` and times its final reports on it, and `rb power`
+    # with `netlist-source: pnr` reads that SPEF instead of re-estimating
+    # parasitics from the global routes (rtl_buddy#101). Fetched by
+    # download_pdk.sh with the rest of the PDK. An older rtl_buddy ignores
+    # the key and keeps the estimate.
+    rcx-rules: "pdk/sky130hd/rcx_patterns.rules"
 
   # The same PDK, with the block-level power grid in place of the top-level
   # one. Everything but `pdn-config` is merged from the entry above.
@@ -409,6 +423,26 @@ cfg-pnr-platforms:
     # Off deliberately. The OpenRAM macro's two clock pins sit at the same
     # point in the layout, and the sink-clustering pass fails on coincident
     # sinks with `[ERROR CTS-0080] Sink not found` (reported in rtl_buddy#101).
+    cts-sink-clustering: false
+    routing-layers:
+      signal: "met1-met5"
+      clock: "met3-met5"
+
+  # Multi-corner signoff (rtl_buddy#104 / rtl_buddy#105): `sky130hd_tt` at all
+  # three corners, in one OpenROAD session. Timing repair (setup and hold)
+  # sees every corner and the scalar WNS / TNS / power results are the worst
+  # across them, with each corner's own numbers beside them. The first entry
+  # is the primary corner — the one CTS characterises its buffers at — so tt
+  # comes first and CTS behaves exactly as it does on `sky130hd_tt`.
+  # Needs rtl_buddy with `corners:` support and the ss / ff Liberty that
+  # synth/demo_tiny_alu_subsys_hier/download_pdk.sh fetches.
+  - name: "sky130hd_mc"
+    pdk: "sky130hd"
+    corners: ["tt", "ss", "ff"]
+    cts-buffer:
+      - "sky130_fd_sc_hd__clkbuf_4"
+      - "sky130_fd_sc_hd__clkbuf_8"
+      - "sky130_fd_sc_hd__clkbuf_16"
     cts-sink-clustering: false
     routing-layers:
       signal: "met1-met5"

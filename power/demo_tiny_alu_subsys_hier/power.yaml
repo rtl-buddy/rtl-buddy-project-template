@@ -8,6 +8,11 @@ rtl-buddy-filetype: power_config
 #   rb power demo_tiny_alu_subsys_sky130_flat_power -c power/demo_tiny_alu_subsys_hier/power.yaml -l 1000
 #   rb power demo_tiny_alu_subsys_sky130_asm_power  -c power/demo_tiny_alu_subsys_hier/power.yaml -l 1000
 #
+# `..._compute_mc_power` is the per-corner (tt/ss/ff) power of the
+# multi-corner `..._compute_mc_pnr` run:
+#
+#   rb power demo_tiny_alu_subsys_sky130_compute_mc_power -c power/demo_tiny_alu_subsys_hier/power.yaml -l 1000
+#
 # ## Where the macro Liberty comes from
 #
 # Neither run names a `lib-paths` of its own. It does not need one: since
@@ -38,6 +43,19 @@ runs:
     pnr: "demo_tiny_alu_subsys_sky130_flat_pnr"
     pnr-path: "../../pnr/demo_tiny_alu_subsys_hier/pnr.yaml"
     platform: "sky130hd_tt"
+    reglvl: 1000
+
+  # Per-corner power of the multi-corner compute-partition run
+  # (rtl_buddy#104). The reported watts are the worst (highest-total)
+  # corner's; each corner's own are in the result's `corners`.
+  - name: "demo_tiny_alu_subsys_sky130_compute_mc_power"
+    desc: "Post-P&R static power of the multi-corner compute partition, per corner (tt/ss/ff)"
+    tool: "openroad"
+    mode: "static"
+    netlist-source: "pnr"
+    pnr: "demo_tiny_alu_subsys_sky130_compute_mc_pnr"
+    pnr-path: "../../pnr/demo_tiny_alu_subsys_hier/pnr.yaml"
+    platform: "sky130hd_mc"
     reglvl: 1000
 
   - name: "demo_tiny_alu_subsys_sky130_asm_power"

@@ -12,6 +12,10 @@ rtl-buddy-filetype: pnr_config
 #                      partitions and the SRAM as hard macros, and ties all
 #                      three into the top-level PDN.
 #
+# Plus one stand-alone example, `..._compute_mc_pnr`: partition B signed off at
+# tt, ss and ff at once on the multi-corner `sky130hd_mc` platform. It needs
+# only `rb synth demo_tiny_alu_subsys_sky130_compute` first.
+#
 # Run order is flat (any time), then csr and compute, then harden.sh on each,
 # then the assembly. See README.md for the full walk-through.
 #
@@ -52,6 +56,29 @@ runs:
   # ── partition A: CSR block ─────────────────────────────────────────────────
   # Hardened on apb_clk with its own SDC and its own floorplan. `harden.sh`
   # turns this run's routed result into abstract/demo_tiny_alu_subsys_csr.{lef,lib,gds}.
+  # Multi-corner signoff (rtl_buddy#104 / rtl_buddy#105): the compute
+  # partition placed and routed as a top of its own and signed off at tt, ss
+  # and ff in one OpenROAD session — see `sky130hd_mc` in root_config.yaml.
+  #
+  # Not the flat run: its OpenRAM SRAM ships one (TT) Liberty whose input pins
+  # carry `max_transition: 0.04` ns. rb reads that Liberty into every corner,
+  # and at ss (1.40 V, -40 C) the fastest sky130hd driver cannot meet 40 ps,
+  # so `repair_design` stops with RSZ-0090. That is a real finding about the
+  # macro's characterisation, not a flow bug; a multi-corner run of the SRAM
+  # design needs per-corner SRAM Liberty.
+  - name: "demo_tiny_alu_subsys_sky130_compute_mc_pnr"
+    desc: "sky130hd P&R of the compute partition, multi-corner signoff (tt/ss/ff)"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_sky130_compute"
+    synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_hier/constraints_compute.sdc"
+    platform: "sky130hd_mc"
+    floorplan:
+      utilization: 0.40
+      aspect: 1.0
+      core-margin: 10.0
+    reglvl: 1000
+
   - name: "demo_tiny_alu_subsys_sky130_csr_pnr"
     desc: "Harden the demo_tiny_alu_subsys_csr partition (apb_clk)"
     tool: "openroad"
