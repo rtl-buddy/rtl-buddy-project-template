@@ -554,11 +554,13 @@ cfg-rtl-reg:
 # https://rtl-buddy.github.io/rtl_buddy/latest/concepts/dispatch/
 #
 # NOTE: everything below this line is Slurm's. `local-parallel` runs jobs as
-# plain subprocesses on one host, which cannot enforce a reservation, so it
-# IGNORES `resources`/`compile`/`max-jobs-per-array` — it warns once per run
-# saying so — and has no accounting source, so it produces no right-sizing
-# advice. Its one knob is `-j/--jobs` (or `jobs:` below); size that for the
-# MEMORY your heaviest tests need, since nothing else limits them.
+# plain subprocesses on one host, which cannot enforce reservation fields, so it
+# IGNORES `resources`, the reservation fields of `compile`, and Slurm-only
+# `max-jobs-per-array`/`max-array-size` controls — it warns once per run — and
+# has no accounting source, so it produces no right-sizing advice. It still
+# honors `compile.parallel` as concurrency inside the local build job. Its one
+# pool knob is `-j/--jobs` (or `jobs:` below); size that for the MEMORY your
+# heaviest tests need, since nothing else limits them.
 cfg-dispatch:
   # backend: slurm          # uncomment (or pass --dispatch slurm) to opt in
 
@@ -600,6 +602,10 @@ cfg-dispatch:
     cpus: 4
     mem: 8G
     time: "01:00:00"
+    # parallel: 2             # compile distinct builds concurrently in the
+                              # shared build job; cpus is scaled by it (mem
+                              # and time are not). Raise it only when no
+                              # config's preproc rewrites another's inputs.
     # A coverage build is its own compile key, and its instrumented
     # verilation holds the peak RSS of the whole compile. Under Slurm a
     # Verilator suite verilates in its own `rb-verilate-<hash>` job, whose
@@ -613,6 +619,10 @@ cfg-dispatch:
       cov:
         verilate:
           mem: 24G
+  # A suite can override these fields, `parallel` included, with a top-level
+  # `compile:` block in its tests.yaml (one testbench's `compile:` block can
+  # override the reservation fields but not `parallel`); see the dispatch
+  # guide for reservation sizing and the preproc-isolation requirement.
 
   # Extra flags passed to sbatch verbatim (partition, account, QOS, ...).
   # sbatch-args:

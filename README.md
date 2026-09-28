@@ -554,7 +554,7 @@ and they talk to each other live through the hub.
 - `rb hub start --serve-viewer` starts the project hub (one per
   project directory, discovered via `.rtl-buddy/hub.json`) and serves
   the UI on the printed `http_port`. The schematic SPA is
-  auto-discovered from the installed `rtl-buddy-view` wheel — no npm,
+  auto-discovered from the installed `rtl-buddy-sch` distribution — no npm,
   no build step, nothing off localhost.
 - The landing greys out an app whose data is missing and names the
   command that produces it: the graph app wants `rb graph build`, the
@@ -867,6 +867,12 @@ tool defaults in `root_config.yaml`.
 - **Discoverable regression**:
   [`synth_regression.yaml`](synth_regression.yaml) drives
   `rb synth-regression` across all listed `synth.yaml` files.
+
+The synthesis examples intentionally contain no non-automatic `function` or
+`task` declarations and no intentional conflicting drivers. They therefore do
+not add a failing fixture for rtl_buddy's static-lifetime and conflicting-driver
+correctness gates; see the core [Synthesis guide](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/synthesis/#gate-static-lifetime-subroutines)
+when testing those gates or migrating an existing design.
 
 ### Try it
 
