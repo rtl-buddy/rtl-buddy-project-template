@@ -15,25 +15,19 @@ rtl-buddy-filetype: power_config
 #
 # ## Where the macro Liberty comes from
 #
-# Neither run names a `lib-paths` of its own. It does not need one: since
-# rtl_buddy#630 a `netlist-source: pnr` run inherits every macro Liberty from
-# the P&R run it reads — the SRAM in both runs, plus the two hardened
-# partitions' abstracts in the assembly — so a macro is characterised instead
-# of being counted as zero for want of a library. A run that needs a library
-# the P&R run did not carry can still add its own `lib-paths`; a macro left
-# with no library at all is now the `power.missing_macro_inputs` ERROR, not a
-# silent 0 W row.
+# Neither run names a `lib-paths` of its own. Since rtl_buddy#630 a
+# `netlist-source: pnr` run inherits the macro Liberty the P&R run it reads
+# names in `lib-paths` — here the SRAM's, in both runs. A macro left with no
+# library at all is the `power.missing_macro_inputs` ERROR, not a silent 0 W
+# row.
 #
-# Because of that the SRAM reports the same 1.93 mW in both runs and the two
-# totals can be read side by side — 3.44 mW flat, 3.12 mW assembled. The
-# remaining 0.3 mW of difference is a property of the abstracts, not of the
-# flow: OpenSTA's `write_timing_model` emits timing arcs and no power tables,
-# so the two hardened partitions are characterised for timing and contribute
-# 0 W, while the SRAM's vendor Liberty has real power groups. The assembly's
-# total is therefore the top-level glue plus the SRAM, and understates the
-# partitions' own cell power. The other event to watch for is the
-# `power.unpowered_instances` WARNING, which names instances the analysis found
-# with no power at all.
+# The SRAM therefore reports the same 1.93 mW in both runs. The two hardened
+# partitions reach the assembly through `blocks:`, which `rb power` does not
+# read yet (rtl_buddy#679), and their abstracts would add nothing if it
+# did: OpenSTA's `write_timing_model` emits timing arcs and no power tables.
+# The assembly's total — 4.78 mW against 3.57 mW flat — is the top-level glue
+# plus the SRAM; it leaves out the partitions' own cell power, and the result
+# names both as cells with no Liberty power data.
 runs:
   - name: "demo_tiny_alu_subsys_sky130_flat_power"
     desc: "Post-P&R static power of the flat sky130hd run (standard cells plus the OpenRAM SRAM)"

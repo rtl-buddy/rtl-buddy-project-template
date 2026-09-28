@@ -17,8 +17,8 @@
 #     pins. So the pins have to be on met4 and the macro must not have anything
 #     of its own on met5.
 #
-#   * `write_abstract_lef -bloat_occupied_layers`, which
-#     ../demo_tiny_alu_subsys_hier/harden.sh uses, turns every layer the block
+#   * `write_abstract_lef -bloat_occupied_layers`, which rtl_buddy's
+#     `harden: true` uses, turns every layer the block
 #     occupied into a blockage over the block's whole footprint. A block that
 #     puts one power strap on met5 therefore blocks met5 across itself, the
 #     parent's straps cannot cross it, and `pdngen` reports the macro's grid as

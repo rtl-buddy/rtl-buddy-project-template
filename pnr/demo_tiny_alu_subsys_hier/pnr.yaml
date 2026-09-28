@@ -6,28 +6,28 @@ rtl-buddy-filetype: pnr_config
 #   ..._flat_pnr       the reference. One flat run of the whole design, with the
 #                      OpenRAM SRAM as its only hard macro.
 #
-#   ..._csr_pnr        partition A, hardened on its own clock.
-#   ..._compute_pnr    partition B, hardened on its own clock.
+#   ..._csr_pnr        partition A, hardened on its own clock (`harden: true`).
+#   ..._compute_pnr    partition B, hardened on its own clock (`harden: true`).
 #   ..._asm_pnr        the assembly. Places and routes the top with both
-#                      partitions and the SRAM as hard macros, and ties all
-#                      three into the top-level PDN.
+#                      partitions (`blocks:`) and the SRAM as hard macros, and
+#                      ties all three into the top-level PDN.
 #
 # Plus one stand-alone example, `..._compute_mc_pnr`: partition B signed off at
 # tt, ss and ff at once on the multi-corner `sky130hd_mc` platform. It needs
 # only `rb synth demo_tiny_alu_subsys_sky130_compute` first.
 #
-# Run order is flat (any time), then csr and compute, then harden.sh on each,
-# then the assembly. See README.md for the full walk-through.
+# Run order is flat (any time), then csr and compute, then the assembly's
+# synthesis and P&R. The assembly refuses to run on a partition that has no
+# abstract, or whose abstract no longer matches its sources. See README.md for
+# the full walk-through.
 #
 # Everything is reglvl 1000 — these need the downloaded PDK, the downloaded
 # macro, openroad and klayout. Invoke directly, e.g.
 #
 #   rb pnr demo_tiny_alu_subsys_sky130_flat_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml --gds --png
 #
-# Needs rtl_buddy >= 6.56.0. Older releases either ignore the `pdn-config`,
-# `placement` and `dont-use-cells` keys in root_config.yaml's sky130hd entry —
-# producing a layout with no power grid at all — or refuse to load
-# root_config.yaml because `cts-buffer` there is a list.
+# Needs rtl_buddy >= 6.63.0 for `harden:` and `blocks:` (rtl_buddy#95); see
+# README.md for what the earlier releases add.
 runs:
 
   # ── flat reference ─────────────────────────────────────────────────────────
@@ -53,9 +53,7 @@ runs:
     gds-mode: strict
     reglvl: 1000
 
-  # ── partition A: CSR block ─────────────────────────────────────────────────
-  # Hardened on apb_clk with its own SDC and its own floorplan. `harden.sh`
-  # turns this run's routed result into abstract/demo_tiny_alu_subsys_csr.{lef,lib,gds}.
+  # ── multi-corner example ───────────────────────────────────────────────────
   # Multi-corner signoff (rtl_buddy#104 / rtl_buddy#105): the compute
   # partition placed and routed as a top of its own and signed off at tt, ss
   # and ff in one OpenROAD session — see `sky130hd_mc` in root_config.yaml.
@@ -79,6 +77,12 @@ runs:
       core-margin: 10.0
     reglvl: 1000
 
+  # ── partition A: CSR block ─────────────────────────────────────────────────
+  # Hardened on apb_clk with its own SDC and its own floorplan. `harden: true`
+  # publishes the routed result as
+  # artefacts/<run>/abstract/demo_tiny_alu_subsys_csr.{lef,lib,gds} plus
+  # abstract.manifest.json, and forces a strict stream-out: a hardened block
+  # with a hole in its layout is never acceptable.
   - name: "demo_tiny_alu_subsys_sky130_csr_pnr"
     desc: "Harden the demo_tiny_alu_subsys_csr partition (apb_clk)"
     tool: "openroad"
@@ -93,9 +97,7 @@ runs:
       utilization: 0.40
       aspect: 1.0
       core-margin: 5.0
-    # A hardened block with a hole in its layout is never acceptable — it is
-    # about to be streamed into a parent.
-    gds-mode: strict
+    harden: true
     reglvl: 1000
 
   # ── partition B: compute datapath ──────────────────────────────────────────
@@ -110,14 +112,14 @@ runs:
       utilization: 0.40
       aspect: 1.0
       core-margin: 5.0
-    gds-mode: strict
+    harden: true
     reglvl: 1000
 
   # ── top-level assembly ─────────────────────────────────────────────────────
-  # The three macro views are wired by hand here. This is the part rtl_buddy#95
-  # replaces with a `blocks:` list — see README.md — and the reason it is a
-  # config-only change is that the paths below are exactly what `blocks:` would
-  # resolve for itself out of each partition's abstract directory.
+  # The two partitions come in through `blocks:`, which resolves each one to
+  # the abstract its `harden: true` run above published. The SRAM stays in
+  # lef-paths / lib-paths / gds-paths: it is a third-party macro, not a block
+  # this project hardens.
   - name: "demo_tiny_alu_subsys_sky130_asm_pnr"
     desc: "Assemble the top from two hardened partitions plus the third-party SRAM"
     tool: "openroad"
@@ -137,16 +139,15 @@ runs:
       core-margin: 10.0
     lef-paths:
       - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
-      - "artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.lef"
-      - "artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.lef"
     lib-paths:
       - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
-      - "artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.lib"
-      - "artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.lib"
     gds-paths:
       - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.gds"
-      - "artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.gds"
-      - "artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.gds"
+    blocks:
+      - name: demo_tiny_alu_subsys_csr
+        pnr: demo_tiny_alu_subsys_sky130_csr_pnr
+      - name: demo_tiny_alu_subsys_compute
+        pnr: demo_tiny_alu_subsys_sky130_compute_pnr
     # The acceptance criterion for the whole example. All three macro layouts
     # are real, so `strict` must pass with no `gds-allow-empty` entries at all:
     # an empty cell here would mean a hardened partition streamed out as a hole.
