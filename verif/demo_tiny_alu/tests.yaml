@@ -16,10 +16,19 @@ testbenches:
     # this in turn, field by field. Ignored by the default in-process run —
     # and by `--dispatch local-parallel`, which cannot cap a subprocess and
     # warns that it is ignoring these (see cfg-dispatch in root_config.yaml).
+    #
+    # `modes:` (rtl_buddy >= 6.57) adds a per-builder-mode override. The
+    # full precedence for one field is
+    #   test.modes[m] > tb.modes[m] > cfg.modes[m] > test > tb > cfg
+    # i.e. ANY mode block beats EVERY base field: under `-M cov` the
+    # ops_sweep test below reserves 16G (this block), not its own 12G.
     resources:
       cpus: 2
       mem: 6G
       time: "00:15:00"
+      modes:
+        cov:
+          mem: 16G
 tests:
   - name: "basic"
     desc: "smoke — exercise each opcode once with non-zero operands; vectors from Python golden"
@@ -49,9 +58,18 @@ tests:
     # Heavier than the rest of the suite: override just mem+time (cpus is
     # inherited from the tb_top reservation above). A distinct reservation
     # means this test lands in its own Slurm array under --dispatch slurm.
+    #
+    # The flip side of "any mode block beats every base field": without the
+    # `modes.debug` below, `-M debug` would hand this test cfg-dispatch's
+    # `resources.modes.debug.mem: 8G` — LESS than its own 12G base. A test
+    # whose base exceeds a broader mode block has to restate the figure in
+    # its own `modes:` for that mode.
     resources:
       mem: 12G
       time: "00:40:00"
+      modes:
+        debug:
+          mem: 12G
     plusargs:
       TEST: ops_sweep
       lvm_verbosity: 2
