@@ -3,8 +3,8 @@
 // Ports only, no body — the counterpart of demo_tiny_alu_subsys_csr_bb.sv for
 // partition B. In the top-level assembly build the compute datapath, including
 // its demo_tiny_alu instance, is a hard macro: extent from the abstract LEF,
-// timing from the Liberty model, layout from the GDS, all three written by
-// pnr/demo_tiny_alu_subsys_hier/harden.sh.
+// timing from the Liberty model, layout from the GDS, all three published by
+// the partition's `harden: true` P&R run in pnr/demo_tiny_alu_subsys_hier.
 //
 // The port list must stay identical to demo_tiny_alu_subsys_compute.sv's.
 

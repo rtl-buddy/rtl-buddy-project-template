@@ -182,7 +182,7 @@ uv run rb skill install --project
 │   └── demo_tiny_alu_subsys_hier/ # demo — post-P&R power, sky130hd flat vs assembled
 ├── pnr/
 │   ├── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
-│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R + harden.sh (see its README)
+│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks: (see its README)
 │   └── sky130hd/                 # sky130hd PDN snippets: pdn.tcl (top) + pdn_block.tcl (block)
 ├── fpv/
 │   ├── demo_abv_basic/   # demo — `rb fpv` saturating counter (bmc + cover)
@@ -925,18 +925,17 @@ the block-level PDN convention a hardened block has to follow, and the
 rtl_buddy gaps the exercise found — most of which it also closed
 (rtl-buddy/rtl_buddy#625, #630, #632).
 
-The hardening step is a project-level script
-(`pnr/demo_tiny_alu_subsys_hier/harden.sh`) and the abstracts are wired into
-the assembly by hand through `lef-paths` / `lib-paths` / `gds-paths`, because
-`rb pnr` has no `harden:` or `blocks:` keys yet
-(rtl-buddy/rtl_buddy#95). Switching to them will be a config-only change; the
-README shows what that config looks like.
+The two partitions are hardened with `harden: true` on their P&R runs, which
+publishes each one's abstract LEF, Liberty model and GDS, and the assembly
+consumes them through `blocks:` in its `synth.yaml` and `pnr.yaml` entries — no
+paths wired by hand (rtl-buddy/rtl_buddy#95). A partition whose sources have
+changed since it was hardened is refused as stale.
 
-This example needs rtl_buddy >= 6.56.0 — the `cfg-pdks.pdn-config`,
-`.placement` and `.dont-use-cells` keys, a list-valued
-`cfg-pnr-platforms.cts-buffer` (rtl-buddy/rtl_buddy#625), the size-aware macro
-packer (rtl-buddy/rtl_buddy#632) and macro Liberty inheritance in `rb power`
-(rtl-buddy/rtl_buddy#630). It is the version this project pins.
+This example needs rtl_buddy >= 6.63.0 for `harden:` / `blocks:`, on top of
+the `cfg-pdks.pdn-config`, `.placement` and `.dont-use-cells` keys, a
+list-valued `cfg-pnr-platforms.cts-buffer` (rtl-buddy/rtl_buddy#625), the
+size-aware macro packer (rtl-buddy/rtl_buddy#632) and macro Liberty
+inheritance in `rb power` (rtl-buddy/rtl_buddy#630).
 
 ---
 

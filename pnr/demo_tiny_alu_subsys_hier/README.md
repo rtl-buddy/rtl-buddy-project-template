@@ -3,12 +3,12 @@
 Hardening two partitions of `demo_tiny_alu_subsys` separately, then placing and
 routing the top with those two as hard macros next to a real OpenRAM SRAM.
 
-This is the template example rtl-buddy/rtl_buddy#95 step 6 asks for, and it
-doubles as that issue's **step 0 spike**: the `harden:` / `blocks:` keys it
-specifies do not exist yet, so everything here is wired by hand through the
-per-run `lef-paths` / `lib-paths` / `gds-paths` that `rb pnr` already has.
-Everything that is hand-wired is called out below, along with the `blocks:`
-config that replaces it.
+This is the template example rtl-buddy/rtl_buddy#95 step 6 asks for, and the
+record of that issue's **step 0 spike**. Each partition's P&R run sets
+`harden: true`, which publishes its abstract LEF, Liberty timing model and GDS;
+the assembly's synthesis and P&R entries name the two partitions under
+`blocks:` and take those views from there. Nothing is wired by hand except the
+third-party SRAM.
 
 ```text
 demo_tiny_alu_subsys_synth_top              ← the run's top, both ways
@@ -30,8 +30,9 @@ third-party macro side by side.
 ## What you need
 
 - `openroad` and `klayout` on `PATH`, and `yosys`.
-- **rtl_buddy >= 6.56.0**, which is what `pyproject.toml` pins. Four things in
-  this example need it:
+- **rtl_buddy >= 6.63.0**, which is what `pyproject.toml` pins, for
+  `harden:` and `blocks:` (rtl-buddy/rtl_buddy#95). The rest of the example
+  needs what 6.56.0 added:
   - `cfg-pdks.placement`, `cfg-pdks.dont-use-cells` and `cfg-pdks.pdn-config`
     (rtl-buddy/rtl_buddy#625). An older rtl_buddy loads `root_config.yaml`
     fine and silently ignores all three — which means **no power grid at all**
@@ -84,34 +85,26 @@ rb pnr demo_tiny_alu_subsys_sky130_csr_pnr     -c pnr/demo_tiny_alu_subsys_hier/
 rb pnr demo_tiny_alu_subsys_sky130_compute_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 --gds --png
 ```
 
-Both carry `gds-mode: strict`: a hardened block with a hole in its layout is
-never acceptable, because it is about to be streamed into a parent.
-
-### 3. Write the abstracts
-
-```sh
-./pnr/demo_tiny_alu_subsys_hier/harden.sh demo_tiny_alu_subsys_sky130_csr_pnr     demo_tiny_alu_subsys_csr
-./pnr/demo_tiny_alu_subsys_hier/harden.sh demo_tiny_alu_subsys_sky130_compute_pnr demo_tiny_alu_subsys_compute
-```
-
-`harden.sh` loads the partition's routed `.odb` in OpenROAD and writes, into
+Both set `harden: true`, which forces a strict stream-out — a hardened block
+with a hole in its layout is never acceptable, because it is about to be
+streamed into a parent — and, once the run passes, publishes into
 `artefacts/<run>/abstract/`:
 
 | file | from | what it is |
 |---|---|---|
 | `<top>.lef` | `write_abstract_lef -bloat_occupied_layers` | placeable extent, signal pins, VDD/VSS pins, layer blockages |
 | `<top>.lib` | OpenSTA `write_timing_model` | boundary setup/hold checks and clock-to-out arcs |
-| `<top>.gds` | copied from the run | the layout, for stream-out |
-| `abstract.manifest.json` | — | `{path, size, sha256}` for every input and every output |
+| `<top>.gds` | the run's strict stream-out | the layout, for stream-out |
+| `abstract.manifest.json` | — | technology, config digest, and `{path, size, sha256}` for every input and output |
 
-It builds into a temporary directory and moves it into place only once all
-three views exist, so a failed run never leaves a directory with two fresh
-views and one stale one. The Liberty files it characterises against are read
-back out of the run's own generated `pnr.tcl`, so the model is built against
-the same libraries the block was routed against and the script knows nothing
-about the platform.
+The LEF and the Liberty model are written in the P&R session itself, after the
+routed database, so the model is characterised against the libraries the
+block was routed against, with the clock tree CTS built and the final
+parasitics. The directory appears only once all three views and the manifest
+exist; a run that cannot produce one fails with `fail_stage: abstract` and
+leaves none.
 
-### 4. Assemble
+### 3. Assemble
 
 ```sh
 rb synth demo_tiny_alu_subsys_sky130_asm -c synth/demo_tiny_alu_subsys_hier/synth.yaml
@@ -121,14 +114,29 @@ rb pnr   demo_tiny_alu_subsys_sky130_asm_pnr -c pnr/demo_tiny_alu_subsys_hier/pn
 
 The synthesis reads `demo_tiny_alu_subsys_sky130_asm.f`, which swaps the two
 partitions and the SRAM for port-only `(* blackbox *)` modules — the
-`design/demo_synth_macro` pattern — and takes their Liberty and LEF through the
-run's `lib-paths` / `lef-paths`. The P&R run names all three macros' LEF,
-Liberty and GDS, the PDN ties all three into the top-level grid, and
+`design/demo_synth_macro` pattern. It takes the SRAM's Liberty and LEF through
+`lib-paths` / `lef-paths` and the partitions' through `blocks:`. The P&R run
+does the same for all three macros' LEF, Liberty and GDS, the PDN ties all
+three into the top-level grid, and
 `gds-mode: strict` passes **with no `gds-allow-empty` entries at all**: every
 macro layout here is real, so an empty cell would be a bug rather than a
 preview.
 
-### 5. Power (optional)
+Before either tool starts, each block's abstract is checked against the
+partition as it is now: every file its manifest recorded — RTL, netlist, SDC,
+Liberty, LEF, PDN snippet — and the three views are fingerprinted again, and
+the partition's configuration is compared by digest. Edit
+`constraints_csr.sdc`, re-run only the assembly, and it fails:
+
+```text
+block 'demo_tiny_alu_subsys_csr' is stale: sdc synth/demo_tiny_alu_subsys_hier/constraints_csr.sdc changed
+— re-run `rb pnr demo_tiny_alu_subsys_sky130_csr_pnr -c …/pnr.yaml`, or pass --accept-stale
+```
+
+`--accept-stale` on `rb synth` / `rb pnr` runs anyway and says so in the
+result.
+
+### 4. Power (optional)
 
 ```sh
 rb power demo_tiny_alu_subsys_sky130_flat_power -c power/demo_tiny_alu_subsys_hier/power.yaml -l 1000
@@ -144,56 +152,60 @@ A macro with no library at all is now the `power.missing_macro_inputs` ERROR.
 ## Results — flat vs assembled
 
 Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8 and the released
-rtl_buddy 6.56.0 wheel this project pins, on the PDK revisions
-`download_pdk.sh` pins. `apb_clk` 20 ns, `cclk` 25 ns.
+rtl_buddy 6.63.0 wheel this project pins, on the PDK revisions
+`download_pdk.sh` pins, with `harden: true` on both partitions and the assembly
+built from `blocks:`. `apb_clk` 20 ns, `cclk` 25 ns. Every final timing and
+power number is on OpenRCX-extracted parasitics (sky130hd sets `rcx-rules`).
 
 | | flat | csr partition | compute partition | **assembled** |
 |---|---|---|---|---|
 | verdict | PASS | PASS | PASS | **PASS** |
 | standard-cell instances | 1237 | 383 | 299 | 548 |
 | die (µm) | 697.4 × 697.4 | 98.9 × 98.9 | 89.5 × 89.5 | **717.0 × 717.0** |
-| design area (µm²) | 207 690 | 3 337 | 2 599 | **219 876** |
+| design area (µm²) | 207 756 | 3 337 | 2 599 | **219 983** |
 | core area (µm²) | 456 758 | 7 727 | 6 241 | **483 051** |
 | core utilization | 45.5% | 43.2% | 41.6% | **45.5%** |
-| setup WNS (ns) | +3.68 | +11.00 | +13.59 | **+3.76** |
+| setup WNS (ns) | +2.86 | +10.71 | +13.50 | **+1.73** |
 | setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** |
-| hold WNS (ns) | +0.27 | +0.47 | +0.62 | **+0.28** |
-| DRCs | 0 | 0 | 0 | **0** |
-| `check_power_grid` VDD/VSS | connected | connected | connected | **connected** |
-| GDS | `complete: true` | `complete: true` | `complete: true` | **`complete: true`** |
-| static power (mW) | 3.44 | — | — | **3.12** |
+| hold WNS (ns) | +0.25 | +0.46 | +0.62 | **+0.22** |
+| DRC violations | 0 | 0 | 0 | **2** — see below |
+| GDS | `complete` | `complete` | `complete` | **`complete`** |
+| abstract published | — | yes | yes | — |
+| static power (mW) | 3.57 | — | — | **4.78** |
 | of which the SRAM (mW) | 1.93 | — | — | **1.93** |
 
 Reading it:
 
-- **Timing is essentially identical.** Setup WNS differs by 0.08 ns on a 20 ns
-  period, and the worst path is the same one in both — the SRAM's `dout1` out
-  to `prdata[9]`, which no partitioning moves. Hold WNS is within 0.01 ns. TNS
-  is zero both ways.
-- **Design area is +5.9%** assembled (219 876 vs 207 690 µm²). That is the
-  partitions' own core-margin and filler being counted at their hardened size
-  rather than as loose cells.
-- **Core area is +5.7%** (483 051 vs 456 758 µm²) — the assembly uses the same
-  `utilization: 0.45, aspect: 1.0, core-margin: 10.0` floorplan as the flat
-  reference. The size-aware shelf packer (rtl-buddy/rtl_buddy#632) packs the
-  three macros from the bottom-left corner at their real sizes, so the
-  floorplan follows the design rather than the placer. The first draft of this
-  example needed a 1 624 × 565 µm strip and 872 086 µm² of core — 91% more than
-  the flat run — to get the same three macros placed and PDN'd.
-- **Power is comparable, with one caveat.** The SRAM reports the same 1.93 mW
-  in both runs, because a `netlist-source: pnr` power run now inherits the P&R
-  run's macro Liberty (rtl-buddy/rtl_buddy#630). The two hardened partitions
-  still contribute 0 W: `write_timing_model` emits timing arcs and no power
-  tables, so their abstracts have nothing to characterise. The assembly's
-  3.12 mW is therefore the top-level glue plus the SRAM, and the 0.32 mW it
-  sits below the flat run is the partitions' own cell power, unmodelled. Both
-  runs are free of `power.missing_macro_inputs` and
-  `power.unpowered_instances`.
+- **Worst setup is the same path both ways**: the SRAM's read data out to
+  `prdata` — `u_sram` → `prdata[8]` flat, → `prdata[9]` assembled — which no
+  partitioning moves. It is 1.13 ns worse assembled. The three macros sit in a
+  different place in the assembly's floorplan, and with extracted parasitics
+  the longer route from the SRAM to the output pins shows up in full. TNS is
+  zero both ways and hold is within 0.03 ns.
+- **Design area is +5.9%** assembled: the partitions' own core margin and
+  filler are counted at their hardened size rather than as loose cells. **Core
+  area is +5.7%**: the assembly uses the flat run's floorplan, and the
+  size-aware shelf packer (rtl-buddy/rtl_buddy#632) packs the three macros at
+  their real sizes.
+- **Two DRC violations** in the assembly — met1 spacing between a top-level net
+  and the `u_csr` macro edge — are rtl-buddy/rtl_buddy#673. They came in with
+  rtl_buddy 6.62.0 (IO pins placed after macros, rtl-buddy/rtl_buddy#668),
+  reproduce with abstracts cut either way, and were 0 on 6.56.0–6.61.0. The run
+  still passes: DRCs are reported, not gated.
+- **Power is not like for like.** The SRAM is 1.93 mW in both. The hardened
+  partitions contribute 0 W — `write_timing_model` writes timing arcs and no
+  power tables, and the assembly's `rb power` says so, naming both cells as
+  having no Liberty power data. So the assembly's total leaves out the
+  partitions' own cell power. What it adds is 1.1 mW more switching power on
+  the top-level nets (1.60 vs 0.47 mW), which now carry extracted wire
+  capacitance between three macros spread over the die.
 
 ## Step-0 spike findings
 
 These are the questions rtl-buddy/rtl_buddy#95 step 0 asks, answered against
-this design.
+this design. They were measured on rtl_buddy 6.56.0, before extracted
+parasitics, with the hand-wired abstract flow this example used before
+`harden:` existed.
 
 ### Does `write_timing_model` output load cleanly?
 
@@ -214,11 +226,11 @@ this design.
 
 **Verdict: OpenSTA `write_timing_model` is fit to be the standard path.**
 
-One caveat worth recording: the model is extracted with the **post-route** SDC,
-not the input one, so the clock arrives through the tree CTS actually built and
-the block's own insertion delay is in the numbers. `harden.tcl` does that
-deliberately; extracting under ideal clocks understates exactly the delay the
-parent needs.
+One caveat worth recording: the model is extracted with the clocks
+propagated through the tree CTS actually built, so the block's own insertion
+delay is in the numbers. `harden: true` extracts it in the P&R session after
+routing for exactly that reason; extracting under ideal clocks understates the
+delay the parent needs.
 
 ### Is the boundary timing defensible against a flat run?
 
@@ -387,56 +399,17 @@ warnings reproduce on `origin/main` with the pre-change RTL, and it is the same
 limitation `lint/cdc/cdc.yaml` documents when it puts
 `demo_tiny_alu_subsys_lint` on the pyslang frontend.
 
-## After rtl-buddy/rtl_buddy#95
+## What is still manual
 
-Everything in the walk-through that is hand-wired collapses into config.
-
-`harden.sh` and `harden.tcl` are deleted, and each partition's P&R entry gains
-one key:
-
-```yaml
-  - name: "demo_tiny_alu_subsys_sky130_csr_pnr"
-    # ... unchanged ...
-    platform: "sky130hd_tt_block"
-    harden: true                        # writes artefacts/<run>/abstract/
-    gds-mode: strict
-```
-
-The assembly's three `lef-paths`, three `lib-paths` and three `gds-paths`
-become one `blocks:` list — the SRAM stays where it is, because it is a
-third-party macro and not a block this project hardens:
-
-```yaml
-  - name: "demo_tiny_alu_subsys_sky130_asm_pnr"
-    # ... unchanged ...
-    blocks:
-      - name: demo_tiny_alu_subsys_csr
-        pnr: demo_tiny_alu_subsys_sky130_csr_pnr
-        pnr-path: pnr.yaml
-      - name: demo_tiny_alu_subsys_compute
-        pnr: demo_tiny_alu_subsys_sky130_compute_pnr
-        pnr-path: pnr.yaml
-    lef-paths: ["../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"]
-    lib-paths: ["../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"]
-    gds-paths: ["../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.gds"]
-    gds-mode: strict
-```
-
-and `rb pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000` with no run name
-orders the partitions before the assembly on its own.
-
-Three things this project-level version cannot do, which are the point of the
-issue's steps 1–3:
-
-- **Fingerprint the real input set.** `abstract.manifest.json` records the
-  netlist, DEF, SDC and ODB it can see in the artefact directory, and the three
-  outputs. It cannot record the PDK files, the platform and corner, or the
-  rtl_buddy version, because a project script does not know them. Step 1 does.
-- **Refuse a stale abstract.** Nothing here re-checks the manifest. Edit a
-  partition's RTL, re-run only the assembly, and it consumes yesterday's
-  abstract without a word. Step 3 makes that a FAIL naming the block.
-- **Order the runs.** The sequence above is prose in this file. Step 4 makes it
-  a topological sort.
+- **Run order.** The walk-through above is the order: partitions first, then
+  the assembly's synthesis, then its P&R. `rb pnr` does not yet sort runs by
+  `blocks:` on its own — that is rtl-buddy/rtl_buddy#95 step 4. What it does
+  do is refuse to run the assembly on a partition that has no abstract, or
+  whose abstract is stale, naming the partition and the command that rebuilds
+  it.
+- **Power of a hardened partition.** `write_timing_model` has no power tables,
+  so the partitions are 0 W in the assembly's `rb power` (see the results
+  table).
 
 ## Files
 
@@ -448,8 +421,6 @@ issue's steps 1–3:
 | `synth/demo_tiny_alu_subsys_hier/constraints_csr.sdc` | partition A's single-clock constraints |
 | `synth/demo_tiny_alu_subsys_hier/constraints_compute.sdc` | partition B's single-clock constraints |
 | `pnr/demo_tiny_alu_subsys_hier/pnr.yaml` | the four P&R runs |
-| `pnr/demo_tiny_alu_subsys_hier/harden.sh` | abstract generation — the stand-in for `harden: true` |
-| `pnr/demo_tiny_alu_subsys_hier/harden.tcl` | the OpenROAD half of it |
 | `pnr/sky130hd/pdn.tcl` | top-level power grid, with macro grids |
 | `pnr/sky130hd/pdn_block.tcl` | block-level power grid — the convention above |
 | `power/demo_tiny_alu_subsys_hier/power.yaml` | post-P&R power for the flat and assembled runs |

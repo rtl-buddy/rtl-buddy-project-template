@@ -15,7 +15,7 @@ rtl-buddy-filetype: synth_config
 #
 #   rb synth demo_tiny_alu_subsys_sky130_flat -c synth/demo_tiny_alu_subsys_hier/synth.yaml
 #
-# Needs rtl_buddy >= 6.56.0 — see
+# Needs rtl_buddy >= 6.63.0 — see
 # ../../pnr/demo_tiny_alu_subsys_hier/README.md.
 syntheses:
 
@@ -58,9 +58,9 @@ syntheses:
   # Same top module as the flat run. The difference is entirely in what the
   # filelist hands over as RTL: here the two partitions arrive as blackboxes
   # and the backend gets their abstracts instead, exactly as it gets the SRAM's
-  # vendor views. The abstracts are written by
-  # ../../pnr/demo_tiny_alu_subsys_hier/harden.sh out of each partition's routed
-  # result, so both partitions have to be placed and routed before this run.
+  # vendor views. `blocks:` resolves each partition to the abstract its
+  # `harden: true` P&R run published, so both partitions have to be placed and
+  # routed before this run; a missing or stale abstract fails it up front.
   - name: "demo_tiny_alu_subsys_sky130_asm"
     desc: "sky130hd synthesis of the top-level assembly — both partitions and the SRAM as macros"
     model: "demo_tiny_alu_subsys_sky130_asm"
@@ -70,10 +70,13 @@ syntheses:
     constraints: "constraints_flat.sdc"
     lib-paths:
       - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
-      - "../../pnr/demo_tiny_alu_subsys_hier/artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.lib"
-      - "../../pnr/demo_tiny_alu_subsys_hier/artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.lib"
     lef-paths:
       - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
-      - "../../pnr/demo_tiny_alu_subsys_hier/artefacts/demo_tiny_alu_subsys_sky130_csr_pnr/abstract/demo_tiny_alu_subsys_csr.lef"
-      - "../../pnr/demo_tiny_alu_subsys_hier/artefacts/demo_tiny_alu_subsys_sky130_compute_pnr/abstract/demo_tiny_alu_subsys_compute.lef"
+    blocks:
+      - name: demo_tiny_alu_subsys_csr
+        pnr: demo_tiny_alu_subsys_sky130_csr_pnr
+        pnr-path: ../../pnr/demo_tiny_alu_subsys_hier/pnr.yaml
+      - name: demo_tiny_alu_subsys_compute
+        pnr: demo_tiny_alu_subsys_sky130_compute_pnr
+        pnr-path: ../../pnr/demo_tiny_alu_subsys_hier/pnr.yaml
     reglvl: 1000

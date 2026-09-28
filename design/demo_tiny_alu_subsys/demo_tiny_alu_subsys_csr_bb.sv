@@ -3,8 +3,8 @@
 // Ports only, no body. Used by the top-level assembly build
 // (demo_tiny_alu_subsys_sky130_asm.f), where the CSR block is not synthesized
 // with the top but consumed as a hard macro: the extent comes from the abstract
-// LEF and the timing from the Liberty model that
-// pnr/demo_tiny_alu_subsys_hier/harden.sh writes out of the partition's own
+// LEF and the timing from the Liberty model that the partition's `harden: true`
+// P&R run (pnr/demo_tiny_alu_subsys_hier/pnr.yaml) writes out of its own
 // routed result.
 //
 // The port list must stay identical to the generated module's — same names,
