@@ -13,8 +13,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Reuse the sandbox golden — single source of truth for ALU op semantics
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "sandbox"))
+# Reuse the tiny ALU golden — single source of truth for ALU op semantics
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "demo_tiny_alu"))
 from tiny_alu_model import AluModel, AluResult, OP_NAMES  # noqa: F401,E402
 
 
