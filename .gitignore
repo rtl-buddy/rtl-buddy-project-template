@@ -1,5 +1,17 @@
-.agents/skills/rtl_buddy/
-.claude/skills/rtl_buddy/
+# rtl_buddy skill family (materialized by `rb skill install --project`)
+.claude/skills/rtl-buddy/
+.agents/skills/rtl-buddy/
+.claude/skills/rtl-buddy-test/
+.agents/skills/rtl-buddy-test/
+.claude/skills/rtl-buddy-dispatch/
+.agents/skills/rtl-buddy-dispatch/
+.claude/skills/rtl-buddy-graph/
+.agents/skills/rtl-buddy-graph/
+.claude/skills/rtl-buddy-fpv/
+.agents/skills/rtl-buddy-fpv/
+.claude/skills/rtl-buddy-implementation/
+.agents/skills/rtl-buddy-implementation/
+
 **.sw?
 **__pycache__
 **egg-info

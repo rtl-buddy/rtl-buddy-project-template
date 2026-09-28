@@ -90,7 +90,7 @@ uv.lock                                  # committed lockfile for reproducible p
 .python-version                          # pinned Python version for uv
 ```
 
-The `rtl_buddy` agent skill family is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl-buddy/`, `~/.codex/skills/rtl-buddy/`); `--project` installs into `.claude/skills/rtl-buddy/` and `.agents/skills/rtl-buddy/` under the project root instead. Both project-level dirs are gitignored.
+The `rtl_buddy` agent skill family is bundled inside the `rtl_buddy` wheel and materialized on demand with `uv run rb skill install`. Default scope is user-level (`~/.claude/skills/rtl-buddy/`, `~/.codex/skills/rtl-buddy/`); `--project` installs into `.claude/skills/` and `.agents/skills/` under the project root instead (`rtl-buddy/` plus its `rtl-buddy-*` siblings). Every project-level skill dir is gitignored.
 
 ## Fresh Clone Setup
 
