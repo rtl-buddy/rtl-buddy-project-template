@@ -948,7 +948,10 @@ consumes them through `blocks:` in its `synth.yaml` and `pnr.yaml` entries — n
 paths wired by hand (rtl-buddy/rtl_buddy#95). A partition whose sources have
 changed since it was hardened is refused as stale.
 
-This example needs rtl_buddy >= 6.63.0 for `harden:` / `blocks:`, on top of
+This example needs rtl_buddy >= 6.64.0: 6.63.0 for `harden:` / `blocks:`,
+6.64.0 for the macro cell halo that keeps the assembly DRC-clean
+(rtl-buddy/rtl_buddy#673) and for `rb power` reading `blocks:`
+(rtl-buddy/rtl_buddy#679), on top of
 the `cfg-pdks.pdn-config`, `.placement` and `.dont-use-cells` keys, a
 list-valued `cfg-pnr-platforms.cts-buffer` (rtl-buddy/rtl_buddy#625), the
 size-aware macro packer (rtl-buddy/rtl_buddy#632) and macro Liberty
