@@ -1,0 +1,52 @@
+rtl-buddy-filetype: pnr_config
+
+# The hard macro of demo_synth_macro, hardened on sky130hd, and the top that
+# instances it. One command runs everything in order -- the macro's synthesis
+# and P&R, then the top's synthesis (which reads the macro's abstract) and P&R:
+#
+#   synth/demo_tiny_alu_subsys_hier/download_pdk.sh
+#   rb pnr -c pnr/demo_synth_macro/pnr.yaml --synth -l 1000
+#
+# `rb pnr` with no run name puts a block before the runs that consume it
+# (rtl_buddy#95), and `--synth` runs each P&R run's upstream synthesis just
+# before it. See synth/demo_synth_macro/README.md.
+runs:
+  # The top first in the file, to show the order comes from `blocks:`, not
+  # from here.
+  - name: "demo_synth_macro_sky130_pnr"
+    desc: "The top with demo_hard_macro as a hard macro from its own abstract"
+    tool: "openroad"
+    synth: "demo_synth_macro_sky130"
+    synth-path: "../../synth/demo_synth_macro/synth.yaml"
+    constraints: "../../synth/demo_synth_macro/constraints.sdc"
+    platform: "sky130hd_tt"
+    # Sized for the macro, not the handful of cells around it: the packer
+    # keeps placement.macro-halo (20 um) between the macro and every core edge.
+    floorplan:
+      utilization: 0.10
+      aspect: 1.0
+      core-margin: 5.0
+    blocks:
+      - name: demo_hard_macro
+        pnr: demo_hard_macro_sky130_pnr
+    # The macro's layout comes from the hardened block's GDS, so nothing may be
+    # left empty.
+    gds-mode: strict
+    reglvl: 1000
+
+  # `harden: true` publishes artefacts/<run>/abstract/demo_hard_macro.{lef,lib,gds}
+  # and abstract.manifest.json. The block-level platform gives it the power
+  # grid a parent can connect to (straps on met4, nothing on met5).
+  - name: "demo_hard_macro_sky130_pnr"
+    desc: "Harden demo_hard_macro on sky130hd"
+    tool: "openroad"
+    synth: "demo_hard_macro_sky130"
+    synth-path: "../../synth/demo_synth_macro/synth.yaml"
+    constraints: "../../synth/demo_synth_macro/constraints_hard_macro.sdc"
+    platform: "sky130hd_tt_block"
+    floorplan:
+      utilization: 0.40
+      aspect: 1.0
+      core-margin: 5.0
+    harden: true
+    reglvl: 1000

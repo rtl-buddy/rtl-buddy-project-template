@@ -22,15 +22,14 @@ rtl-buddy-filetype: power_config
 # row.
 #
 # The SRAM therefore reports the same 1.93 mW in both runs. The two hardened
-# partitions reach the assembly through `blocks:`, and since rtl_buddy 6.64.0
-# (rtl_buddy#679) this run reads their abstract Liberty from there. It adds
-# nothing to the partitions' own power: OpenSTA's `write_timing_model` emits
-# timing arcs and no power tables, so the result still names both as cells
-# with no Liberty power data. It also has no `function` on the output pins, so
-# vectorless propagation gives every partition output zero activity and the
-# top-level glue they drive reads as nearly static (rtl_buddy#684). The
-# assembly's 3.34 mW, against 3.57 mW flat, is the SRAM plus that
-# under-switched glue: a lower bound, not a like-for-like comparison.
+# partitions reach the assembly through `blocks:`, which this run resolves but
+# whose abstract Liberty it does not read (rtl_buddy#684): OpenSTA's
+# `write_timing_model` emits timing arcs and no power tables, so the
+# partitions are 0 W either way and the result names both as cells with no
+# Liberty power data, and read in, its function-less outputs would stop
+# activity propagation and zero the switching of everything they drive. The
+# assembly's total — 4.73 mW against 3.57 mW flat — is the top-level glue plus
+# the SRAM; it leaves out the partitions' own cell power.
 runs:
   - name: "demo_tiny_alu_subsys_sky130_flat_power"
     desc: "Post-P&R static power of the flat sky130hd run (standard cells plus the OpenRAM SRAM)"
