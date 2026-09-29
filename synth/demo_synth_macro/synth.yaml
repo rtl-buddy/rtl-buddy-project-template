@@ -1,17 +1,25 @@
 # RTL-Buddy Synthesis Configuration File
 rtl-buddy-filetype: synth_config
 
-# A design with a hard macro. Two runs:
-#  - demo_synth_macro_generic:    tech-independent Yosys synth, proves the
-#                                 blackbox elaborates (no PDK, no macro views)
-#  - demo_synth_macro_nangate45:  the real point of the demo -- OpenROAD reading
-#                                 the macro's LEF and Liberty alongside the PDK
+# A design with a hard macro. Three runs:
+#  - demo_synth_macro_generic:   tech-independent Yosys synth, proves the
+#                                blackbox elaborates (no PDK, no macro views)
+#  - demo_hard_macro_sky130:     the macro itself, synthesized so it can be
+#                                hardened by pnr/demo_synth_macro/pnr.yaml
+#  - demo_synth_macro_sky130:    the real point of the demo -- the top, with the
+#                                macro as a blackbox whose LEF and Liberty come
+#                                from the hardened block's published abstract
 #
-# `lef-paths` and `lib-paths` are what make a hard macro work. They are per
-# design rather than per process, which is why they live here and not in
-# root_config.yaml's cfg-pdks. Between them the backend has a complete master for
-# demo_hard_macro: extent from the LEF, arcs from the Liberty. See README.md for
-# why the RTL blackbox must not be handed to OpenROAD as Verilog as well.
+# The macro's views are *generated*, not hand-written: `blocks:` resolves
+# demo_hard_macro to the abstract its `harden: true` P&R run published. Between
+# them the backend has a complete master for it: extent from the abstract LEF,
+# arcs from the abstract Liberty. See README.md for why the RTL blackbox must not
+# be handed to the backend as Verilog as well.
+#
+# Deferred tier: needs the sky130hd views and `openroad` on PATH. Download with
+# `synth/demo_tiny_alu_subsys_hier/download_pdk.sh`; then one command builds the
+# macro, the top's synthesis and the top's P&R in order:
+#   rb pnr -c pnr/demo_synth_macro/pnr.yaml --synth -l 1000
 syntheses:
   - name: "demo_synth_macro_generic"
     desc: "Tech-independent Yosys synthesis of a design with a blackbox hard macro"
@@ -21,18 +29,26 @@ syntheses:
     constraints: "constraints.sdc"
     reglvl: 0
 
-  - name: "demo_synth_macro_nangate45"
-    desc: "OpenROAD synthesis of a hard-macro design, macro views alongside the PDK"
+  - name: "demo_hard_macro_sky130"
+    desc: "sky130hd synthesis of demo_hard_macro, for hardening"
+    model: "demo_hard_macro"
+    model_path: "../../design/demo_synth_macro/models.yaml"
+    tool: "yosys"
+    platform: "sky130hd_tt"
+    constraints: "constraints_hard_macro.sdc"
+    reglvl: 1000
+
+  - name: "demo_synth_macro_sky130"
+    desc: "OpenROAD synthesis of the top, the macro's views from its hardened abstract"
     model: "demo_synth_macro_top"
     model_path: "../../design/demo_synth_macro/models.yaml"
+    # OpenROAD, not Yosys: its stage is the one that generates Verilog stubs
+    # for blackboxes, which is what this demo guards (see README.md).
     tool: "openroad"
-    platform: "nangate45_typ"
+    platform: "sky130hd_tt"
     constraints: "constraints.sdc"
-    lib-paths:
-      - "../../design/demo_synth_macro/macro/demo_hard_macro.lib"
-    lef-paths:
-      - "../../design/demo_synth_macro/macro/demo_hard_macro.lef"
-    # Deferred tier: needs the Nangate45 views and `openroad` on PATH. Download
-    # with `synth/demo_tiny_alu_subsys/download_pdk.sh`, then invoke directly:
-    #   rb synth demo_synth_macro_nangate45 -c synth/demo_synth_macro/synth.yaml
+    blocks:
+      - name: demo_hard_macro
+        pnr: demo_hard_macro_sky130_pnr
+        pnr-path: ../../pnr/demo_synth_macro/pnr.yaml
     reglvl: 1000

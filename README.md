@@ -948,10 +948,18 @@ consumes them through `blocks:` in its `synth.yaml` and `pnr.yaml` entries — n
 paths wired by hand (rtl-buddy/rtl_buddy#95). A partition whose sources have
 changed since it was hardened is refused as stale.
 
-This example needs rtl_buddy >= 6.64.0: 6.63.0 for `harden:` / `blocks:`,
+One command builds the whole hierarchy from nothing, partitions before the
+assembly:
+
+```bash
+rb pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 --synth -j 2 --gds
+```
+
+This example needs rtl_buddy >= 6.65.0: 6.63.0 for `harden:` / `blocks:`,
 6.64.0 for the macro cell halo that keeps the assembly DRC-clean
-(rtl-buddy/rtl_buddy#673) and for `rb power` reading `blocks:`
-(rtl-buddy/rtl_buddy#679), on top of
+(rtl-buddy/rtl_buddy#673), and 6.65.0 for the whole-suite driver (`--synth`,
+`-j`), `macro-placement: rtl-mp`, and `rb power` counting the switching the
+partitions drive (rtl-buddy/rtl_buddy#684), on top of
 the `cfg-pdks.pdn-config`, `.placement` and `.dont-use-cells` keys, a
 list-valued `cfg-pnr-platforms.cts-buffer` (rtl-buddy/rtl_buddy#625), the
 size-aware macro packer (rtl-buddy/rtl_buddy#632) and macro Liberty

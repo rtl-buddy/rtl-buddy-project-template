@@ -4,3 +4,8 @@ rtl-buddy-filetype: model_config
 models:
   - name      : "demo_synth_macro_top"
     filelist  : [ "-F demo_synth_macro_top.f" ]
+
+  # The macro itself, for hardening. Never part of the top's filelist, which
+  # keeps demo_hard_macro a blackbox (demo_hard_macro_bb.sv).
+  - name      : "demo_hard_macro"
+    filelist  : [ "-v demo_hard_macro.sv" ]

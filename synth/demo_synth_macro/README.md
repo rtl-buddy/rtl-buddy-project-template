@@ -11,12 +11,25 @@ Tech-independent, no setup:
 rb synth demo_synth_macro_generic -c synth/demo_synth_macro/synth.yaml
 ```
 
-Tech-mapped through OpenROAD. Needs the Nangate45 views and `openroad` on PATH:
+On sky130hd. Needs the sky130hd views, `openroad`, `yosys` and `klayout` on
+PATH. One `rb pnr` builds everything, in order:
 
 ```sh
-synth/demo_tiny_alu_subsys/download_pdk.sh
-rb synth demo_synth_macro_nangate45 -c synth/demo_synth_macro/synth.yaml
+synth/demo_tiny_alu_subsys_hier/download_pdk.sh
+rb pnr -c pnr/demo_synth_macro/pnr.yaml --synth -l 1000 --gds
 ```
+
+That runs four steps. `pnr/demo_synth_macro/pnr.yaml` lists the top first, and
+`rb pnr` still hardens the macro before it, because the top names the macro
+under `blocks:`. `--synth` runs each P&R run's own synthesis just before it,
+so the top is synthesized after the macro's abstract exists:
+
+| step | run | what it produces |
+|---|---|---|
+| 1 | `rb synth demo_hard_macro_sky130` | the macro's netlist, from `design/demo_synth_macro/demo_hard_macro.sv` |
+| 2 | `rb pnr demo_hard_macro_sky130_pnr` | the macro, placed, routed and hardened (`harden: true`): `abstract/demo_hard_macro.{lef,lib,gds}` |
+| 3 | `rb synth demo_synth_macro_sky130` | the top's netlist, the macro a blackbox with the abstract as its master |
+| 4 | `rb pnr demo_synth_macro_sky130_pnr` | the top, with the macro placed as a hard macro and streamed out from its own GDS |
 
 ## What a hard macro needs
 
@@ -25,12 +38,18 @@ Three views, and they come from three different places:
 | view | what it is for | where it comes from |
 |---|---|---|
 | RTL | somewhere for instances to bind | `design/demo_synth_macro/demo_hard_macro_bb.sv`, a port-only `(* blackbox *)` module |
-| LEF | placeable extent | `lef-paths` on the synth entry |
-| Liberty | timing arcs | `lib-paths` on the synth entry |
+| LEF | placeable extent | the hardened macro's `abstract/demo_hard_macro.lef` |
+| Liberty | timing arcs | the hardened macro's `abstract/demo_hard_macro.lib` |
 
-`lef-paths` and `lib-paths` sit on the synth entry rather than in
-`root_config.yaml`'s `cfg-pdks` because a PDK is per process and a macro is per
-design. Everything the standard cells need still comes from `platform:`.
+Neither the LEF nor the Liberty is written by hand. `blocks:` on the synth
+entry and on the P&R entry resolves `demo_hard_macro` to the abstract its
+`harden: true` run published, and fails the run, naming the macro, when there
+is none or when the macro's RTL, SDC or configuration changed since it was
+hardened. Everything the standard cells need still comes from `platform:`.
+
+The macro's own RTL, `demo_hard_macro.sv`, is compiled only by step 1. The
+top's filelist reads the blackbox, so to the top the macro is its abstract and
+nothing else, which is what a hard macro is.
 
 ## The thing this demo guards
 
@@ -46,7 +65,8 @@ binds to the zero-area Verilog module instead: the macro is gone from the
 OpenROAD database, its area is not counted, and its timing arcs are not in the
 graph.
 
-Measured on this demo, changing nothing but which `rtl_buddy` runs it:
+Measured on this demo when it still used hand-written Nangate45 views,
+changing nothing but which `rtl_buddy` runs it:
 
 | rtl_buddy | reported area | WNS | macro instances after `link_design` |
 |---|---|---|---|
@@ -67,8 +87,8 @@ nothing to configure; this demo exists so the behaviour has a regression.
 
 ### Why the bus ports matter
 
-`d` and `q` are 8 bits wide on purpose, and the LEF carries them bit-blasted
-(`d[0]` .. `d[7]`) the way a compiled macro's abstract does.
+`d` and `q` are 8 bits wide on purpose, and the abstract LEF carries them
+bit-blasted (`d[0]` .. `d[7]`), as every generated abstract does.
 
 A version of this macro with only scalar ports does **not** reproduce the bug: the
 stub is read and the LEF/Liberty master survives anyway, area and all. Add one
@@ -81,16 +101,17 @@ Keep at least one bussed port here or the demo stops testing anything.
 
 ## Checking a run by hand
 
-`artefacts/demo_synth_macro_nangate45/synth.tcl` is the direct evidence. It should
-read the macro LEF and Liberty and the netlist, and contain **no** `read_verilog`
-of a generated `or_demo_hard_macro_bb.sv`. There should be no such file in the
-artefact directory either.
+`artefacts/demo_synth_macro_sky130/synth.tcl` is the direct evidence. It should
+read the abstract's LEF and Liberty and the netlist, and contain **no**
+`read_verilog` of a generated `or_demo_hard_macro_bb.sv`. There should be no
+such file in the artefact directory either.
 
 Then either of these catches a regression on its own:
 
-- **Area includes the macro.** `demo_hard_macro` is `area : 8000` against about
-  54 um^2 of standard cells, so the figure is a little over 8000. Tens of um^2
-  means the macro was dropped.
+- **Area includes the macro.** The hardened macro is 67.5 x 67.5 um, about
+  4550 um^2, against about 260 um^2 of standard cells around it, so the
+  figure is a little over 4800 um^2. A few hundred um^2 means the macro was
+  dropped.
 - **The macro is in the graph.** Append
   `puts [llength [get_cells -hierarchical *i_macro*]]` to `synth.tcl` and run
   `openroad -no_init -exit` on it. It should print 1.

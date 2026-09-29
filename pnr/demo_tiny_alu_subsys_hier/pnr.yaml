@@ -26,8 +26,12 @@ rtl-buddy-filetype: pnr_config
 #
 #   rb pnr demo_tiny_alu_subsys_sky130_flat_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml --gds --png
 #
-# Needs rtl_buddy >= 6.63.0 for `harden:` and `blocks:` (rtl_buddy#95); see
-# README.md for what the earlier releases add.
+# Or all of it, from nothing, partitions before the assembly (rtl_buddy#95):
+#
+#   rb pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 --synth -j 2 --gds
+#
+# Needs rtl_buddy >= 6.65.0 for that and for `macro-placement: rtl-mp`
+# (6.63.0 for `harden:` and `blocks:`); see README.md.
 runs:
 
   # ── flat reference ─────────────────────────────────────────────────────────
@@ -151,5 +155,36 @@ runs:
     # The acceptance criterion for the whole example. All three macro layouts
     # are real, so `strict` must pass with no `gds-allow-empty` entries at all:
     # an empty cell here would mean a hardened partition streamed out as a hole.
+    gds-mode: strict
+    reglvl: 1000
+
+  # ── the same assembly, macros placed by OpenROAD's RTL-MP ─────────────────
+  # Identical to `..._asm_pnr` but for `floorplan.macro-placement: rtl-mp`:
+  # `rtl_macro_placer` places (and rotates) the two partitions and the SRAM by
+  # connectivity instead of the packer filling rows from a corner. Compare the
+  # two rows of the results table in README.md.
+  - name: "demo_tiny_alu_subsys_sky130_asm_rtlmp_pnr"
+    desc: "The assembly with RTL-MP macro placement instead of the packer"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_sky130_asm"
+    synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_hier/constraints_flat.sdc"
+    platform: "sky130hd_tt"
+    floorplan:
+      utilization: 0.45
+      aspect: 1.0
+      core-margin: 10.0
+      macro-placement: rtl-mp
+    lef-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
+    lib-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
+    gds-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.gds"
+    blocks:
+      - name: demo_tiny_alu_subsys_csr
+        pnr: demo_tiny_alu_subsys_sky130_csr_pnr
+      - name: demo_tiny_alu_subsys_compute
+        pnr: demo_tiny_alu_subsys_sky130_compute_pnr
     gds-mode: strict
     reglvl: 1000

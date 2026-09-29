@@ -30,12 +30,14 @@ third-party macro side by side.
 ## What you need
 
 - `openroad` and `klayout` on `PATH`, and `yosys`.
-- **rtl_buddy >= 6.64.0**, which is what `pyproject.toml` pins. 6.63.0 added
-  `harden:` and `blocks:` (rtl-buddy/rtl_buddy#95); 6.64.0 adds the
-  standard-cell keep-out around macros that keeps the assembly DRC-clean
-  (`cfg-pdks.placement.macro-cell-halo`, rtl-buddy/rtl_buddy#673) and makes
-  `rb power` read a P&R run's `blocks:` (rtl-buddy/rtl_buddy#679). The rest
-  of the example needs what 6.56.0 added:
+- **rtl_buddy >= 6.65.0**, which is what `pyproject.toml` pins. 6.63.0 added
+  `harden:` and `blocks:` (rtl-buddy/rtl_buddy#95); 6.64.0 the standard-cell
+  keep-out around macros that keeps the assembly DRC-clean
+  (`cfg-pdks.placement.macro-cell-halo`, rtl-buddy/rtl_buddy#673); 6.65.0 the
+  whole-suite `rb pnr` that orders blocks before the assembly, with `--synth`
+  and `-j`, `floorplan.macro-placement: rtl-mp`, and an `rb power` that no
+  longer zeroes the switching the partitions drive (rtl-buddy/rtl_buddy#684).
+  The rest of the example needs what 6.56.0 added:
   - `cfg-pdks.placement`, `cfg-pdks.dont-use-cells` and `cfg-pdks.pdn-config`
     (rtl-buddy/rtl_buddy#625). An older rtl_buddy loads `root_config.yaml`
     fine and silently ignores all three — which means **no power grid at all**
@@ -61,6 +63,23 @@ a commit. `pdk/` is gitignored.
 ## The walk-through
 
 Every run is `reglvl: 1000`, so pass `-l 1000` to `rb pnr`.
+
+### All of it in one command
+
+```sh
+rb pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 --synth -j 2 --gds
+```
+
+`rb pnr` with no run name runs every entry in `pnr.yaml`, each partition before
+the assembly runs that consume it (rtl-buddy/rtl_buddy#95). `--synth` runs
+each P&R run's own synthesis just before it, which is what puts the assembly's
+synthesis *after* the partitions are hardened: it reads their abstracts. `-j 2`
+hardens the two partitions side by side. From an empty tree that is every
+synthesis and every P&R below, in under seven minutes on a laptop. A partition
+that fails leaves the assembly runs `FAIL` with `fail_stage: blocked`, naming
+the partition, rather than running them against a missing abstract.
+
+The steps below are the same runs one at a time, and what each one does.
 
 ### 1. Flat reference
 
@@ -150,40 +169,42 @@ Neither run names a `lib-paths`: since rtl-buddy/rtl_buddy#630 a
 `netlist-source: pnr` power run inherits the macro Liberty from the P&R run it
 reads, so the SRAM is characterised rather than counted as zero. The
 assembly's run also reads both partitions' abstract Liberty through the P&R
-run's `blocks:` (rtl-buddy/rtl_buddy#679); those carry no power tables, so the
-partitions themselves still count as 0 W, and the result names them. A macro
+run's `blocks:` resolved (rtl-buddy/rtl_buddy#679), but deliberately not
+their abstract Liberty (rtl-buddy/rtl_buddy#684): it carries no power tables,
+so the partitions count as 0 W either way, and the result names them. A macro
 with no library at all is the `power.missing_macro_inputs` ERROR.
 
 ## Results — flat vs assembled
 
 Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8 and the released
-rtl_buddy 6.64.0 wheel this project pins, on the PDK revisions
+rtl_buddy 6.65.0 wheel this project pins, from an empty tree with the one
+command above, on the PDK revisions
 `download_pdk.sh` pins, with `harden: true` on both partitions and the assembly
 built from `blocks:`. `apb_clk` 20 ns, `cclk` 25 ns. Every final timing and
 power number is on OpenRCX-extracted parasitics (sky130hd sets `rcx-rules`).
 
-| | flat | csr partition | compute partition | **assembled** |
-|---|---|---|---|---|
-| verdict | PASS | PASS | PASS | **PASS** |
-| standard-cell instances | 1237 | 383 | 299 | 548 |
-| die (µm) | 697.4 × 697.4 | 98.9 × 98.9 | 89.5 × 89.5 | **717.0 × 717.0** |
-| design area (µm²) | 207 753 | 3 337 | 2 599 | **219 950** |
-| core area (µm²) | 456 758 | 7 727 | 6 241 | **483 051** |
-| core utilization | 45.5% | 43.2% | 41.6% | **45.5%** |
-| setup WNS (ns) | +2.79 | +10.71 | +13.50 | **+1.99** |
-| setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** |
-| hold WNS (ns) | +0.24 | +0.46 | +0.62 | **+0.33** |
-| DRC violations | 0 | 0 | 0 | **0** |
-| GDS | `complete` | `complete` | `complete` | **`complete`** |
-| abstract published | — | yes | yes | — |
-| static power (mW) | 3.57 | — | — | **3.34** — see below |
+| | flat | csr partition | compute partition | **assembled** | assembled, RTL-MP |
+|---|---|---|---|---|---|
+| verdict | PASS | PASS | PASS | **PASS** | PASS |
+| standard-cell instances | 1237 | 383 | 299 | 548 | 548 |
+| die (µm) | 697.4 × 697.4 | 98.9 × 98.9 | 89.5 × 89.5 | **717.0 × 717.0** | 717.0 × 717.0 |
+| design area (µm²) | 207 753 | 3 337 | 2 599 | **219 950** | 219 855 |
+| core area (µm²) | 456 758 | 7 727 | 6 241 | **483 051** | 483 051 |
+| core utilization | 45.5% | 43.2% | 41.6% | **45.5%** | 45.5% |
+| setup WNS (ns) | +2.79 | +10.71 | +13.50 | **+2.00** | +2.77 |
+| setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** | 0.00 |
+| hold WNS (ns) | +0.24 | +0.46 | +0.62 | **+0.33** | +0.35 |
+| DRC violations | 0 | 0 | 0 | **0** | 0 |
+| GDS | `complete` | `complete` | `complete` | **`complete`** | `complete` |
+| abstract published | — | yes | yes | — | — |
+| static power (mW) | 3.57 | — | — | **4.73** — see below |
 | of which the SRAM (mW) | 1.93 | — | — | **1.93** |
 
 Reading it:
 
 - **Worst setup is the same path both ways**: the SRAM's read data out to
   `prdata` — `u_sram` → `prdata[10]` flat, → `prdata[6]` assembled — which no
-  partitioning moves. It is 0.80 ns worse assembled. The three macros sit in a
+  partitioning moves. It is 0.79 ns worse assembled. The three macros sit in a
   different place in the assembly's floorplan, and with extracted parasitics
   the longer route from the SRAM to the output pins shows up in full. TNS is
   zero both ways and hold is within 0.1 ns.
@@ -192,6 +213,13 @@ Reading it:
   area is +5.7%**: the assembly uses the flat run's floorplan, and the
   size-aware shelf packer (rtl-buddy/rtl_buddy#632) packs the three macros at
   their real sizes.
+- **RTL-MP recovers the setup slack.** `..._asm_rtlmp_pnr` is the same
+  assembly with `floorplan.macro-placement: rtl-mp`: OpenROAD's
+  `rtl_macro_placer` places the three macros by connectivity, and rotates the
+  two partitions (R180 and MY), instead of the packer filling rows from a
+  corner. The worst path is still the SRAM-to-`prdata` one, and it gains
+  0.77 ns, to within 0.02 ns of the flat run. Everything else is unchanged: 0 DRCs, the power grid connected to both
+  rotated partitions, strict GDS complete.
 - **DRC-clean on every run.** 6.62.0 and 6.63.0 left two met1 spacing
   violations in the assembly, where a standard cell abutted the `u_csr` macro
   edge (rtl-buddy/rtl_buddy#673). 6.64.0 surrounds every macro with a
@@ -203,16 +231,15 @@ Reading it:
   partitions contribute 0 W: `write_timing_model` writes timing arcs and no
   power tables, and the assembly's `rb power` says so, naming both cells as
   having no Liberty power data. So the assembly's total leaves out the
-  partitions' own cell power.
-- **The assembly's glue power is understated** (rtl-buddy/rtl_buddy#684).
-  Since 6.64.0, `rb power` reads the partitions' abstract Liberty through
-  `blocks:` (rtl-buddy/rtl_buddy#679). The output pins in that Liberty have no
-  `function`, so OpenSTA's vectorless propagation gives every partition output
-  zero activity, and the top-level CDC glue they drive switches at almost
-  nothing: 9 µW of sequential and combinational switching, against 1.1 mW on
-  the same routed database with the abstracts left out (4.75 mW total, close
-  to 6.63.0's 4.78 mW). Treat 3.34 mW as a lower bound until that
-  issue is fixed.
+  partitions' own cell power. What it adds is 1.1 mW more switching power on
+  the top-level nets (1.57 vs 0.48 mW), which now carry extracted wire
+  capacitance between three macros spread over the die, and whose drivers
+  inside the partitions switch at OpenSTA's default input activity, since an
+  abstract says nothing about them.
+- **6.64.0 read 3.34 mW here** (rtl-buddy/rtl_buddy#684). It read the
+  partitions' abstract Liberty, whose outputs have no `function`, so OpenSTA's
+  activity propagation never reached them and every net they drive counted as
+  static. 6.65.0 leaves that Liberty out of `rb power`.
 
 ## Step-0 spike findings
 
@@ -415,12 +442,6 @@ limitation `lint/cdc/cdc.yaml` documents when it puts
 
 ## What is still manual
 
-- **Run order.** The walk-through above is the order: partitions first, then
-  the assembly's synthesis, then its P&R. `rb pnr` does not yet sort runs by
-  `blocks:` on its own — that is rtl-buddy/rtl_buddy#95 step 4. What it does
-  do is refuse to run the assembly on a partition that has no abstract, or
-  whose abstract is stale, naming the partition and the command that rebuilds
-  it.
 - **Power of a hardened partition.** `write_timing_model` has no power tables,
   so the partitions are 0 W in the assembly's `rb power` (see the results
   table).
@@ -434,7 +455,7 @@ limitation `lint/cdc/cdc.yaml` documents when it puts
 | `synth/demo_tiny_alu_subsys_hier/constraints_flat.sdc` | top-level constraints, shared by the flat and assembly runs |
 | `synth/demo_tiny_alu_subsys_hier/constraints_csr.sdc` | partition A's single-clock constraints |
 | `synth/demo_tiny_alu_subsys_hier/constraints_compute.sdc` | partition B's single-clock constraints |
-| `pnr/demo_tiny_alu_subsys_hier/pnr.yaml` | the four P&R runs |
+| `pnr/demo_tiny_alu_subsys_hier/pnr.yaml` | the P&R runs: flat, the multi-corner partition, the two partitions, and the assembly with the packer and with RTL-MP |
 | `pnr/sky130hd/pdn.tcl` | top-level power grid, with macro grids |
 | `pnr/sky130hd/pdn_block.tcl` | block-level power grid — the convention above |
 | `power/demo_tiny_alu_subsys_hier/power.yaml` | post-P&R power for the flat and assembled runs |
