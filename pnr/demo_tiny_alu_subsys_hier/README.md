@@ -30,9 +30,12 @@ third-party macro side by side.
 ## What you need
 
 - `openroad` and `klayout` on `PATH`, and `yosys`.
-- **rtl_buddy >= 6.63.0**, which is what `pyproject.toml` pins, for
-  `harden:` and `blocks:` (rtl-buddy/rtl_buddy#95). The rest of the example
-  needs what 6.56.0 added:
+- **rtl_buddy >= 6.64.0**, which is what `pyproject.toml` pins. 6.63.0 added
+  `harden:` and `blocks:` (rtl-buddy/rtl_buddy#95); 6.64.0 adds the
+  standard-cell keep-out around macros that keeps the assembly DRC-clean
+  (`cfg-pdks.placement.macro-cell-halo`, rtl-buddy/rtl_buddy#673) and makes
+  `rb power` read a P&R run's `blocks:` (rtl-buddy/rtl_buddy#679). The rest
+  of the example needs what 6.56.0 added:
   - `cfg-pdks.placement`, `cfg-pdks.dont-use-cells` and `cfg-pdks.pdn-config`
     (rtl-buddy/rtl_buddy#625). An older rtl_buddy loads `root_config.yaml`
     fine and silently ignores all three — which means **no power grid at all**
@@ -145,14 +148,16 @@ rb power demo_tiny_alu_subsys_sky130_asm_power  -c power/demo_tiny_alu_subsys_hi
 
 Neither run names a `lib-paths`: since rtl-buddy/rtl_buddy#630 a
 `netlist-source: pnr` power run inherits the macro Liberty from the P&R run it
-reads, so the SRAM and — in the assembly — both hardened partitions are
-characterised rather than counted as zero, and the two totals are comparable.
-A macro with no library at all is now the `power.missing_macro_inputs` ERROR.
+reads, so the SRAM is characterised rather than counted as zero. The
+assembly's run also reads both partitions' abstract Liberty through the P&R
+run's `blocks:` (rtl-buddy/rtl_buddy#679); those carry no power tables, so the
+partitions themselves still count as 0 W, and the result names them. A macro
+with no library at all is the `power.missing_macro_inputs` ERROR.
 
 ## Results — flat vs assembled
 
 Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8 and the released
-rtl_buddy 6.63.0 wheel this project pins, on the PDK revisions
+rtl_buddy 6.64.0 wheel this project pins, on the PDK revisions
 `download_pdk.sh` pins, with `harden: true` on both partitions and the assembly
 built from `blocks:`. `apb_clk` 20 ns, `cclk` 25 ns. Every final timing and
 power number is on OpenRCX-extracted parasitics (sky130hd sets `rcx-rules`).
@@ -162,43 +167,52 @@ power number is on OpenRCX-extracted parasitics (sky130hd sets `rcx-rules`).
 | verdict | PASS | PASS | PASS | **PASS** |
 | standard-cell instances | 1237 | 383 | 299 | 548 |
 | die (µm) | 697.4 × 697.4 | 98.9 × 98.9 | 89.5 × 89.5 | **717.0 × 717.0** |
-| design area (µm²) | 207 756 | 3 337 | 2 599 | **219 983** |
+| design area (µm²) | 207 753 | 3 337 | 2 599 | **219 950** |
 | core area (µm²) | 456 758 | 7 727 | 6 241 | **483 051** |
 | core utilization | 45.5% | 43.2% | 41.6% | **45.5%** |
-| setup WNS (ns) | +2.86 | +10.71 | +13.50 | **+1.73** |
+| setup WNS (ns) | +2.79 | +10.71 | +13.50 | **+1.99** |
 | setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** |
-| hold WNS (ns) | +0.25 | +0.46 | +0.62 | **+0.22** |
-| DRC violations | 0 | 0 | 0 | **2** — see below |
+| hold WNS (ns) | +0.24 | +0.46 | +0.62 | **+0.33** |
+| DRC violations | 0 | 0 | 0 | **0** |
 | GDS | `complete` | `complete` | `complete` | **`complete`** |
 | abstract published | — | yes | yes | — |
-| static power (mW) | 3.57 | — | — | **4.78** |
+| static power (mW) | 3.57 | — | — | **3.34** — see below |
 | of which the SRAM (mW) | 1.93 | — | — | **1.93** |
 
 Reading it:
 
 - **Worst setup is the same path both ways**: the SRAM's read data out to
-  `prdata` — `u_sram` → `prdata[8]` flat, → `prdata[9]` assembled — which no
-  partitioning moves. It is 1.13 ns worse assembled. The three macros sit in a
+  `prdata` — `u_sram` → `prdata[10]` flat, → `prdata[6]` assembled — which no
+  partitioning moves. It is 0.80 ns worse assembled. The three macros sit in a
   different place in the assembly's floorplan, and with extracted parasitics
   the longer route from the SRAM to the output pins shows up in full. TNS is
-  zero both ways and hold is within 0.03 ns.
+  zero both ways and hold is within 0.1 ns.
 - **Design area is +5.9%** assembled: the partitions' own core margin and
   filler are counted at their hardened size rather than as loose cells. **Core
   area is +5.7%**: the assembly uses the flat run's floorplan, and the
   size-aware shelf packer (rtl-buddy/rtl_buddy#632) packs the three macros at
   their real sizes.
-- **Two DRC violations** in the assembly — met1 spacing between a top-level net
-  and the `u_csr` macro edge — are rtl-buddy/rtl_buddy#673. They came in with
-  rtl_buddy 6.62.0 (IO pins placed after macros, rtl-buddy/rtl_buddy#668),
-  reproduce with abstracts cut either way, and were 0 on 6.56.0–6.61.0. The run
-  still passes: DRCs are reported, not gated.
+- **DRC-clean on every run.** 6.62.0 and 6.63.0 left two met1 spacing
+  violations in the assembly, where a standard cell abutted the `u_csr` macro
+  edge (rtl-buddy/rtl_buddy#673). 6.64.0 surrounds every macro with a
+  standard-cell keep-out, `cfg-pdks.placement.macro-cell-halo` (default
+  1 µm). That keep-out also moves the placement and routing a little, which
+  accounts for the small shifts in the flat run's timing and area from the
+  6.63.0 numbers.
 - **Power is not like for like.** The SRAM is 1.93 mW in both. The hardened
-  partitions contribute 0 W — `write_timing_model` writes timing arcs and no
+  partitions contribute 0 W: `write_timing_model` writes timing arcs and no
   power tables, and the assembly's `rb power` says so, naming both cells as
   having no Liberty power data. So the assembly's total leaves out the
-  partitions' own cell power. What it adds is 1.1 mW more switching power on
-  the top-level nets (1.60 vs 0.47 mW), which now carry extracted wire
-  capacitance between three macros spread over the die.
+  partitions' own cell power.
+- **The assembly's glue power is understated** (rtl-buddy/rtl_buddy#684).
+  Since 6.64.0, `rb power` reads the partitions' abstract Liberty through
+  `blocks:` (rtl-buddy/rtl_buddy#679). The output pins in that Liberty have no
+  `function`, so OpenSTA's vectorless propagation gives every partition output
+  zero activity, and the top-level CDC glue they drive switches at almost
+  nothing: 9 µW of sequential and combinational switching, against 1.1 mW on
+  the same routed database with the abstracts left out (4.75 mW total, close
+  to 6.63.0's 4.78 mW). Treat 3.34 mW as a lower bound until that
+  issue is fixed.
 
 ## Step-0 spike findings
 
