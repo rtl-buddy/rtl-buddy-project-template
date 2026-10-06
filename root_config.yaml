@@ -384,6 +384,85 @@ cfg-pdks:
     name: "sky130hd_block"
     pdn-config: "pnr/sky130hd/pdn_block.tcl"
 
+  # ASAP7 predictive 7nm (ASU/ARM, BSD-3), RVT cells at the TT corner. The
+  # third PDK in this template, and the one taken straight from an ORFS
+  # platform: values are ORFS' flow/platforms/asap7/config.mk, transcribed key
+  # by key. Fetch the files with
+  # `synth/demo_tiny_alu_subsys_asap7/download_pdk.sh` (pinned ORFS commit).
+  # Used by synth|pnr/demo_tiny_alu_subsys_asap7/.
+  #
+  # The ASAP7 Liberty `time_unit` is 1 ps, not 1 ns: the SDC is written in ps,
+  # and rb reads the unit from the Liberty and reports in ps either way.
+  #
+  # Needs an rtl_buddy release containing rtl-buddy/rtl_buddy#716 (the four Tcl
+  # hooks), #717 (`post-cts-setup-repair`, `routing-layer-adjustment`) and #718
+  # (routed / physical cell counts). The pin in pyproject.toml must be bumped
+  # to that release before these runs work from the wheel.
+  - name: "asap7"
+    site: "asap7sc7p5t"
+    # ORFS TC_NLDM_LIB_FILES with PRIMARY_VT=RVT: the cells are split across
+    # five Liberty files, so the corner takes a list.
+    corners:
+      tt:
+        - "pdk/asap7/lib/NLDM/asap7sc7p5t_AO_RVT_TT_nldm_211120.lib.gz"
+        - "pdk/asap7/lib/NLDM/asap7sc7p5t_INVBUF_RVT_TT_nldm_220122.lib.gz"
+        - "pdk/asap7/lib/NLDM/asap7sc7p5t_OA_RVT_TT_nldm_211120.lib.gz"
+        - "pdk/asap7/lib/NLDM/asap7sc7p5t_SEQ_RVT_TT_nldm_220123.lib"
+        - "pdk/asap7/lib/NLDM/asap7sc7p5t_SIMPLE_RVT_TT_nldm_211120.lib.gz"
+    tech-lef: "pdk/asap7/lef/asap7_tech_1x_201209.lef"
+    macro-lef: "pdk/asap7/lef/asap7sc7p5t_28_R_1x_220121a.lef"
+    cell-gds: "pdk/asap7/gds/asap7sc7p5t_28_R_220121a.gds"
+    klayout-tech: "pdk/asap7/KLayout/asap7.lyt"
+    klayout-props: "pdk/asap7/KLayout/asap7.lyp"
+    tie-hi: "TIEHIx1_ASAP7_75t_R/H"
+    tie-lo: "TIELOx1_ASAP7_75t_R/L"
+    # ORFS FILL_CELLS: the two fillers and the five decaps. Patterns, so the
+    # routed / physical cell counts (rtl-buddy/rtl_buddy#718) put the decaps on
+    # the physical side.
+    fill-cells:
+      - "FILLER*_ASAP7_75t_R"
+      - "DECAPx*_ASAP7_75t_R"
+    # ORFS IO_PLACER_H / IO_PLACER_V.
+    pin-layers:
+      horizontal: "M4"
+      vertical: "M5"
+    # ORFS PLACE_DENSITY.
+    placement:
+      density: 0.60
+    # ORFS DONT_USE_CELLS: the fractional-drive cells (x1p*, xp*) to ease
+    # congestion, plus scan flops and clock gaters this flow does not use.
+    dont-use-cells:
+      - "*x1p*_ASAP7*"
+      - "*xp*_ASAP7*"
+      - "SDF*"
+      - "ICG*"
+    # ORFS PDN_TCL — the upstream grid_strategy-M1-M2-M5-M6.tcl, committed under
+    # pnr/ like pnr/sky130hd/pdn.tcl (see its header).
+    pdn-config: "pnr/asap7/pdn.tcl"
+    # ORFS RCX_RULES.
+    rcx-rules: "pdk/asap7/rcx_patterns.rules"
+
+    # ── ORFS platform Tcl hooks (rtl-buddy/rtl_buddy#716) ──────────────────
+    # Each is sourced at the step ORFS sources its own. Three are upstream
+    # files used verbatim from pdk/; only the tapcell script is vendored,
+    # because upstream's reads ORFS environment variables.
+    #
+    # ORFS PLATFORM_TCL: `suppress_message STA 1212`, before the Liberty
+    # reads, so the SIMPLE library's output-pin timing group does not flood
+    # the log with STA-1212 warnings.
+    platform-tcl: "pdk/asap7/liberty_suppressions.tcl"
+    # ORFS SET_RC_TCL: per-layer and default wire RC. The ASAP7 tech LEF
+    # carries zero RC, so without this every wire is free: repair and CTS see
+    # no wire delay (EST-0018 / EST-0027 / CTS-0104 warnings) and the
+    # reported slack is optimistic.
+    layer-rc-tcl: "pdk/asap7/setRC.tcl"
+    # ORFS MAKE_TRACKS: ASAP7's M2 has several offsets per row; the bare
+    # `make_tracks` stops with IFP-0039.
+    tracks-tcl: "pdk/asap7/openRoad/make_tracks.tcl"
+    # ORFS TAPCELL_TCL, with TAP_CELL_NAME and MACRO_ROWS_HALO_X/Y filled in.
+    # Inserts the TAPCELL_ASAP7_75t_R taps and row endcaps.
+    tapcell-tcl: "pnr/asap7/tapcell.tcl"
+
 # Synth platforms — name + PDK + corner. Referenced by `platform:` in synth.yaml.
 cfg-synth-platforms:
   - name: "nangate45_typ"
@@ -392,6 +471,10 @@ cfg-synth-platforms:
 
   - name: "sky130hd_tt"
     pdk: "sky130hd"
+    corner: "tt"
+
+  - name: "asap7_tt"
+    pdk: "asap7"
     corner: "tt"
 
 # P&R platforms — name + PDK + STA corner + P&R-specific knobs.
@@ -463,6 +546,34 @@ cfg-pnr-platforms:
     routing-layers:
       signal: "met1-met4"
       clock: "met3-met4"
+
+  # ASAP7 at TT, RVT. ORFS flow/platforms/asap7/config.mk values; see the
+  # `asap7` PDK entry above for the rtl_buddy release these keys need.
+  - &asap7_tt
+    name: "asap7_tt"
+    pdk: "asap7"
+    corner: "tt"
+    # The first entry is the root buffer.
+    cts-buffer:
+      - "BUFx4_ASAP7_75t_R"
+      - "BUFx8_ASAP7_75t_R"
+    # ORFS MIN_ROUTING_LAYER / MAX_ROUTING_LAYER / MIN_CLK_ROUTING_LAYER.
+    routing-layers:
+      signal: "M2-M7"
+      clock: "M4-M7"
+    # ORFS ROUTING_LAYER_ADJUSTMENT (rtl-buddy/rtl_buddy#717): withhold a
+    # quarter of each layer's capacity from the global router, so detailed
+    # routing on ASAP7's tight M2/M3 pitch finishes DRC-clean.
+    routing-layer-adjustment: 0.25
+
+  # The same platform with setup repair after CTS (rtl-buddy/rtl_buddy#717).
+  # The default flow repairs only hold after CTS, so setup paths the clock
+  # tree's insertion delay broke stay broken. Off by default because it adds
+  # buffers and resizes cells; pnr/demo_tiny_alu_subsys_asap7/ compares the two
+  # on an over-constrained clock.
+  - <<: *asap7_tt
+    name: "asap7_tt_setup_repair"
+    post-cts-setup-repair: true
 # End synth / pnr configuration
 
 # Power analysis tool defaults — `tool:` in power.yaml selects the entry.
