@@ -1,0 +1,67 @@
+# RTL-Buddy P&R Configuration File
+rtl-buddy-filetype: pnr_config
+
+# P&R half of the ASAP7 example: the demo_tiny_alu_subsys_compute partition,
+# flat, on the ASAP7 predictive 7nm PDK taken from an OpenROAD-flow-scripts
+# platform. Three runs:
+#
+#   ..._compute_pnr                  the example. 600 ps clock, `asap7_tt`.
+#   ..._compute_tight_pnr            250 ps clock, `asap7_tt`: hold repair
+#                                    only after CTS, so setup stays broken.
+#   ..._compute_tight_setup_pnr      250 ps clock, `asap7_tt_setup_repair`:
+#                                    the same with post-CTS setup repair.
+#
+# Everything is reglvl 1000 — these need the downloaded PDK and openroad.
+# Synthesise first, then place and route, e.g.
+#
+#   rb synth demo_tiny_alu_subsys_asap7_compute -c synth/demo_tiny_alu_subsys_asap7/synth.yaml
+#   rb pnr demo_tiny_alu_subsys_asap7_compute_pnr -c pnr/demo_tiny_alu_subsys_asap7/pnr.yaml -l 1000
+#
+# Or all of it, synthesis included:
+#
+#   rb pnr -c pnr/demo_tiny_alu_subsys_asap7/pnr.yaml -l 1000 --synth
+#
+# Needs an rtl_buddy release containing rtl-buddy/rtl_buddy#716-#718; see
+# README.md.
+runs:
+
+  - name: "demo_tiny_alu_subsys_asap7_compute_pnr"
+    desc: "ASAP7 P&R of the demo_tiny_alu_subsys_compute partition, 600 ps clock"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_asap7_compute"
+    synth-path: "../../synth/demo_tiny_alu_subsys_asap7/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_asap7/constraints_compute.sdc"
+    platform: "asap7_tt"
+    floorplan:
+      utilization: 0.40
+      aspect: 1.0
+      core-margin: 2.0
+    reglvl: 1000
+
+  # ── post-CTS setup repair, on an over-constrained clock ────────────────────
+  # Same netlist and floorplan; only the platform differs.
+  - name: "demo_tiny_alu_subsys_asap7_compute_tight_pnr"
+    desc: "ASAP7 P&R, 250 ps clock, hold repair only after CTS"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_asap7_compute_tight"
+    synth-path: "../../synth/demo_tiny_alu_subsys_asap7/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_asap7/constraints_compute_tight.sdc"
+    platform: "asap7_tt"
+    floorplan:
+      utilization: 0.40
+      aspect: 1.0
+      core-margin: 2.0
+    reglvl: 1000
+
+  - name: "demo_tiny_alu_subsys_asap7_compute_tight_setup_pnr"
+    desc: "ASAP7 P&R, 250 ps clock, setup and hold repair after CTS"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_asap7_compute_tight"
+    synth-path: "../../synth/demo_tiny_alu_subsys_asap7/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_asap7/constraints_compute_tight.sdc"
+    platform: "asap7_tt_setup_repair"
+    floorplan:
+      utilization: 0.40
+      aspect: 1.0
+      core-margin: 2.0
+    reglvl: 1000
