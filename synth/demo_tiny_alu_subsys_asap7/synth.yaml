@@ -14,7 +14,7 @@ rtl-buddy-filetype: synth_config
 #
 #   rb synth demo_tiny_alu_subsys_asap7_compute -c synth/demo_tiny_alu_subsys_asap7/synth.yaml
 #
-# Needs an rtl_buddy release containing rtl-buddy/rtl_buddy#716-#718 — see
+# Needs rtl_buddy >= 6.70.0 (rtl-buddy/rtl_buddy#716-#718) — see
 # ../../pnr/demo_tiny_alu_subsys_asap7/README.md.
 syntheses:
 

@@ -30,16 +30,17 @@ third-party macro side by side.
 ## What you need
 
 - `openroad` and `klayout` on `PATH`, and `yosys`.
-- **rtl_buddy >= 6.65.0**, which is what `pyproject.toml` pins. 6.63.0 added
+- **rtl_buddy >= 6.70.0**, which is what `pyproject.toml` pins (6.70.0 for
+  the sky130hd wire RC below; the rest needs 6.65.0). 6.63.0 added
   `harden:` and `blocks:` (rtl-buddy/rtl_buddy#95); 6.64.0 the standard-cell
   keep-out around macros that keeps the assembly DRC-clean
   (`cfg-pdks.placement.macro-cell-halo`, rtl-buddy/rtl_buddy#673); 6.65.0 the
   whole-suite `rb pnr` that orders blocks before the assembly, with `--synth`
   and `-j`, `floorplan.macro-placement: rtl-mp`, and an `rb power` that no
   longer zeroes the switching the partitions drive (rtl-buddy/rtl_buddy#684).
-  The sky130hd wire RC (`cfg-pdks.layer-rc-tcl`) needs the release with
-  rtl-buddy/rtl_buddy#716; an older rtl_buddy ignores the key and runs repair
-  and CTS on zero-RC wires, as before. The rest of the example needs what 6.56.0 added:
+  The sky130hd wire RC (`cfg-pdks.layer-rc-tcl`) needs 6.70.0
+  (rtl-buddy/rtl_buddy#716); an older rtl_buddy ignores the key and runs
+  repair and CTS on zero-RC wires. The rest of the example needs what 6.56.0 added:
   - `cfg-pdks.placement`, `cfg-pdks.dont-use-cells` and `cfg-pdks.pdn-config`
     (rtl-buddy/rtl_buddy#625). An older rtl_buddy loads `root_config.yaml`
     fine and silently ignores all three — which means **no power grid at all**
@@ -178,7 +179,8 @@ with no library at all is the `power.missing_macro_inputs` ERROR.
 
 ## Results — flat vs assembled
 
-Measured with OpenROAD `26Q2-911-g731f8ff5a4` and KLayout 0.30.8, from an empty
+Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8 and the released
+rtl_buddy 6.70.0 wheel this project pins, from an empty
 tree with the one command above, on the PDK revisions `download_pdk.sh` pins,
 with `harden: true` on both partitions and the assembly built from `blocks:`.
 `apb_clk` 20 ns, `cclk` 25 ns. Every final timing and power number is on
@@ -186,11 +188,8 @@ OpenRCX-extracted parasitics (sky130hd sets `rcx-rules`).
 
 These numbers are with wire RC through the whole flow: the sky130hd PDK entry
 sets `layer-rc-tcl: pnr/sky130hd/setRC.tcl` and `placement.macro-cell-halo: 3`
-(see below). They were measured on unreleased rtl_buddy, the
-rtl-buddy/rtl_buddy#718 tip (which contains #716, the Tcl hooks); re-measure on
-the release that ships #716 when the pin is bumped. Partitions hardened before
-this change have stale abstracts and need re-hardening, which the one command
-above does.
+(see below). Partitions hardened before this change have stale abstracts and
+need re-hardening, which the one command above does.
 
 | | flat | csr partition | compute partition | **assembled** | assembled, RTL-MP |
 |---|---|---|---|---|---|
@@ -200,7 +199,7 @@ above does.
 | design area (µm²) | 208 826 | 3 480 | 2 606 | **221 384** | 220 751 |
 | core area (µm²) | 456 758 | 7 767 | 6 241 | **483 370** | 483 370 |
 | core utilization | 46% | 45% | 42% | **46%** | 46% |
-| setup WNS (ns) | +3.00 | +10.75 | +13.47 | **+2.65** | +3.03 |
+| setup WNS (ns) | +3.08 | +10.75 | +13.47 | **+2.66** | +3.03 |
 | setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** | 0.00 |
 | hold WNS (ns) | +0.15 | +0.49 | +0.68 | **+0.29** | +0.18 |
 | DRC violations | 0 | 0 | 0 | **0** | 0 |
@@ -212,8 +211,8 @@ above does.
 Reading it:
 
 - **Worst setup is the same path both ways**: the SRAM's read data out to
-  `prdata` — `u_sram` → `prdata[7]` flat, → `prdata[1]` assembled — which no
-  partitioning moves. It is 0.35 ns worse assembled. The three macros sit in a
+  `prdata` — `u_sram` → `prdata[6]` flat, → `prdata[1]` assembled — which no
+  partitioning moves. It is 0.42 ns worse assembled. The three macros sit in a
   different place in the assembly's floorplan, and with extracted parasitics
   the longer route from the SRAM to the output pins shows up in full. TNS is
   zero both ways and hold is within 0.15 ns.
@@ -227,7 +226,7 @@ Reading it:
   `rtl_macro_placer` places the three macros by connectivity, and rotates the
   two partitions (R180 and MY), instead of the packer filling rows from a
   corner. The worst path is still the SRAM-to-`prdata` one, and it gains
-  0.38 ns, 0.03 ns better than the flat run. Everything else is unchanged: 0 DRCs, the power grid connected to both
+  0.37 ns, to within 0.05 ns of the flat run. Everything else is unchanged: 0 DRCs, the power grid connected to both
   rotated partitions, strict GDS complete.
 - **DRC-clean on every run.** 6.62.0 and 6.63.0 left two met1 spacing
   violations in the assembly, where a standard cell abutted the `u_csr` macro

@@ -14,7 +14,7 @@ configuration for them.
 
 ## What you need
 
-- **rtl_buddy** with rtl-buddy/rtl_buddy#716 (the Tcl hooks), #717
+- **rtl_buddy >= 6.70.0**, which `pyproject.toml` pins: rtl-buddy/rtl_buddy#716 (the Tcl hooks), #717
   (`post-cts-setup-repair`, `routing-layer-adjustment`, hold TNS) and #718
   (`routed_cell_count` / `physical_cell_count`), on top of #699 (list-valued
   corners for ASAP7's split Liberty, the ps Liberty `time_unit`, gzipped
@@ -69,7 +69,7 @@ upstream files.
 
 ## Expected results
 
-Measured with rtl_buddy at the rtl-buddy/rtl_buddy#718 tip, OpenROAD and Yosys
+Measured with the released rtl_buddy 6.70.0 wheel this project pins, OpenROAD and Yosys
 from rtl-buddy-tools, ORFS at the commit pinned in `download_pdk.sh`.
 
 | Run | Clock | Platform | Cells in / routed / physical | Area | WNS setup | TNS setup | WNS hold | DRC |

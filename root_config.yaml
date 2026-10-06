@@ -386,8 +386,8 @@ cfg-pdks:
     # (EST-0018 / CTS-0104) and only the extracted final timing sees the real
     # wires — a hold escape a hardened block's parent then inherits. OpenROAD's
     # own sky130hd test layer RC and signal / clock wire layers; see the
-    # file's header. Inherited by `sky130hd_block` below. Needs an rtl_buddy
-    # release containing #716; older ones ignore the key.
+    # file's header. Inherited by `sky130hd_block` below. Needs rtl_buddy
+    # >= 6.70.0 (#716); older ones ignore the key.
     layer-rc-tcl: "pnr/sky130hd/setRC.tcl"
 
   # The same PDK, with the block-level power grid in place of the top-level
@@ -412,10 +412,11 @@ cfg-pdks:
   # The ASAP7 Liberty `time_unit` is 1 ps, not 1 ns: the SDC is written in ps,
   # and rb reads the unit from the Liberty and reports in ps either way.
   #
-  # Needs an rtl_buddy release containing rtl-buddy/rtl_buddy#716 (the four Tcl
-  # hooks), #717 (`post-cts-setup-repair`, `routing-layer-adjustment`) and #718
-  # (routed / physical cell counts). The pin in pyproject.toml must be bumped
-  # to that release before these runs work from the wheel.
+  # Needs rtl_buddy >= 6.70.0, which the pin in pyproject.toml carries:
+  # rtl-buddy/rtl_buddy#716 (the four Tcl hooks), #717
+  # (`post-cts-setup-repair`, `routing-layer-adjustment`) and #718 (routed /
+  # physical cell counts). The list-valued `corners.tt` (#699, 6.68.0) makes
+  # this file unloadable on anything older.
   - name: "asap7"
     site: "asap7sc7p5t"
     # ORFS TC_NLDM_LIB_FILES with PRIMARY_VT=RVT: the cells are split across

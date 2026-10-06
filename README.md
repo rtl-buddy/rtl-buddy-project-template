@@ -959,7 +959,8 @@ assembly:
 rb pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 --synth -j 2 --gds
 ```
 
-This example needs rtl_buddy >= 6.65.0: 6.63.0 for `harden:` / `blocks:`,
+This example needs rtl_buddy >= 6.70.0, for the sky130hd wire RC
+(`cfg-pdks.layer-rc-tcl`, rtl-buddy/rtl_buddy#716); before that, 6.63.0 for `harden:` / `blocks:`,
 6.64.0 for the macro cell halo that keeps the assembly DRC-clean
 (rtl-buddy/rtl_buddy#673), and 6.65.0 for the whole-suite driver (`--synth`,
 `-j`), `macro-placement: rtl-mp`, and `rb power` counting the switching the
@@ -995,8 +996,8 @@ grid. [`pnr/demo_tiny_alu_subsys_asap7/README.md`](pnr/demo_tiny_alu_subsys_asap
 has the configuration, the expected results and what to look for in the log.
 
 ASAP7 is BSD-3-Clause (ASU/ARM), packaged by The OpenROAD Project in ORFS
-(BSD-3-Clause). It needs an rtl_buddy release containing
-rtl-buddy/rtl_buddy#716-#718: list-valued `corners:` (rtl-buddy/rtl_buddy#699,
+(BSD-3-Clause). It needs rtl_buddy >= 6.70.0, which this project pins
+(rtl-buddy/rtl_buddy#716-#718); list-valued `corners:` (rtl-buddy/rtl_buddy#699,
 for ASAP7's split Liberty files) make `root_config.yaml` unloadable on older
 releases.
 
