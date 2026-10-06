@@ -202,6 +202,7 @@ cfg-verible:
 cfg-coverage:
   - name: "verilator"
     use-lcov: true
+    # merge-timeout: 1800   # seconds the raw merge may run; unset = no limit
   - name: "vcs"
     use-lcov: true
 
@@ -711,8 +712,9 @@ cfg-dispatch:
     # more memory than the same sim under `-M reg`; a mode no block names
     # (here `reg`) reserves exactly the base. Mode blocks are strict — an
     # unknown key, a nested `modes:`, or `parallel` inside one is a load
-    # error — while an unknown key in the base block above is still dropped
-    # silently (rtl-buddy/rtl_buddy#652), so spell base keys carefully.
+    # error. An unknown key in the base block above (e.g. `memory:` for
+    # `mem:`) is ignored with a `config.unknown_key` warning naming the
+    # nearest key (rtl_buddy >= 6.71); a later major release makes it fatal.
     modes:
       cov:
         mem: 16G
@@ -753,6 +755,16 @@ cfg-dispatch:
   # `compile:` block in its tests.yaml (one testbench's `compile:` block can
   # override the reservation fields but not `parallel`); see the dispatch
   # guide for reservation sizing and the preproc-isolation requirement.
+
+  # Under Slurm a `-M cov` run's coverage tail (merge, coverage-model.json,
+  # LCOV exports, manifest) runs as one `rb:coverage` job after the sims
+  # instead of on the submit host (rtl_buddy >= 6.71). It inherits
+  # `resources` field by field; size it here, usually under `modes.cov`.
+  # coverage:
+  #   modes:
+  #     cov:
+  #       mem: 8G
+  #       time: "00:30:00"
 
   # Extra flags passed to sbatch verbatim (partition, account, QOS, ...).
   # sbatch-args:
