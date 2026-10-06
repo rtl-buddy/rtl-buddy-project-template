@@ -14,3 +14,7 @@ synth-configs:
   # macro from synth/demo_tiny_alu_subsys_hier/download_pdk.sh, and the two
   # partition runs feed pnr/demo_tiny_alu_subsys_hier.
   - "synth/demo_tiny_alu_subsys_hier/synth.yaml"
+  # Both runs are reglvl 1000: they need the ASAP7 PDK from
+  # synth/demo_tiny_alu_subsys_asap7/download_pdk.sh, and feed
+  # pnr/demo_tiny_alu_subsys_asap7.
+  - "synth/demo_tiny_alu_subsys_asap7/synth.yaml"

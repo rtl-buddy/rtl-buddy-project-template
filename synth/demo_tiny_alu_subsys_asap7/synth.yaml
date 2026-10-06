@@ -1,0 +1,37 @@
+rtl-buddy-filetype: synth_config
+
+# Synthesis half of the ASAP7 example: the demo_tiny_alu_subsys_compute
+# partition (the ALU datapath, one clock) mapped to ASAP7 RVT cells at TT.
+# The same partition the sky130hd hierarchical example hardens, so the two
+# processes can be compared on one netlist.
+#
+#   ..._compute         600 ps clock, feeds ..._compute_pnr
+#   ..._compute_tight   250 ps clock, feeds the two ..._tight_pnr runs that
+#                       compare P&R with and without post-CTS setup repair
+#
+# Both runs are reglvl 1000: neither can do anything until
+# `./download_pdk.sh` has fetched the PDK. Invoke directly, e.g.
+#
+#   rb synth demo_tiny_alu_subsys_asap7_compute -c synth/demo_tiny_alu_subsys_asap7/synth.yaml
+#
+# Needs rtl_buddy >= 6.70.0 (rtl-buddy/rtl_buddy#716-#718) — see
+# ../../pnr/demo_tiny_alu_subsys_asap7/README.md.
+syntheses:
+
+  - name: "demo_tiny_alu_subsys_asap7_compute"
+    desc: "ASAP7 synthesis of the demo_tiny_alu_subsys_compute partition, 600 ps clock"
+    model: "demo_tiny_alu_subsys_compute"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "yosys"
+    platform: "asap7_tt"
+    constraints: "constraints_compute.sdc"
+    reglvl: 1000
+
+  - name: "demo_tiny_alu_subsys_asap7_compute_tight"
+    desc: "ASAP7 synthesis of the demo_tiny_alu_subsys_compute partition, over-constrained 250 ps clock"
+    model: "demo_tiny_alu_subsys_compute"
+    model_path: "../../design/demo_tiny_alu_subsys/models.yaml"
+    tool: "yosys"
+    platform: "asap7_tt"
+    constraints: "constraints_compute_tight.sdc"
+    reglvl: 1000

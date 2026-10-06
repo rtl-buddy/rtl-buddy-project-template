@@ -53,6 +53,7 @@ naming convention surfaces the category in the directory name:
 | `demo_tiny_alu_sc`     | SystemC + Verilator cosim peer of `demo_tiny_alu`, showing the same DUT driven from `sc_main()` | [`verif/demo_tiny_alu_sc/`](verif/demo_tiny_alu_sc/) |
 | `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the `rb pnr` Nangate45 flow | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
 | `demo_tiny_alu_subsys_hier` | The same design on **sky130hd**, hardened hierarchically: two partitions placed and routed on their own, then assembled at the top beside a real OpenRAM SRAM macro, with a PDN and `gds-mode: strict` | [`synth/demo_tiny_alu_subsys_hier/`](synth/demo_tiny_alu_subsys_hier/), [`pnr/demo_tiny_alu_subsys_hier/`](pnr/demo_tiny_alu_subsys_hier/) ([walk-through](pnr/demo_tiny_alu_subsys_hier/README.md)), [`power/demo_tiny_alu_subsys_hier/`](power/demo_tiny_alu_subsys_hier/) |
+| `demo_tiny_alu_subsys_asap7` | The compute partition on **ASAP7** (predictive 7nm), straight from an OpenROAD-flow-scripts platform: the four platform Tcl hooks, wire RC, taps/endcaps, and post-CTS setup repair compared on an over-constrained clock | [`synth/demo_tiny_alu_subsys_asap7/`](synth/demo_tiny_alu_subsys_asap7/), [`pnr/demo_tiny_alu_subsys_asap7/`](pnr/demo_tiny_alu_subsys_asap7/) ([walk-through](pnr/demo_tiny_alu_subsys_asap7/README.md)) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 | `demo_abv_basic`    | Saturating up-counter with a bound SVA checker for `rb fpv` (bmc-proves no-overflow, cover-reaches saturation); also the `rb mut` reference block | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_basic.md)), [`spec/demo_abv/`](spec/demo_abv/), [`fpv/demo_abv/demo_abv_basic/`](fpv/demo_abv/demo_abv_basic/) |
 | `demo_abv_features`   | Assertion-Based Verification end-to-end — testbench-side SVA via `rb test` + `rb fpv` reporting **COI**, **dead-assume**, and slang-fronted **vacuity** (`1/2 vacuous`) on a tiny saturating counter | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_features.md)), [`spec/demo_abv/`](spec/demo_abv/), [`verif/demo_abv/demo_abv_features/`](verif/demo_abv/demo_abv_features/), [`fpv/demo_abv/demo_abv_features/`](fpv/demo_abv/demo_abv_features/) |
@@ -175,6 +176,7 @@ uv run rb skill install --project
 │   ├── demo_tiny_alu/       # demo — Yosys synth of the ALU leaf (generic + Nangate45)
 │   ├── demo_tiny_alu_subsys/     # demo — Yosys synth of the system block (generic + Nangate45)
 │   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd: flat, two partitions, and the assembly
+│   ├── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 compute partition + download_pdk.sh
 │   └── demo_cdc_src_sync/  # demo — Yosys synth of the source-sync chain
 ├── power/
 │   ├── demo_tiny_alu_subsys/     # demo — `rb power` runs (static / synthetic / SAIF / post-P&R);
@@ -183,7 +185,9 @@ uv run rb skill install --project
 ├── pnr/
 │   ├── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
 │   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks: (see its README)
-│   └── sky130hd/                 # sky130hd PDN snippets: pdn.tcl (top) + pdn_block.tcl (block)
+│   ├── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 flat P&R from an ORFS platform (see its README)
+│   ├── sky130hd/                 # sky130hd PDN snippets: pdn.tcl (top) + pdn_block.tcl (block)
+│   └── asap7/                    # asap7 hooks: pdn.tcl + tapcell.tcl (ORFS, filled in)
 ├── fpv/
 │   ├── demo_abv_basic/   # demo — `rb fpv` saturating counter (bmc + cover)
 │   └── demo_abv_features/  # demo — slang-fronted `|->` properties exercising vacuity / COI / dead-assume
@@ -955,7 +959,8 @@ assembly:
 rb pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 --synth -j 2 --gds
 ```
 
-This example needs rtl_buddy >= 6.65.0: 6.63.0 for `harden:` / `blocks:`,
+This example needs rtl_buddy >= 6.70.0, for the sky130hd wire RC
+(`cfg-pdks.layer-rc-tcl`, rtl-buddy/rtl_buddy#716); before that, 6.63.0 for `harden:` / `blocks:`,
 6.64.0 for the macro cell halo that keeps the assembly DRC-clean
 (rtl-buddy/rtl_buddy#673), and 6.65.0 for the whole-suite driver (`--synth`,
 `-j`), `macro-placement: rtl-mp`, and `rb power` counting the switching the
@@ -964,6 +969,37 @@ the `cfg-pdks.pdn-config`, `.placement` and `.dont-use-cells` keys, a
 list-valued `cfg-pnr-platforms.cts-buffer` (rtl-buddy/rtl_buddy#625), the
 size-aware macro packer (rtl-buddy/rtl_buddy#632) and macro Liberty
 inheritance in `rb power` (rtl-buddy/rtl_buddy#630).
+
+### ASAP7 from an ORFS platform
+
+[`pnr/demo_tiny_alu_subsys_asap7/`](pnr/demo_tiny_alu_subsys_asap7/) places and
+routes the `demo_tiny_alu_subsys_compute` partition on **ASAP7**, the
+predictive 7nm PDK, configured from OpenROAD-flow-scripts'
+`flow/platforms/asap7`. It is the template's example of the four `cfg-pdks`
+platform Tcl hooks (`platform-tcl`, `layer-rc-tcl`, `tracks-tcl`,
+`tapcell-tcl`; rtl-buddy/rtl_buddy#716) and of the `cfg-pnr-platforms`
+`routing-layer-adjustment` and `post-cts-setup-repair` keys
+(rtl-buddy/rtl_buddy#717).
+
+```bash
+./synth/demo_tiny_alu_subsys_asap7/download_pdk.sh    # ~12 MB from ORFS, pinned commit
+uv run rb pnr -c pnr/demo_tiny_alu_subsys_asap7/pnr.yaml -l 1000 --synth
+```
+
+At a 600 ps clock the routed design is DRC-clean with +63.6 ps setup and
++63.2 ps hold slack, 359 routed cells plus 610 endcap, filler and decap cells.
+Two more runs at an over-constrained 250 ps clock compare P&R with and without
+post-CTS setup repair. Three of the hooks use the downloaded ORFS files as they
+are; [`pnr/asap7/`](pnr/asap7/) holds the two files that are committed, the
+tap/endcap script with its ORFS environment variables filled in and the power
+grid. [`pnr/demo_tiny_alu_subsys_asap7/README.md`](pnr/demo_tiny_alu_subsys_asap7/README.md)
+has the configuration, the expected results and what to look for in the log.
+
+ASAP7 is BSD-3-Clause (ASU/ARM), packaged by The OpenROAD Project in ORFS
+(BSD-3-Clause). It needs rtl_buddy >= 6.70.0, which this project pins
+(rtl-buddy/rtl_buddy#716-#718); list-valued `corners:` (rtl-buddy/rtl_buddy#699,
+for ASAP7's split Liberty files) make `root_config.yaml` unloadable on older
+releases.
 
 ---
 
