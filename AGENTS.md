@@ -22,12 +22,14 @@ Blocks shipped with this template fall into four categories. Preserve this categ
   specific rtl_buddy capabilities (`demo_tiny_alu`,
   `demo_tiny_alu_cocotb`, `demo_tiny_alu_sc`,
   `demo_tiny_alu_subsys`, `demo_tiny_alu_subsys_hier`,
-  `demo_cdc_src_sync`, the grouped
+  `demo_tiny_alu_subsys_asap7`, `demo_cdc_src_sync`, the grouped
   `demo_abv` family, `demo_axi_2x2`, and `demo_pulp_platform_axi`).
   Safe to delete when starting a new project, after removing their
   regression/config references. `demo_tiny_alu_subsys_hier` is not a
   separate design — it is a second set of flow configs over
   `demo_tiny_alu_subsys`, on sky130hd instead of Nangate45.
+  `demo_tiny_alu_subsys_asap7` is the same kind of flow-config set:
+  its compute partition on ASAP7.
 - **Focused smoke suites** — small backend or tool smoke tests such as
   `icarus_smoke`, which are intentionally minimal and may not follow
   the `demo_*` naming pattern.
@@ -83,6 +85,8 @@ power/demo_tiny_alu_subsys/power.yaml    # `rb power` runs; the static one carri
 pnr/demo_tiny_alu_subsys/                # `rb pnr` Nangate45 flat flow
 pnr/demo_tiny_alu_subsys_hier/           # sky130hd hierarchical P&R pipeclean (read its README first)
 pnr/sky130hd/                            # sky130hd PDN snippets, top-level and block-level
+pnr/demo_tiny_alu_subsys_asap7/          # ASAP7 flat P&R from an ORFS platform (read its README first)
+pnr/asap7/                               # asap7 hooks: PDN + tap/endcap Tcl
 fpga/demo_cdc_open/                      # openXC7 FPGA flow example
 fpv/demo_abv/                            # FPV and ABV examples
 pyproject.toml                           # uv-managed project environment and rtl_buddy dependency pin
