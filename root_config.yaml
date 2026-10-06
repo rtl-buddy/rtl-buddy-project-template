@@ -313,9 +313,18 @@ cfg-pdks:
     # leaves around each macro and between a macro and the core edge) is left
     # at its 20 µm default: that is what keeps the PDN channels around the
     # OpenRAM SRAM wide enough for `pdngen` to repair.
+    #
+    # `macro-cell-halo` (µm of standard-cell keep-out around each placed
+    # macro, rtl-buddy/rtl_buddy#673) is 3, up from the 1 µm default. With
+    # wire RC set (`layer-rc-tcl` below), `repair_design` buffers the OpenRAM
+    # SRAM's long read-data nets, and at 1 µm those buffers sit against the
+    # SRAM's pin edge: the global router then overflows the GCell row along
+    # that edge (GRT-0116, 11 overflows on met2/met4) on the flat run and the
+    # assembly. 3 µm clears it.
     placement:
       density: 0.60
       padding: 1
+      macro-cell-halo: 3.0
 
     # ORFS DONT_USE_CELLS. The *probe* cells carry metal on every layer and
     # the *lpflow* cells belong to multi-power-domain flows; either one picked
@@ -371,6 +380,15 @@ cfg-pdks:
     # download_pdk.sh with the rest of the PDK. An older rtl_buddy ignores
     # the key and keeps the estimate.
     rcx-rules: "pdk/sky130hd/rcx_patterns.rules"
+
+    # ORFS SET_RC_TCL (rtl-buddy/rtl_buddy#716). The sky130hd tech LEF carries
+    # no wire RC, so without this CTS and hold repair run on zero-RC wires
+    # (EST-0018 / CTS-0104) and only the extracted final timing sees the real
+    # wires — a hold escape a hardened block's parent then inherits. OpenROAD's
+    # own sky130hd test layer RC and signal / clock wire layers; see the
+    # file's header. Inherited by `sky130hd_block` below. Needs an rtl_buddy
+    # release containing #716; older ones ignore the key.
+    layer-rc-tcl: "pnr/sky130hd/setRC.tcl"
 
   # The same PDK, with the block-level power grid in place of the top-level
   # one. Everything but `pdn-config` is merged from the entry above.
