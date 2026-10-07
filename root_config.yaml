@@ -322,10 +322,18 @@ cfg-pdks:
     # SRAM's pin edge: the global router then overflows the GCell row along
     # that edge (GRT-0116, 11 overflows on met2/met4) on the flat run and the
     # assembly. 3 µm clears it.
+    #
+    # For a congested block, `routability-driven: true` adds
+    # `-routability_driven` to `global_placement` (rtl_buddy >= 6.77), and
+    # `routability-use-grt: true` estimates the congestion with the global
+    # router instead of RUDY. use-grt needs routability-driven. Either can
+    # also be set per platform under `cfg-pnr-platforms[].placement`.
     placement:
       density: 0.60
       padding: 1
       macro-cell-halo: 3.0
+      # routability-driven: true
+      # routability-use-grt: true
 
     # ORFS DONT_USE_CELLS. The *probe* cells carry metal on every layer and
     # the *lpflow* cells belong to multi-power-domain flows; either one picked
