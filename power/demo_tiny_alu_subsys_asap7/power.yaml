@@ -1,0 +1,39 @@
+rtl-buddy-filetype: power_config
+
+# Power half of the ASAP7 example: the demo_tiny_alu_subsys_compute partition
+# on ASAP7 RVT at TT, whose corner is split across five Liberty files (three of
+# them gzipped) with a 1 ps `time_unit` (rtl-buddy/rtl_buddy#699). See
+# ../../pnr/demo_tiny_alu_subsys_asap7/README.md.
+#
+#   ..._power_static    the synthesised netlist, Liberty default activity
+#   ..._power_postpnr   the routed ODB of ..._compute_pnr (CTS clock tree,
+#                       parasitics), synthetic 0.2 toggle / 0.5 duty activity
+#
+# reglvl 1000 — needs the downloaded PDK and openroad. Synthesise (and place
+# and route, for the post-P&R run) first, then:
+#
+#   rb power demo_tiny_alu_subsys_asap7_power_static  -c power/demo_tiny_alu_subsys_asap7/power.yaml
+#   rb power demo_tiny_alu_subsys_asap7_power_postpnr -c power/demo_tiny_alu_subsys_asap7/power.yaml
+runs:
+  - name: "demo_tiny_alu_subsys_asap7_power_static"
+    desc: "Static-mode power of the ASAP7 compute netlist, split TT corner"
+    tool: "openroad"
+    mode: "static"
+    synth: "demo_tiny_alu_subsys_asap7_compute"
+    synth-path: "../../synth/demo_tiny_alu_subsys_asap7/synth.yaml"
+    constraints: "../../synth/demo_tiny_alu_subsys_asap7/constraints_compute.sdc"
+    platform: "asap7_tt"
+    reglvl: 1000
+
+  - name: "demo_tiny_alu_subsys_asap7_power_postpnr"
+    desc: "Post-P&R power on the routed ASAP7 ODB, synthetic activity"
+    tool: "openroad"
+    mode: "dynamic"
+    netlist-source: "pnr"
+    pnr: "demo_tiny_alu_subsys_asap7_compute_pnr"
+    pnr-path: "../../pnr/demo_tiny_alu_subsys_asap7/pnr.yaml"
+    platform: "asap7_tt"
+    activity:
+      default-toggle-rate: 0.2
+      default-static-prob: 0.5
+    reglvl: 1000
