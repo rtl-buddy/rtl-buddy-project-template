@@ -30,7 +30,7 @@ third-party macro side by side.
 ## What you need
 
 - `openroad` and `klayout` on `PATH`, and `yosys`.
-- **rtl_buddy >= 6.70.0**, which is what `pyproject.toml` pins (6.70.0 for
+- **rtl_buddy >= 6.70.0** (`pyproject.toml` pins 6.77.0; 6.70.0 is needed for
   the sky130hd wire RC below; the rest needs 6.65.0). 6.63.0 added
   `harden:` and `blocks:` (rtl-buddy/rtl_buddy#95); 6.64.0 the standard-cell
   keep-out around macros that keeps the assembly DRC-clean
@@ -180,7 +180,9 @@ with no library at all is the `power.missing_macro_inputs` ERROR.
 ## Results — flat vs assembled
 
 Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8 and the released
-rtl_buddy 6.70.0 wheel this project pins, from an empty
+rtl_buddy 6.70.0 wheel, and re-measured on the 6.77.0 wheel this project now
+pins: only the flat column moved (its synthesised netlist is 6 cells smaller,
+1217 vs 1223, and setup WNS is +2.95 ns, was +3.08), all from an empty
 tree with the one command above, on the PDK revisions `download_pdk.sh` pins,
 with `harden: true` on both partitions and the assembly built from `blocks:`.
 `apb_clk` 20 ns, `cclk` 25 ns. Every final timing and power number is on
@@ -194,12 +196,12 @@ need re-hardening, which the one command above does.
 | | flat | csr partition | compute partition | **assembled** | assembled, RTL-MP |
 |---|---|---|---|---|---|
 | verdict | PASS | PASS | PASS | **PASS** | PASS |
-| standard-cell instances, input / routed | 1223 / 1462 | 376 / 395 | 297 / 305 | **554 / 828** | 554 / 760 |
+| standard-cell instances, input / routed | 1217 / 1455 | 376 / 395 | 297 / 305 | **554 / 828** | 554 / 760 |
 | die (µm) | 697.5 × 697.5 | 99.3 × 99.3 | 89.6 × 89.6 | **717.2 × 717.2** | 717.2 × 717.2 |
-| design area (µm²) | 208 826 | 3 480 | 2 606 | **221 384** | 220 751 |
+| design area (µm²) | 208 812 | 3 480 | 2 606 | **221 384** | 220 751 |
 | core area (µm²) | 456 758 | 7 767 | 6 241 | **483 370** | 483 370 |
 | core utilization | 46% | 45% | 42% | **46%** | 46% |
-| setup WNS (ns) | +3.08 | +10.75 | +13.47 | **+2.66** | +3.03 |
+| setup WNS (ns) | +2.95 | +10.75 | +13.47 | **+2.66** | +3.03 |
 | setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** | 0.00 |
 | hold WNS (ns) | +0.15 | +0.49 | +0.68 | **+0.29** | +0.18 |
 | DRC violations | 0 | 0 | 0 | **0** | 0 |
@@ -211,8 +213,8 @@ need re-hardening, which the one command above does.
 Reading it:
 
 - **Worst setup is the same path both ways**: the SRAM's read data out to
-  `prdata` — `u_sram` → `prdata[6]` flat, → `prdata[1]` assembled — which no
-  partitioning moves. It is 0.42 ns worse assembled. The three macros sit in a
+  `prdata` — `u_sram` → `prdata[9]` flat, → `prdata[1]` assembled — which no
+  partitioning moves. It is 0.29 ns worse assembled. The three macros sit in a
   different place in the assembly's floorplan, and with extracted parasitics
   the longer route from the SRAM to the output pins shows up in full. TNS is
   zero both ways and hold is within 0.15 ns.
@@ -226,7 +228,7 @@ Reading it:
   `rtl_macro_placer` places the three macros by connectivity, and rotates the
   two partitions (R180 and MY), instead of the packer filling rows from a
   corner. The worst path is still the SRAM-to-`prdata` one, and it gains
-  0.37 ns, to within 0.05 ns of the flat run. Everything else is unchanged: 0 DRCs, the power grid connected to both
+  0.37 ns, which puts it 0.08 ns ahead of the flat run. Everything else is unchanged: 0 DRCs, the power grid connected to both
   rotated partitions, strict GDS complete.
 - **DRC-clean on every run.** 6.62.0 and 6.63.0 left two met1 spacing
   violations in the assembly, where a standard cell abutted the `u_csr` macro

@@ -14,7 +14,7 @@ configuration for them.
 
 ## What you need
 
-- **rtl_buddy >= 6.70.0**, which `pyproject.toml` pins: rtl-buddy/rtl_buddy#716 (the Tcl hooks), #717
+- **rtl_buddy >= 6.70.0** (`pyproject.toml` pins 6.77.0): rtl-buddy/rtl_buddy#716 (the Tcl hooks), #717
   (`post-cts-setup-repair`, `routing-layer-adjustment`, hold TNS) and #718
   (`routed_cell_count` / `physical_cell_count`), on top of #699 (list-valued
   corners for ASAP7's split Liberty, the ps Liberty `time_unit`, gzipped
@@ -41,6 +41,9 @@ rb pnr demo_tiny_alu_subsys_asap7_compute_pnr -c pnr/demo_tiny_alu_subsys_asap7/
 rb pnr -c pnr/demo_tiny_alu_subsys_asap7/pnr.yaml -l 1000 --synth
 
 # add --gds --png to stream out GDS and render it with KLayout
+
+# power: the synthesised netlist, then the routed design of ..._compute_pnr
+rb power -c power/demo_tiny_alu_subsys_asap7/power.yaml -l 1000
 ```
 
 Each run takes about 30 seconds. Outputs land in `artefacts/<run>/`.
@@ -69,7 +72,8 @@ upstream files.
 
 ## Expected results
 
-Measured with the released rtl_buddy 6.70.0 wheel this project pins, OpenROAD and Yosys
+Measured with the released rtl_buddy 6.70.0 wheel and again, unchanged, with
+the 6.77.0 wheel this project now pins, OpenROAD and Yosys
 from rtl-buddy-tools, ORFS at the commit pinned in `download_pdk.sh`.
 
 | Run | Clock | Platform | Cells in / routed / physical | Area | WNS setup | TNS setup | WNS hold | DRC |
@@ -102,3 +106,20 @@ WNS and about 60% of the TNS. Neither closes at 250 ps; the clock is
 over-constrained on purpose.
 
 Without `tracks-tcl` the run stops at `make_tracks` with `IFP-0039`.
+
+## Power
+
+[`power/demo_tiny_alu_subsys_asap7/power.yaml`](../../power/demo_tiny_alu_subsys_asap7/power.yaml)
+analyses the same partition on the same `asap7_tt` platform, so OpenROAD's
+power analysis reads the corner the way synthesis and P&R do: five Liberty
+files, three of them `.lib.gz`, in ps (rtl-buddy/rtl_buddy#699).
+
+| Run | Netlist | Activity | Total | Internal | Switching | Leakage | Clock |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `..._power_static` | synthesised | Liberty defaults | 205 µW | 138 µW | 67 µW | 28 nW | 0 |
+| `..._power_postpnr` | routed `..._compute_pnr`, SPEF | 0.2 toggle, 0.5 duty | 194 µW | 119 µW | 75 µW | 24 nW | 42 µW |
+
+Only the post-P&R run has a clock tree to report. It warns that the 610
+physical-only instances (eight masters: the `DECAP*` and `FILLER*` cells and
+the `TAPCELL` endcaps) have no Liberty power data and are reported at 0 W. That is expected: the TT Liberty
+does not characterise them.
