@@ -570,6 +570,12 @@ cfg-pnr-platforms:
       - "sky130_fd_sc_hd__clkbuf_4"
       - "sky130_fd_sc_hd__clkbuf_8"
       - "sky130_fd_sc_hd__clkbuf_16"
+    # The cell `buffer_ports` puts on every port of a `harden: true` run
+    # (rtl_buddy >= 6.78, rtl-buddy/rtl_buddy#772), so the parent drives one
+    # buffer, not the block's internal fanout. ORFS' sky130hd MIN_BUF_CELL.
+    # Left unset, OpenROAD picks the delay cell clkdlybuf4s50_1, which costs
+    # the csr partition about 0.9 ns of setup.
+    port-buffer: "sky130_fd_sc_hd__buf_4"
     cts-sink-clustering: false
     routing-layers:
       signal: "met1-met4"
