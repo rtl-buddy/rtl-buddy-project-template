@@ -927,6 +927,23 @@ Outputs land in `pnr/demo_tiny_alu_subsys/artefacts/<run>/`. Requires a
 local `openroad` build (referenced via `cfg-pnr-tools` if outside PATH);
 KLayout is optional and only needed for `--gds`/`--png`.
 
+`pnr.log` is written as OpenROAD runs, so `tail -f` follows it: the
+global router's per-layer congestion table (GRT-0096) and each detailed-route
+iteration's violation count appear as they happen (rtl_buddy >= 6.78,
+`detailed-route-verbose`). Every run also counts its max-slew,
+max-capacitance and max-fanout violators (the Slew/Cap/Fanout column). This
+design routes with 50 max-capacitance violators and 1 max-slew violator, so it
+passes with an "electrical" note; `fail-on-electrical: true` would fail it.
+
+[`pnr/demo_tiny_alu_subsys/pnr.yaml`](pnr/demo_tiny_alu_subsys/pnr.yaml)
+carries a commented-out `floorplan.pins` block (side, edge-range, ordered-group
+and exact-location pin constraints, rtl_buddy >= 6.78). The other floorplan
+controls 6.78 added are not shown in these examples: `floorplan.macros`
+(fixed macro location, orientation and halo), explicit `die-area` /
+`core-area`, `core-cutouts` for L- or T-shaped cores, and a run's own
+`pdn-config` or declarative `pdn:` grid. See the
+[rtl_buddy P&R docs](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/pnr/).
+
 ### Hierarchical P&R on sky130hd
 
 [`pnr/demo_tiny_alu_subsys_hier/`](pnr/demo_tiny_alu_subsys_hier/) takes the
@@ -959,6 +976,11 @@ assembly:
 ```bash
 rb pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 --synth -j 2 --gds
 ```
+
+Its partitions' ports are buffered (`buffer_ports`, on by default for
+`harden: true` since rtl_buddy 6.78.0) with the `port-buffer` cell the
+`sky130hd_tt_block` platform names, so each abstract presents one buffer's
+input capacitance to the parent rather than its internal fanout.
 
 This example needs rtl_buddy >= 6.70.0, for the sky130hd wire RC
 (`cfg-pdks.layer-rc-tcl`, rtl-buddy/rtl_buddy#716); before that, 6.63.0 for `harden:` / `blocks:`,
