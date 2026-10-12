@@ -17,4 +17,21 @@ runs:
       utilization: 0.55
       aspect: 1.0
       core-margin: 2.0
+      # IO pin constraints (rtl_buddy >= 6.78, rtl-buddy/rtl_buddy#105). Each
+      # entry names ports by name or glob and puts them on a side (optionally
+      # within start/end µm along it), keeps them together in order, or fixes
+      # one pin at a die location. A glob that matches no port fails the run.
+      # pins:
+      #   - {names: "paddr*", side: left}
+      #   - {names: "prdata*", side: right, start: 10, end: 60}
+      #   - {names: "pwdata*", side: top, group: true, order: true}
+      #   - {names: "apb_clk", location: [0, 30]}
+    # Detailed-route progress in pnr.log (rtl_buddy >= 6.78, #769): 1 (the
+    # default) logs each iteration's violation count; 0 silences it.
+    # detailed-route-verbose: 1
+    # Max-slew / max-capacitance / max-fanout violators are counted on every
+    # run (the Slew/Cap/Fanout column, rtl_buddy >= 6.78, #772). This design
+    # routes with 50 max-capacitance violators (and 1 max-slew), so it passes
+    # with an "electrical" note; uncomment to make them fail the run.
+    # fail-on-electrical: true
     reglvl: 1000

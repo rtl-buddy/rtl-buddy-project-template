@@ -87,6 +87,7 @@ pnr/demo_tiny_alu_subsys_hier/           # sky130hd hierarchical P&R pipeclean (
 pnr/sky130hd/                            # sky130hd PDN snippets, top-level and block-level
 pnr/demo_tiny_alu_subsys_asap7/          # ASAP7 flat P&R from an ORFS platform (read its README first)
 pnr/asap7/                               # asap7 hooks: PDN + tap/endcap Tcl
+power/demo_tiny_alu_subsys_asap7/        # ASAP7 power on the split-Liberty TT corner, static and post-P&R
 fpga/demo_cdc_open/                      # openXC7 FPGA flow example
 fpv/demo_abv/                            # FPV and ABV examples
 pyproject.toml                           # uv-managed project environment and rtl_buddy dependency pin
