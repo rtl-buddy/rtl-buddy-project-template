@@ -30,7 +30,8 @@ third-party macro side by side.
 ## What you need
 
 - `openroad` and `klayout` on `PATH`, and `yosys`.
-- **rtl_buddy >= 6.70.0** (`pyproject.toml` pins 6.77.0; 6.70.0 is needed for
+- **rtl_buddy >= 6.70.0**, and 6.78.0 for the numbers below (`pyproject.toml`
+  pins 6.78.0, which buffers a hardened block's ports; 6.70.0 is needed for
   the sky130hd wire RC below; the rest needs 6.65.0). 6.63.0 added
   `harden:` and `blocks:` (rtl-buddy/rtl_buddy#95); 6.64.0 the standard-cell
   keep-out around macros that keeps the assembly DRC-clean
@@ -180,9 +181,7 @@ with no library at all is the `power.missing_macro_inputs` ERROR.
 ## Results — flat vs assembled
 
 Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8 and the released
-rtl_buddy 6.70.0 wheel, and re-measured on the 6.77.0 wheel this project now
-pins: only the flat column moved (its synthesised netlist is 6 cells smaller,
-1217 vs 1223, and setup WNS is +2.95 ns, was +3.08), all from an empty
+rtl_buddy 6.78.0 wheel this project pins, all from an empty
 tree with the one command above, on the PDK revisions `download_pdk.sh` pins,
 with `harden: true` on both partitions and the assembly built from `blocks:`.
 `apb_clk` 20 ns, `cclk` 25 ns. Every final timing and power number is on
@@ -196,25 +195,28 @@ need re-hardening, which the one command above does.
 | | flat | csr partition | compute partition | **assembled** | assembled, RTL-MP |
 |---|---|---|---|---|---|
 | verdict | PASS | PASS | PASS | **PASS** | PASS |
-| standard-cell instances, input / routed | 1217 / 1455 | 376 / 395 | 297 / 305 | **554 / 828** | 554 / 760 |
+| standard-cell instances, input / routed | 1217 / 1455 | 376 / 559 | 297 / 362 | **554 / 824** | 554 / 759 |
 | die (µm) | 697.5 × 697.5 | 99.3 × 99.3 | 89.6 × 89.6 | **717.2 × 717.2** | 717.2 × 717.2 |
-| design area (µm²) | 208 812 | 3 480 | 2 606 | **221 384** | 220 751 |
+| design area (µm²) | 208 812 | 4 644 | 3 057 | **221 328** | 220 718 |
 | core area (µm²) | 456 758 | 7 767 | 6 241 | **483 370** | 483 370 |
-| core utilization | 46% | 45% | 42% | **46%** | 46% |
-| setup WNS (ns) | +2.95 | +10.75 | +13.47 | **+2.66** | +3.03 |
+| core utilization | 46% | 60% | 49% | **46%** | 46% |
+| setup WNS (ns) | +2.95 | +10.69 | +13.49 | **+2.76** | +3.18 |
 | setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** | 0.00 |
-| hold WNS (ns) | +0.15 | +0.49 | +0.68 | **+0.29** | +0.18 |
+| hold WNS (ns) | +0.15 | +0.47 | +0.67 | **+0.29** | +0.25 |
 | DRC violations | 0 | 0 | 0 | **0** | 0 |
+| max-slew / max-cap violators | 27 / 13 | 0 / 0 | 0 / 0 | **36 / 14** | 28 / 3 |
 | GDS | `complete` | `complete` | `complete` | **`complete`** | `complete` |
 | abstract published | — | yes | yes | — | — |
-| static power (mW) | 3.55 | — | — | **4.74** — see below |
+| port buffers, in / out | — | 85 / 78 | 42 / 15 | — | — |
+| largest abstract input pin cap (pF) | — | 0.016 | 0.014 | — | — |
+| static power (mW) | 3.55 | — | — | **4.73** — see below |
 | of which the SRAM (mW) | 1.93 | — | — | **1.93** |
 
 Reading it:
 
 - **Worst setup is the same path both ways**: the SRAM's read data out to
   `prdata` — `u_sram` → `prdata[9]` flat, → `prdata[1]` assembled — which no
-  partitioning moves. It is 0.29 ns worse assembled. The three macros sit in a
+  partitioning moves. It is 0.19 ns worse assembled. The three macros sit in a
   different place in the assembly's floorplan, and with extracted parasitics
   the longer route from the SRAM to the output pins shows up in full. TNS is
   zero both ways and hold is within 0.15 ns.
@@ -228,7 +230,7 @@ Reading it:
   `rtl_macro_placer` places the three macros by connectivity, and rotates the
   two partitions (R180 and MY), instead of the packer filling rows from a
   corner. The worst path is still the SRAM-to-`prdata` one, and it gains
-  0.37 ns, which puts it 0.08 ns ahead of the flat run. Everything else is unchanged: 0 DRCs, the power grid connected to both
+  0.42 ns, which puts it 0.23 ns ahead of the flat run. Everything else is unchanged: 0 DRCs, the power grid connected to both
   rotated partitions, strict GDS complete.
 - **DRC-clean on every run.** 6.62.0 and 6.63.0 left two met1 spacing
   violations in the assembly, where a standard cell abutted the `u_csr` macro
@@ -242,7 +244,7 @@ Reading it:
   power tables, and the assembly's `rb power` says so, naming both cells as
   having no Liberty power data. So the assembly's total leaves out the
   partitions' own cell power. What it adds is 1.1 mW more switching power on
-  the top-level nets (1.58 vs 0.48 mW), which now carry extracted wire
+  the top-level nets (1.57 vs 0.47 mW), which now carry extracted wire
   capacitance between three macros spread over the die, and whose drivers
   inside the partitions switch at OpenSTA's default input activity, since an
   abstract says nothing about them.
@@ -261,6 +263,27 @@ Reading it:
   partitions' abstract Liberty, whose outputs have no `function`, so OpenSTA's
   activity propagation never reached them and every net they drive counted as
   static. 6.65.0 leaves that Liberty out of `rb power`.
+- **Hardened partitions have buffered ports** (rtl_buddy 6.78.0,
+  rtl-buddy/rtl_buddy#772). `harden: true` now runs `buffer_ports` before
+  global placement, with the cell `sky130hd_tt_block` names in `port-buffer`
+  (`sky130_fd_sc_hd__buf_4`): 163 buffers on csr, 57 on compute. The largest
+  input pin capacitance either abstract presents to the parent falls from
+  0.227 pF (csr `rst_n`) and 0.107 pF (compute `rst_n`) to 0.016 and 0.014 pF,
+  and the summed input capacitance by 40% and 50%. The partitions grow
+  (csr 3 480 → 4 644 µm², compute 2 606 → 3 057 µm²) with timing within
+  0.06 ns, and the assembly gains 0.10 ns of setup (RTL-MP 0.15 ns). Without
+  `port-buffer`, OpenROAD picks the delay cell `clkdlybuf4s50_1` and csr loses
+  0.9 ns of setup. Abstracts hardened on an older rtl_buddy are refused as
+  stale (`config changed (buffer_ports)`); the one command above re-hardens
+  them.
+- **Electrical violators are counted** (rtl_buddy 6.78.0). Every run reports
+  its max-slew and max-capacitance violators; the flat run and both
+  assemblies have some, mostly on the SRAM's read path: its `dout1` pins
+  have a 0.03 pF max-capacitance limit their read-data nets exceed, and the
+  slews downstream reach 1.67 ns against a 1.5 ns limit. They pass with an
+  "electrical" note. The counts
+  vary a little between identical runs. `fail-on-electrical: true` on a run
+  makes them fail it. The partitions have none.
 
 ## Step-0 spike findings
 
