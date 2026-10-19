@@ -188,7 +188,7 @@ uv run rb skill install --project
 │   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks: (see its README)
 │   ├── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 flat P&R from an ORFS platform (see its README)
 │   ├── demo_synth_macro/         # demo — sky130hd hard macro hardened and placed in a top; run hooks
-│   ├── sky130hd/                 # sky130hd PDN snippets: pdn.tcl (top) + pdn_block.tcl (block)
+│   ├── sky130hd/                 # sky130hd hooks: pdn.tcl (top) + pdn_block.tcl (block) + tapcell.tcl (row cuts)
 │   └── asap7/                    # asap7 hooks: pdn.tcl + tapcell.tcl (ORFS, filled in)
 ├── fpv/
 │   ├── demo_abv_basic/   # demo — `rb fpv` saturating counter (bmc + cover)
