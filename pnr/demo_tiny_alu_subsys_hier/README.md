@@ -502,6 +502,7 @@ limitation `lint/cdc/cdc.yaml` documents when it puts
 | `pnr/demo_tiny_alu_subsys_hier/pnr.yaml` | the P&R runs: flat, the multi-corner partition, the two partitions, and the assembly with the packer and with RTL-MP |
 | `pnr/sky130hd/pdn.tcl` | top-level power grid, with macro grids |
 | `pnr/sky130hd/pdn_block.tcl` | block-level power grid — the convention above |
+| `pnr/sky130hd/tapcell.tcl` | cuts the standard-cell rows 2 µm around each macro, as far as the macro grids' halo reaches |
 | `power/demo_tiny_alu_subsys_hier/power.yaml` | post-P&R power for the flat and assembled runs |
 | `design/demo_tiny_alu_subsys/demo_tiny_alu_subsys_mem.sv` | technology wrapper — flop array or SRAM macro |
 | `design/demo_tiny_alu_subsys/*_bb.sv` | port-only blackboxes for the two partitions and the SRAM |

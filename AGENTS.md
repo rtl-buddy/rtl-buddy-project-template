@@ -84,7 +84,7 @@ lint/cdc/cdc.yaml                        # CDC analyses, including slang and bla
 power/demo_tiny_alu_subsys/power.yaml    # `rb power` runs; the static one carries `phys-run` for a merged physical model
 pnr/demo_tiny_alu_subsys/                # `rb pnr` Nangate45 flat flow
 pnr/demo_tiny_alu_subsys_hier/           # sky130hd hierarchical P&R pipeclean (read its README first)
-pnr/sky130hd/                            # sky130hd PDN snippets, top-level and block-level
+pnr/sky130hd/                            # sky130hd hooks: PDN (top-level and block-level) + row cutting around macros
 pnr/demo_tiny_alu_subsys_asap7/          # ASAP7 flat P&R from an ORFS platform (read its README first)
 pnr/asap7/                               # asap7 hooks: PDN + tap/endcap Tcl
 power/demo_tiny_alu_subsys_asap7/        # ASAP7 power on the split-Liberty TT corner, static and post-P&R
