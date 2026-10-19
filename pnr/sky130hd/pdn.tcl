@@ -7,8 +7,8 @@
 #
 # Adapted from OpenROAD-flow-scripts flow/platforms/sky130hd/pdn.tcl
 # (BSD-3-Clause, The OpenROAD Project), at the commit pinned in
-# ../../synth/demo_tiny_alu_subsys_hier/download_pdk.sh. Two changes from the
-# upstream file, both noted where they appear:
+# ../../synth/demo_tiny_alu_subsys_hier/download_pdk.sh. Three changes from the
+# upstream file, all noted where they appear:
 #
 #   1. Global connections for the OpenRAM macros' vccd1 / vssd1 power pins,
 #      which upstream does not carry because its default platform has no
@@ -16,6 +16,8 @@
 #   2. Comments explaining what the hierarchical flow depends on, since this
 #      file is the block-level PDN convention that
 #      ../demo_tiny_alu_subsys_hier/README.md documents.
+#   3. No macro-grid halo above or below a macro, because the rtl_buddy flow
+#      does not cut the standard-cell rows around a macro as ORFS does.
 #
 # Nangate45 does not use this file: its `cfg-pdks` entry declares no
 # `pdn-config`, so no `pdngen` block is emitted and its flow is unchanged.
@@ -70,8 +72,22 @@ add_pdn_connect -grid {grid} -layers {met4 met5}
 # Two grids, one per orientation family, because a macro's power pins rotate
 # with it. `-grid_over_boundary` lets the top-level met4/met5 straps run across
 # the macro and drop vias onto its pins, which is how a hard macro — an OpenRAM
-# SRAM or a hardened partition — is tied into the top-level supply. The 2 um
-# halo keeps the via stacks off the macro edge.
+# SRAM or a hardened partition — is tied into the top-level supply.
+#
+# The halo keeps the standard-cell grid's followpins and via stacks that far
+# off the macro, on top of the minimum spacing pdngen always keeps. It may not
+# reach a row the macro does not sit on: the grid lays no followpin inside a
+# halo, so pdngen fails such a halo with PDN-0008. ORFS cuts the rows 2 um
+# around each macro before it builds the grid, so its 2 um halo on every side
+# lands on no row. The rtl_buddy flow leaves the rows whole and keeps cells
+# off a macro with a placement blockage instead (`placement.macro-cell-halo`
+# in ../../root_config.yaml), and the macro packer puts a macro's bottom edge
+# on a row boundary, so any halo above or below a macro reaches the
+# neighbouring row. The halo here is 2 um to the left and right only, over
+# rows the macro itself sits on.
+#
+# `-halo` is {left bottom right top} in the macro's own frame and turns with
+# the macro, which is why the quarter-turn grid writes it as {0 2 0 2}.
 #
 # This is the half of the hierarchical convention that lives at the top. The
 # other half is the block-level grid above: a block hardened for consumption
@@ -81,11 +97,11 @@ add_pdn_connect -grid {grid} -layers {met4 met5}
 # grid for: CORE_macro_grid_1
 ####################################
 define_pdn_grid -name {CORE_macro_grid_1} -voltage_domains {CORE} -macro \
-  -orient {R0 R180 MX MY} -halo {2.0 2.0 2.0 2.0} -default -grid_over_boundary
+  -orient {R0 R180 MX MY} -halo {2.0 0.0 2.0 0.0} -default -grid_over_boundary
 add_pdn_connect -grid {CORE_macro_grid_1} -layers {met4 met5}
 ####################################
 # grid for: CORE_macro_grid_2
 ####################################
 define_pdn_grid -name {CORE_macro_grid_2} -voltage_domains {CORE} -macro \
-  -orient {R90 R270 MXR90 MYR90} -halo {2.0 2.0 2.0 2.0} -default -grid_over_boundary
+  -orient {R90 R270 MXR90 MYR90} -halo {0.0 2.0 0.0 2.0} -default -grid_over_boundary
 add_pdn_connect -grid {CORE_macro_grid_2} -layers {met4 met5}
