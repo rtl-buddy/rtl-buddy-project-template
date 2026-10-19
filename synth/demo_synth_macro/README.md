@@ -44,11 +44,13 @@ them:
 | `macro-placement` | `pnr/demo_synth_macro/hooks/place_macro.tcl` | replaces rb's macro packer: puts `i_macro` with its lower-left corner at (130, 130) um, snapped onto the site grid |
 | `after-cts` | `pnr/demo_synth_macro/hooks/clock_report.tcl` | right after clock tree synthesis, writes the clock tree's buffers, skew and latency to `clock_tree.rpt` |
 
-Use `macro-placement` when a block needs its macros in known places, such as
-next to the pins they talk to, and the packer or RTL-MP cannot be told where.
-Use the other points for a step the flow does not have, such as an extra
-report or repair. The hooks run is step 5 of the command above; once the
-macro is hardened, it also runs on its own:
+A fixed location alone can also be written in YAML, with `floorplan.macros`.
+Use a `macro-placement` hook when the placement has to be computed, for
+example from the core size or from where other macros went, or already exists
+as a Tcl script; this demo keeps it to one fixed location so the effect is
+easy to check. Use the other points for a step the flow does not have, such as
+an extra report or repair. The hooks run is step 5 of the command above; once
+the macro is hardened, it also runs on its own:
 
 ```sh
 uv run rb pnr demo_synth_macro_sky130_hooks_pnr -c pnr/demo_synth_macro/pnr.yaml --synth -l 1000 --gds
