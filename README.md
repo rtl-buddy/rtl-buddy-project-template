@@ -187,6 +187,7 @@ uv run rb skill install --project
 │   ├── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
 │   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks: (see its README)
 │   ├── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 flat P&R from an ORFS platform (see its README)
+│   ├── demo_synth_macro/         # demo — sky130hd hard macro hardened and placed in a top; run hooks
 │   ├── sky130hd/                 # sky130hd PDN snippets: pdn.tcl (top) + pdn_block.tcl (block)
 │   └── asap7/                    # asap7 hooks: pdn.tcl + tapcell.tcl (ORFS, filled in)
 ├── fpv/
@@ -943,6 +944,14 @@ controls 6.78 added are not shown in these examples: `floorplan.macros`
 `core-area`, `core-cutouts` for L- or T-shaped cores, and a run's own
 `pdn-config` or declarative `pdn:` grid. See the
 [rtl_buddy P&R docs](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/pnr/).
+
+Run hooks, Tcl files a P&R run's `hooks:` names for `rb pnr` to source at
+fixed points of its flow (rtl-buddy/rtl_buddy#847), are shown by
+`demo_synth_macro_sky130_hooks_pnr` in
+[`pnr/demo_synth_macro/pnr.yaml`](pnr/demo_synth_macro/pnr.yaml): a
+`macro-placement` hook puts the hard macro at an explicit location and an
+`after-cts` hook writes a clock tree report. See
+[`synth/demo_synth_macro/README.md`](synth/demo_synth_macro/README.md#placing-the-macro-with-a-run-hook).
 
 ### Hierarchical P&R on sky130hd
 

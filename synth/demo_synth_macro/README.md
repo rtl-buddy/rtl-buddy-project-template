@@ -19,7 +19,7 @@ synth/demo_tiny_alu_subsys_hier/download_pdk.sh
 rb pnr -c pnr/demo_synth_macro/pnr.yaml --synth -l 1000 --gds
 ```
 
-That runs four steps. `pnr/demo_synth_macro/pnr.yaml` lists the top first, and
+That runs five steps. `pnr/demo_synth_macro/pnr.yaml` lists the top first, and
 `rb pnr` still hardens the macro before it, because the top names the macro
 under `blocks:`. `--synth` runs each P&R run's own synthesis just before it,
 so the top is synthesized after the macro's abstract exists:
@@ -30,6 +30,40 @@ so the top is synthesized after the macro's abstract exists:
 | 2 | `rb pnr demo_hard_macro_sky130_pnr` | the macro, placed, routed and hardened (`harden: true`): `abstract/demo_hard_macro.{lef,lib,gds}` |
 | 3 | `rb synth demo_synth_macro_sky130` | the top's netlist, the macro a blackbox with the abstract as its master |
 | 4 | `rb pnr demo_synth_macro_sky130_pnr` | the top, with the macro placed as a hard macro and streamed out from its own GDS |
+| 5 | `rb pnr demo_synth_macro_sky130_hooks_pnr` | the same top, with the macro placed by a run hook; see [Placing the macro with a run hook](#placing-the-macro-with-a-run-hook) |
+
+## Placing the macro with a run hook
+
+`hooks:` on a P&R run names Tcl files that `rb pnr` sources at fixed points of
+its flow, so a run can add or replace a step without editing the generated
+`pnr.tcl`. `demo_synth_macro_sky130_hooks_pnr` is the top run with two of
+them:
+
+| point | file | what it does |
+|---|---|---|
+| `macro-placement` | `pnr/demo_synth_macro/hooks/place_macro.tcl` | replaces rb's macro packer: puts `i_macro` with its lower-left corner at (130, 130) um, snapped onto the site grid |
+| `after-cts` | `pnr/demo_synth_macro/hooks/clock_report.tcl` | right after clock tree synthesis, writes the clock tree's buffers, skew and latency to `clock_tree.rpt` |
+
+Use `macro-placement` when a block needs its macros in known places, such as
+next to the pins they talk to, and the packer or RTL-MP cannot be told where.
+Use the other points for a step the flow does not have, such as an extra
+report or repair. The hooks run is step 5 of the command above; once the
+macro is hardened, it also runs on its own:
+
+```sh
+uv run rb pnr demo_synth_macro_sky130_hooks_pnr -c pnr/demo_synth_macro/pnr.yaml --synth -l 1000 --gds
+```
+
+In `pnr/demo_synth_macro/artefacts/demo_synth_macro_sky130_hooks_pnr/`:
+
+- `pnr.log` announces each file as `>>> Hook <point>: <path>`, and the
+  placement hook prints `placed i_macro at (129.72, 127.84) um`.
+- `demo_synth_macro_top.def` has `i_macro` at `( 129720 127840 )`, where
+  `demo_synth_macro_sky130_pnr` has it in the lower-left corner.
+- `clock_tree.rpt` is the after-CTS report.
+
+The full list of hook points and the flow variables each one sees is in the
+[rtl_buddy P&R docs](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/pnr/#run-tcl-hooks).
 
 ## What a hard macro needs
 
