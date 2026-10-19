@@ -199,14 +199,12 @@ rb pnr   demo_tiny_alu_subsys_sky130_planner_pnr -c pnr/demo_tiny_alu_subsys_hie
 
 | what | where | effect |
 |---|---|---|
-| macro plan | `plan/macros.yaml`, read by `floorplan.macros-file` | the SRAM turned R90, its lower-left corner at (80.04, 100.64) µm |
+| macro plan | `plan/macros.yaml`, read by `floorplan.macros-file` | the SRAM rotated 180 degrees (`R180`), its lower-left corner at (80.04, 100.64) µm |
 | `macro-snap: false` | `pnr.yaml` | the corner is kept exactly; the default `true` snaps it to the site and row grid |
 | pin plan | `plan/pins.yaml`, read by `floorplan.pins-file` | six exact pins, then a side rule for every other port |
 | `pin-snap: false` | `pnr.yaml` | each exact pin's centre is kept; the default `true` moves it onto the die edge and a routing track |
 | `pins-complete: true` | `pnr.yaml` | the run fails before pin placement if a signal port has no entry, or two |
 | `lifetime: global-placement` | the run's `blockages:` | a partial blockage, 35% cell density, that exists only during global placement |
-| `rotated-macro-footprint` | default `block` | blocks the turned SRAM's unrotated footprint during global placement, so no cell lands where the legalizer would refuse it (OpenROAD#11735) |
-| `pdn-config` | `pdn_turned_macro.tcl` | this run's power grid, without the PDK's macro grid for turned orientations; see its header |
 
 Leave `macro-snap` and `pin-snap` at their defaults when the planner does not
 know the site grid or the routing tracks. Set them to `false` when it does and
@@ -216,13 +214,13 @@ site and row grid, the pins are not on a track.
 What to look at, in `pnr/demo_tiny_alu_subsys_hier/artefacts/demo_tiny_alu_subsys_sky130_planner_pnr/`:
 
 - `pnr.log` has `floorplan.macros-file[0]: fixed u_inner/u_hist_mem/u_sram at
-  (80.040, 100.640) um R90`, one `placed pin ...` line per exact pin and
-  `floorplan.pins-complete: every signal port is covered`. After
-  `>>> Global-placement-only blockages` and `>>> Rotated macros` it ends global
-  placement with `removed 2 global-placement-only blockage(s)`: the run's screen
-  and the turned SRAM's footprint.
+  (80.040, 100.640) um R180`, one `placed pin ...` line per exact pin and
+  `floorplan.pins-complete: every signal port is covered`. Under
+  `>>> Global-placement-only blockages` the screen exists only for
+  `global_placement`, and the log says `removed 1 global-placement-only
+  blockage(s)` right after it.
 - The routed `demo_tiny_alu_subsys_synth_top.def` has the SRAM at
-  `FIXED ( 80040 100640 ) W` (DEF's name for R90) and `paddr[0]` at
+  `FIXED ( 80040 100640 ) S` (DEF's name for R180) and `paddr[0]` at
   `FIXED ( 500 68340 )`.
 - `rb pnr` compares the routed DEF with the `RB-FLOORPLAN-MACRO` and
   `RB-FLOORPLAN-PIN` lines the log recorded, after OpenROAD exits. A macro at
@@ -233,10 +231,14 @@ Remove `pwrite` and `crst_n` from the last rule of `plan/pins.yaml` and the run
 fails before it places any pin, with
 `floorplan.pins-complete: 2 port(s) matched by no entry (crst_n, pwrite)`.
 
-The SRAM's `vccd1` / `vssd1` pins are not tied into the power grid in this run.
-Turned 90 degrees, the SRAM's supply ring runs parallel to the grid's met5
-straps and no via lands on it (`pdn_turned_macro.tcl` says why), so this run
-checks macro and pin placement, not the SRAM's supply.
+The SRAM is rotated 180 degrees, not 90, so that the PDK's macro grid in
+`pnr/sky130hd/pdn.tcl` powers it: `R0`, `R180`, `MX` and `MY` keep its supply
+sides vertical. A 90-degree turn (`R90`, `R270`, `MXR90`, `MYR90`) needs a PDN
+macro grid that reaches the turned power pins, and the shipped sky130hd grid
+cannot do this for the OpenRAM SRAM
+([#143](https://github.com/rtl-buddy/rtl-buddy-project-template/issues/143)).
+To check the supply, read the routed `.odb` back into OpenROAD and run
+`check_power_grid -net VDD` and `-net VSS`.
 
 ## Results — flat vs assembled
 
@@ -560,9 +562,8 @@ limitation `lint/cdc/cdc.yaml` documents when it puts
 | `synth/demo_tiny_alu_subsys_hier/constraints_csr.sdc` | partition A's single-clock constraints |
 | `synth/demo_tiny_alu_subsys_hier/constraints_compute.sdc` | partition B's single-clock constraints |
 | `pnr/demo_tiny_alu_subsys_hier/pnr.yaml` | the P&R runs: flat, the multi-corner partition, the two partitions, the assembly with the packer and with RTL-MP, and the flat run floorplanned from planner files |
-| `pnr/demo_tiny_alu_subsys_hier/plan/macros.yaml` | the macro plan the planner-files run reads: the SRAM, turned R90, at an explicit location |
+| `pnr/demo_tiny_alu_subsys_hier/plan/macros.yaml` | the macro plan the planner-files run reads: the SRAM, rotated 180 degrees, at an explicit location |
 | `pnr/demo_tiny_alu_subsys_hier/plan/pins.yaml` | the pin plan it reads: six exact pins and a side rule for every other port |
-| `pnr/demo_tiny_alu_subsys_hier/pdn_turned_macro.tcl` | that run's power grid: `pnr/sky130hd/pdn.tcl` without its macro grid for turned orientations |
 | `pnr/sky130hd/pdn.tcl` | top-level power grid, with macro grids |
 | `pnr/sky130hd/pdn_block.tcl` | block-level power grid — the convention above |
 | `pnr/sky130hd/tapcell.tcl` | cuts the standard-cell rows 2 µm around each macro, as far as the macro grids' halo reaches |

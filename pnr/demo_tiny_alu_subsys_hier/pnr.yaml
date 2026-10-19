@@ -196,10 +196,10 @@ runs:
 
   # ── the flat reference, floorplanned from planner files ────────────────────
   # What a floorplanner hands over, read from plan/ instead of typed here:
-  # where the SRAM sits and which way it is turned (plan/macros.yaml), and
+  # where the SRAM sits and which way it is oriented (plan/macros.yaml), and
   # where each pin goes (plan/pins.yaml). See README.md, "Planner files".
   - name: "demo_tiny_alu_subsys_sky130_planner_pnr"
-    desc: "Flat sky130hd P&R with the SRAM turned R90 and macro and pin positions from planner files"
+    desc: "Flat sky130hd P&R with the SRAM at R180 and macro and pin positions from planner files"
     tool: "openroad"
     synth: "demo_tiny_alu_subsys_sky130_flat"
     synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
@@ -221,17 +221,10 @@ runs:
         # A screen for global placement only: the planner wants this region
         # kept to 35% cell density while cells are placed. The blockage is
         # removed right after, so legalization, repair and routing never see it.
-        - rect: [600, 100, 750, 200]
+        - rect: [600, 300, 700, 400]
           type: partial
           max-density: 0.35
           lifetime: global-placement
-    # `placement.rotated-macro-footprint` is left at its default, `block`: the
-    # turned SRAM gets a placement blockage over its unrotated footprint during
-    # global placement, so no cell lands where legalization would refuse it.
-    # The PDK's power grid has a macro grid for turned orientations that fails
-    # on this SRAM (PDN-0233). This run's own pdn-config replaces the PDK's for
-    # this run only; see its header.
-    pdn-config: pdn_turned_macro.tcl
     lef-paths:
       - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
     lib-paths:

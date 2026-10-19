@@ -955,7 +955,7 @@ Planner files, macro and pin plans a floorplanner writes and `floorplan.macros-f
 and `floorplan.pins-file` read (rtl-buddy/rtl_buddy#850), are shown by
 `demo_tiny_alu_subsys_sky130_planner_pnr` in
 [`pnr/demo_tiny_alu_subsys_hier/pnr.yaml`](pnr/demo_tiny_alu_subsys_hier/pnr.yaml):
-the SRAM turned R90 at an explicit location, six exact pins plus side rules with
+the SRAM rotated 180 degrees at an explicit location, six exact pins plus side rules with
 `pins-complete: true`, a global-placement-only blockage, and the routed-floorplan
 check. See
 [`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md#5-planner-files-optional).
