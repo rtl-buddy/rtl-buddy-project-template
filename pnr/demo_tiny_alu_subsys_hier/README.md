@@ -240,6 +240,136 @@ cannot do this for the OpenRAM SRAM
 To check the supply, read the routed `.odb` back into OpenROAD and run
 `check_power_grid -net VDD` and `-net VSS`.
 
+### 6. Staged runs and timing repair (optional)
+
+Three more runs on the flat reference. They need an rtl_buddy release that has
+staged runs, repair and probe (rtl-buddy/rtl_buddy#848, #849) and timing-driven
+placement (#867), and the same synthesis as step 1. Post-route repair also needs
+the PDK's `rcx-rules`, which the sky130hd entry sets.
+
+```sh
+rb synth demo_tiny_alu_subsys_sky130_flat -c synth/demo_tiny_alu_subsys_hier/synth.yaml
+rb pnr   demo_tiny_alu_subsys_sky130_tight_pnr  -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000
+rb pnr   demo_tiny_alu_subsys_sky130_repair_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000
+rb pnr   demo_tiny_alu_subsys_sky130_probe_pnr  -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000
+```
+
+`..._tight_pnr` and `..._repair_pnr` run the flat reference with `apb_clk` at
+14 ns (`constraints_flat_tight.sdc`) instead of 20 ns. The worst setup path is
+the SRAM's read data out to `prdata`, launched on the falling clock edge, so at
+14 ns routing leaves it with negative slack. Both run the same synthesised
+netlist and the same floorplan.
+
+| what | where | effect |
+|---|---|---|
+| `placement.timing-driven: true` | both runs | `global_placement -timing_driven`: the placer weights the nets on the worst setup paths. On OpenROAD 26Q4 it also buffers and resizes cells during placement |
+| `stages: true` | `..._repair_pnr` | each stage (`floorplan`, `place`, `cts`, `global_route`, `detailed_route`, `post_route_repair`, `finish`) is its own OpenROAD session and writes a checkpoint |
+| `global-route-repair` | `..._repair_pnr` | after global route, `repair_design` with a 20% slew and capacitance margin |
+| `post-route-repair` | `..._repair_pnr` | up to two rounds that extract the routed design and, while setup slack is negative, run `repair_timing -setup` with a 0.05 ns margin (0.10 ns in round 2), then route the changed nets again and keep every other wire (`reroute: eco`) |
+| `resources` | `..._repair_pnr` | the Slurm reservation of each stage job under `--dispatch slurm`; ignored otherwise |
+| `mode: probe` | `..._probe_pnr` | placement and global route only, at 70% utilization instead of 45%; no timing repair, no routed design |
+
+A round starts only when setup slack is negative: `setup-margin` sets how much
+slack the repair aims for, not when it runs. On a design that already meets
+timing the stage runs its extraction and stops.
+
+| | tight | repair |
+|---|---|---|
+| verdict | PASS | PASS |
+| routed cells | 1 434 | 1 465 |
+| design area (µm²) | 208 669 | 208 968 |
+| setup WNS (ns) | **-0.21** | **+0.05** |
+| setup TNS (ns) | -0.42 | 0.00 |
+| hold WNS (ns) | +0.27 | +0.27 |
+| DRC violations | 0 | 0 |
+| max-slew / max-cap violators | 8 / 9 | 9 / 1 |
+| wall time, one OpenROAD thread | 3.4 min | 5.2 min |
+
+Measured with OpenROAD 26Q4 on a shared host, from the synthesis above. At one
+OpenROAD thread, runs of the same configuration give the same numbers.
+
+Reading it:
+
+- **A `PASS` is not timing met.** `..._tight_pnr` passes with -0.21 ns of
+  setup slack and a TNS of -0.42 ns; `wns_setup_ps` and `tns_ps` are the
+  verdict, as for every `rb pnr` run.
+- **The repair run closes setup.** After detailed route the worst setup slack,
+  on the SRAM read path, is -0.39 ns (TNS -0.41 ns). Round 1 repairs it to -0.04 ns, round 2, with the
+  margin raised to 0.10 ns, to +0.05 ns, and the final report is on the
+  extracted parasitics of that route. `progress.jsonl` in
+  `artefacts/<run>/checkpoints/latest/` has a `post_route_round` event per
+  round, and `pnr.log` has each round's `worst slack max` under
+  `>>> Post-route repair timing, round N`. The two runs' routes differ from
+  global route on, since the global-route repair changes the netlist, so the
+  repair run's starting point is not the tight run's result.
+- **Global-route repair** cuts the capacitance violators from 9 to 1 and
+  leaves the slew violators where they were (8 and 9).
+- **Each repair is logged where it runs.** `pnr.log` announces
+  `>>> Global-route repair: repair_design -slew_margin 20 -cap_margin 20` and
+  `>>> Post-route repair round 1 of 2: repair on extracted parasitics (reroute eco)`.
+  A round that makes slack worse is still kept when it is the last one that
+  repaired, so compare the rounds' slack in `progress.jsonl` before trusting
+  the result, and raise `rounds` or the margins when the stage stops short.
+- **Probe.** `..._probe_pnr` finishes in seconds with `routed: false`,
+  `mode: probe`, `stopped_after: global_route` and `global_route_overflow: 0`:
+  the denser floorplan places and routes globally. It says nothing about
+  detailed route or timing after repair; it is a screen before a closure run.
+
+#### Stop after a stage, resume from a checkpoint
+
+```sh
+rb pnr demo_tiny_alu_subsys_sky130_repair_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 \
+       --stop-after global_route
+rb pnr demo_tiny_alu_subsys_sky130_repair_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 \
+       --resume latest --from detailed_route
+```
+
+The first command ends once the `global_route` checkpoint is written, in under
+10 seconds. The result is a `PASS` with `routed: false` and
+`stopped_after: global_route`, with the timing on the global-route estimate
+(setup WNS -0.35 ns) and the overflow, and no routed DEF, ODB or SPEF.
+
+The second starts a new run directory at `detailed_route` from that
+checkpoint: it routes in detail, runs both repair rounds and finishes. Its
+result is the full run's, number for number, and its `manifest.json` records
+`resumed_from` with the run id and stage. `--resume` takes `latest`, a run id
+under `artefacts/<run>/checkpoints/` or a checkpoint directory; the run it
+reads is left as it was, so the same global route can be resumed again, by its
+run id, with other detailed-route settings. A resume is refused, naming what differs, when
+the scripts of the stages it would skip, an input file or the OpenROAD version
+changed since the checkpoint was written.
+
+Only the stages from `--from` on read their settings again, so repair alone can
+be retried without placing or routing again. Change `post-route-repair` in
+`pnr.yaml` (`rounds`, `setup-margin`, `margin-step`), then:
+
+```sh
+rb pnr demo_tiny_alu_subsys_sky130_repair_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 \
+       --resume latest --from post_route_repair
+```
+
+#### Dispatch the stages to Slurm
+
+```sh
+rb pnr demo_tiny_alu_subsys_sky130_repair_pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 \
+       --dispatch slurm
+```
+
+rb writes every stage's script into the run directory, then submits one Slurm
+job per stage, each held until the one before it succeeds, named
+`rb:pnr:<run>:<stage>`, and waits until the last has left the queue. Each job
+reserves what `resources:` gives its stage: `..._repair_pnr` asks for 4G and 30
+minutes, and for 8G and an hour in `detailed_route` and `post_route_repair`.
+OpenROAD runs on one thread in each job; `threads: auto` takes the job's CPUs,
+though results are not guaranteed identical across thread counts. The result,
+manifest and outputs are those of the same run staged locally, and each job's
+script, log and result are under `checkpoints/<run id>/dispatch/`.
+`--dispatch slurm` combines with `--stop-after` and `--resume`: only the stages
+the run executes are submitted.
+
+The template's CI has no Slurm and runs none of these P&R runs; this command
+needs a host with `sbatch`.
+
 ## Results — flat vs assembled
 
 Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8 and the released
@@ -561,7 +691,8 @@ limitation `lint/cdc/cdc.yaml` documents when it puts
 | `synth/demo_tiny_alu_subsys_hier/constraints_flat.sdc` | top-level constraints, shared by the flat and assembly runs |
 | `synth/demo_tiny_alu_subsys_hier/constraints_csr.sdc` | partition A's single-clock constraints |
 | `synth/demo_tiny_alu_subsys_hier/constraints_compute.sdc` | partition B's single-clock constraints |
-| `pnr/demo_tiny_alu_subsys_hier/pnr.yaml` | the P&R runs: flat, the multi-corner partition, the two partitions, the assembly with the packer and with RTL-MP, and the flat run floorplanned from planner files |
+| `pnr/demo_tiny_alu_subsys_hier/pnr.yaml` | the P&R runs: flat, the multi-corner partition, the two partitions, the assembly with the packer and with RTL-MP, the flat run floorplanned from planner files, and the flat run at a tight clock without and with staged repair, plus a probe of a denser floorplan |
+| `pnr/demo_tiny_alu_subsys_hier/constraints_flat_tight.sdc` | the flat constraints with `apb_clk` at 14 ns, read by the tight and repair runs |
 | `pnr/demo_tiny_alu_subsys_hier/plan/macros.yaml` | the macro plan the planner-files run reads: the SRAM, rotated 180 degrees, at an explicit location |
 | `pnr/demo_tiny_alu_subsys_hier/plan/pins.yaml` | the pin plan it reads: six exact pins and a side rule for every other port |
 | `pnr/sky130hd/pdn.tcl` | top-level power grid, with macro grids |

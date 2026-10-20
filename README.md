@@ -185,7 +185,7 @@ uv run rb skill install --project
 │   └── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 power, synthesised and routed
 ├── pnr/
 │   ├── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
-│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks:, planner files (see its README)
+│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks:, planner files, staged runs and repair (see its README)
 │   ├── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 flat P&R from an ORFS platform (see its README)
 │   ├── demo_synth_macro/         # demo — sky130hd hard macro hardened and placed in a top; run hooks
 │   ├── sky130hd/                 # sky130hd hooks: pdn.tcl (top) + pdn_block.tcl (block) + tapcell.tcl (row cuts)
@@ -959,6 +959,16 @@ the SRAM rotated 180 degrees at an explicit location, six exact pins plus side r
 `pins-complete: true`, a global-placement-only blockage, and the routed-floorplan
 check. See
 [`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md#5-planner-files-optional).
+
+Staged runs, repair and probe (rtl-buddy/rtl_buddy#848, #849) and timing-driven
+placement (#867) are shown by three runs on the same flat reference:
+`demo_tiny_alu_subsys_sky130_tight_pnr` misses setup at a 14 ns clock,
+`demo_tiny_alu_subsys_sky130_repair_pnr` runs it stage by stage with
+global-route and post-route repair, and `demo_tiny_alu_subsys_sky130_probe_pnr`
+checks a denser floorplan in seconds with `mode: probe`. The README shows how
+to stop a staged run after a stage, resume it from a checkpoint and dispatch
+its stages to Slurm. See
+[`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md#6-staged-runs-and-timing-repair-optional).
 
 ### Hierarchical P&R on sky130hd
 
