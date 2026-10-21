@@ -31,7 +31,7 @@ ORFS_BASE="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD-flow-
 OPENROAD_REF="731f8ff5a4804791a895fe594e482136fb2101bb"
 OPENROAD_BASE="https://raw.githubusercontent.com/The-OpenROAD-Project/OpenROAD/$OPENROAD_REF/test/sky130hd"
 
-# VLSIDA/sky130_sram_macros — OpenRAM-compiled Sky130 SRAMs (BSD-3).
+# VLSIDA/sky130_sram_macros — OpenRAM-compiled Sky130 SRAMs (Apache-2.0).
 # 1 kbyte, 32-bit words x 256, byte write mask, one RW port + one R port.
 SRAM_REF="965df150c754fe2b3f93a0bd1f9883eb114279b2"
 SRAM_NAME="sky130_sram_1kbyte_1rw1r_32x256_8"
