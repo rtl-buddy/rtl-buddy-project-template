@@ -1,0 +1,51 @@
+# RTL-Buddy P&R Configuration File
+rtl-buddy-filetype: pnr_config
+
+# Multi-corner signoff of the flat sky130hd design, with the OpenRAM SRAM timed
+# from its own Liberty at each corner. See README.md in this directory.
+#
+# Needs the netlist of `rb synth demo_tiny_alu_subsys_sky130_flat`, the
+# sky130hd PDK and SRAM from synth/demo_tiny_alu_subsys_hier/download_pdk.sh,
+# and the derived SRAM Liberty from ./derive_sram_liberty.sh:
+#
+#   rb pnr demo_tiny_alu_subsys_sky130_mc_pnr -c pnr/demo_tiny_alu_subsys_mc/pnr.yaml -l 1000
+runs:
+  - name: "demo_tiny_alu_subsys_sky130_mc_pnr"
+    desc: "Flat sky130hd P&R signed off at tt, ss and ff, SRAM Liberty per corner"
+    tool: "openroad"
+    synth: "demo_tiny_alu_subsys_sky130_flat"
+    synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
+    # tt, ss and ff in one OpenROAD session, each corner in an SDC mode of its
+    # own. See `sky130hd_mc` in root_config.yaml.
+    platform: "sky130hd_mc"
+    # One SDC per corner. Each sources clocks_io.sdc, which rb does not read,
+    # so it is listed under `inputs:`.
+    constraints:
+      tt: "constraints_tt.sdc"
+      ss: "constraints_ss.sdc"
+      ff: "constraints_ff.sdc"
+    inputs: ["clocks_io.sdc"]
+    floorplan:
+      utilization: 0.45
+      aspect: 1.0
+      core-margin: 10.0
+    lef-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
+    # The SRAM's Liberty per corner: each corner times the macro from its own
+    # file. All three are demo files that derive_sram_liberty.sh writes.
+    lib-paths:
+      - tt: "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_derived.lib"
+        ss: "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_SS_derived.lib"
+        ff: "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_FF_derived.lib"
+    gds-paths:
+      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.gds"
+    # Setup is signed off at the slow corner and hold at the fast one. A
+    # negative WNS there, or any routing DRC, fails the run.
+    signoff:
+      setup-corners: [ss]
+      hold-corners: [ff]
+      fail-on: [timing, drc]
+    # Each stage is its own OpenROAD session with a checkpoint, so the run can
+    # be resumed from a stage (`--resume`).
+    stages: true
+    reglvl: 1000

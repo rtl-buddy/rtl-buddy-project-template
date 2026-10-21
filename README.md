@@ -53,6 +53,7 @@ naming convention surfaces the category in the directory name:
 | `demo_tiny_alu_sc`     | SystemC + Verilator cosim peer of `demo_tiny_alu`, showing the same DUT driven from `sc_main()` | [`verif/demo_tiny_alu_sc/`](verif/demo_tiny_alu_sc/) |
 | `demo_tiny_alu_subsys`      | Multi-clock APB-mapped ALU accelerator that composes apb + ip_cdc_* + ALU; also drives the `rb pnr` Nangate45 flow | [`design/demo_tiny_alu_subsys/`](design/demo_tiny_alu_subsys/), [`spec/demo_tiny_alu_subsys/`](spec/demo_tiny_alu_subsys/), [`verif/demo_tiny_alu_subsys/`](verif/demo_tiny_alu_subsys/), [`pnr/demo_tiny_alu_subsys/`](pnr/demo_tiny_alu_subsys/) |
 | `demo_tiny_alu_subsys_hier` | The same design on **sky130hd**, hardened hierarchically: two partitions placed and routed on their own, then assembled at the top beside a real OpenRAM SRAM macro, with a PDN and `gds-mode: strict` | [`synth/demo_tiny_alu_subsys_hier/`](synth/demo_tiny_alu_subsys_hier/), [`pnr/demo_tiny_alu_subsys_hier/`](pnr/demo_tiny_alu_subsys_hier/) ([walk-through](pnr/demo_tiny_alu_subsys_hier/README.md)), [`power/demo_tiny_alu_subsys_hier/`](power/demo_tiny_alu_subsys_hier/) |
+| `demo_tiny_alu_subsys_mc` | The flat sky130hd netlist placed, routed and signed off at three corners (`tt`, `ss`, `ff`) in one run: an SDC mode per corner, a per-corner `lib-paths` map for the SRAM, and a `signoff:` block gating setup at `ss`, hold at `ff` and routing DRC | [`pnr/demo_tiny_alu_subsys_mc/`](pnr/demo_tiny_alu_subsys_mc/) ([walk-through](pnr/demo_tiny_alu_subsys_mc/README.md)) |
 | `demo_tiny_alu_subsys_asap7` | The compute partition on **ASAP7** (predictive 7nm), straight from an OpenROAD-flow-scripts platform: the four platform Tcl hooks, wire RC, taps/endcaps, and post-CTS setup repair compared on an over-constrained clock, and power on its split-Liberty corner | [`synth/demo_tiny_alu_subsys_asap7/`](synth/demo_tiny_alu_subsys_asap7/), [`pnr/demo_tiny_alu_subsys_asap7/`](pnr/demo_tiny_alu_subsys_asap7/), [`power/demo_tiny_alu_subsys_asap7/`](power/demo_tiny_alu_subsys_asap7/) ([walk-through](pnr/demo_tiny_alu_subsys_asap7/README.md)) |
 | `demo_cdc_src_sync`   | Source-synchronous chain (A→B0/B1→C0/C1) exercising internal-pin `create_generated_clock` for SoC-scope CDC | [`design/demo_cdc_src_sync/`](design/demo_cdc_src_sync/), [`spec/demo_cdc_src_sync/`](spec/demo_cdc_src_sync/), [`verif/demo_cdc_src_sync/`](verif/demo_cdc_src_sync/) |
 | `demo_abv_basic`    | Saturating up-counter with a bound SVA checker for `rb fpv` (bmc-proves no-overflow, cover-reaches saturation); also the `rb mut` reference block | [`design/demo_abv/`](design/demo_abv/) ([detail](design/demo_abv/demo_abv_basic.md)), [`spec/demo_abv/`](spec/demo_abv/), [`fpv/demo_abv/demo_abv_basic/`](fpv/demo_abv/demo_abv_basic/) |
@@ -185,9 +186,11 @@ uv run rb skill install --project
 │   └── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 power, synthesised and routed
 ├── pnr/
 │   ├── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
-│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks: (see its README)
+│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks:, planner files, staged runs and repair (see its README)
+│   ├── demo_tiny_alu_subsys_mc/  # demo — sky130hd multi-corner P&R with signoff gates (see its README)
 │   ├── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 flat P&R from an ORFS platform (see its README)
-│   ├── sky130hd/                 # sky130hd PDN snippets: pdn.tcl (top) + pdn_block.tcl (block)
+│   ├── demo_synth_macro/         # demo — sky130hd hard macro hardened and placed in a top; run hooks
+│   ├── sky130hd/                 # sky130hd hooks: pdn.tcl (top) + pdn_block.tcl (block) + tapcell.tcl (row cuts)
 │   └── asap7/                    # asap7 hooks: pdn.tcl + tapcell.tcl (ORFS, filled in)
 ├── fpv/
 │   ├── demo_abv_basic/   # demo — `rb fpv` saturating counter (bmc + cover)
@@ -502,8 +505,7 @@ into a Coverview zip for the browser dashboard.
   controls the dashboard title and table type.
 - **Loop with spec**: `tests.yaml` `covers:` IDs are listed in the
   generated DV report and validated by `rb spec check-coverage`.
-- **Source-point figures**: `--coverage-source-summary` (rtl_buddy
-  >= 6.58) appends the run's coverage scored per *source point* beside
+- **Source-point figures**: `--coverage-source-summary` appends the run's coverage scored per *source point* beside
   the per-elaboration figure. A module elaborated under two parameter
   sets counts each point twice per elaboration but once per source
   point. `demo_tiny_alu` has one elaboration, so the two coincide;
@@ -592,7 +594,7 @@ uv run rb hub status           # peers + ports at a glance
 ### `rb graph build` and the non-module models
 
 Two shipped models are legitimately not elaborable as a module top, and
-`models.yaml` says so (rtl_buddy >=6.44.0, rtl-buddy/rtl_buddy#479):
+`models.yaml` says so (rtl-buddy/rtl_buddy#479):
 
 - **`apb_intf`** is a pure SV `interface`, so it carries `graph: false`
   — it keeps its `model:` node in the config tier (the blocks that include
@@ -813,8 +815,7 @@ with optional waivers. Same shape as the sim/synth flows: a
   drives `rb cdc-regression` across all listed `cdc.yaml` files.
   Because it lives under `lint/cdc/` rather than at the project root,
   `cfg-rtl-reg.cdc-reg-cfg-path` in
-  [`root_config.yaml`](root_config.yaml) points at it (rtl_buddy >=
-  6.35) — so bare `rb cdc-regression` finds it and `rb graph build`
+  [`root_config.yaml`](root_config.yaml) points at it, so bare `rb cdc-regression` finds it and `rb graph build`
   stamps the analyses into the graph's config tier, exactly as the
   root-level `synth_regression.yaml` / `fpv_regression.yaml` are found
   by filename.
@@ -929,20 +930,45 @@ KLayout is optional and only needed for `--gds`/`--png`.
 
 `pnr.log` is written as OpenROAD runs, so `tail -f` follows it: the
 global router's per-layer congestion table (GRT-0096) and each detailed-route
-iteration's violation count appear as they happen (rtl_buddy >= 6.78,
-`detailed-route-verbose`). Every run also counts its max-slew,
+iteration's violation count appear as they happen
+(`detailed-route-verbose`). Every run also counts its max-slew,
 max-capacitance and max-fanout violators (the Slew/Cap/Fanout column). This
-design routes with 50 max-capacitance violators and 1 max-slew violator, so it
+design routes with 54 max-capacitance violators and 1 max-slew violator, so it
 passes with an "electrical" note; `fail-on-electrical: true` would fail it.
 
 [`pnr/demo_tiny_alu_subsys/pnr.yaml`](pnr/demo_tiny_alu_subsys/pnr.yaml)
 carries a commented-out `floorplan.pins` block (side, edge-range, ordered-group
-and exact-location pin constraints, rtl_buddy >= 6.78). The other floorplan
-controls 6.78 added are not shown in these examples: `floorplan.macros`
-(fixed macro location, orientation and halo), explicit `die-area` /
-`core-area`, `core-cutouts` for L- or T-shaped cores, and a run's own
-`pdn-config` or declarative `pdn:` grid. See the
+and exact-location pin constraints). Two other floorplan controls are not shown
+in these examples: `core-cutouts` for L- or T-shaped cores and a run's
+declarative `pdn:` grid. See the
 [rtl_buddy P&R docs](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/pnr/).
+
+Run hooks, Tcl files a P&R run's `hooks:` names for `rb pnr` to source at
+fixed points of its flow (rtl-buddy/rtl_buddy#847), are shown by
+`demo_synth_macro_sky130_hooks_pnr` in
+[`pnr/demo_synth_macro/pnr.yaml`](pnr/demo_synth_macro/pnr.yaml): a
+`macro-placement` hook puts the hard macro at an explicit location and an
+`after-cts` hook writes a clock tree report. See
+[`synth/demo_synth_macro/README.md`](synth/demo_synth_macro/README.md#placing-the-macro-with-a-run-hook).
+
+Planner files, macro and pin plans a floorplanner writes and `floorplan.macros-file`
+and `floorplan.pins-file` read (rtl-buddy/rtl_buddy#850), are shown by
+`demo_tiny_alu_subsys_sky130_planner_pnr` in
+[`pnr/demo_tiny_alu_subsys_hier/pnr.yaml`](pnr/demo_tiny_alu_subsys_hier/pnr.yaml):
+the SRAM rotated 180 degrees at an explicit location, six exact pins plus side rules with
+`pins-complete: true`, a global-placement-only blockage, and the routed-floorplan
+check. See
+[`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md#5-planner-files-optional).
+
+Staged runs, repair and probe (rtl-buddy/rtl_buddy#848, #849) and timing-driven
+placement (#867) are shown by three runs on the same flat reference:
+`demo_tiny_alu_subsys_sky130_tight_pnr` misses setup at a 14 ns clock,
+`demo_tiny_alu_subsys_sky130_repair_pnr` runs it stage by stage with
+global-route and post-route repair, and `demo_tiny_alu_subsys_sky130_probe_pnr`
+checks a denser floorplan in seconds with `mode: probe`. The README shows how
+to stop a staged run after a stage, resume it from a checkpoint and dispatch
+its stages to Slurm. See
+[`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md#6-staged-runs-and-timing-repair-optional).
 
 ### Hierarchical P&R on sky130hd
 
@@ -960,9 +986,8 @@ also carries a real OpenRAM SRAM — three macros, one power grid,
 
 [`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md)
 is the walk-through: every command in order, a flat-vs-assembled results table,
-the block-level PDN convention a hardened block has to follow, and the
-rtl_buddy gaps the exercise found — most of which it also closed
-(rtl-buddy/rtl_buddy#625, #630, #632).
+the block-level PDN convention a hardened block has to follow, and what is
+still manual.
 
 The two partitions are hardened with `harden: true` on their P&R runs, which
 publishes each one's abstract LEF, Liberty model and GDS, and the assembly
@@ -978,20 +1003,45 @@ rb pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 --synth -j 2 --gds
 ```
 
 Its partitions' ports are buffered (`buffer_ports`, on by default for
-`harden: true` since rtl_buddy 6.78.0) with the `port-buffer` cell the
+`harden: true`) with the `port-buffer` cell the
 `sky130hd_tt_block` platform names, so each abstract presents one buffer's
 input capacitance to the parent rather than its internal fanout.
 
-This example needs rtl_buddy >= 6.70.0, for the sky130hd wire RC
-(`cfg-pdks.layer-rc-tcl`, rtl-buddy/rtl_buddy#716); before that, 6.63.0 for `harden:` / `blocks:`,
-6.64.0 for the macro cell halo that keeps the assembly DRC-clean
-(rtl-buddy/rtl_buddy#673), and 6.65.0 for the whole-suite driver (`--synth`,
-`-j`), `macro-placement: rtl-mp`, and `rb power` counting the switching the
-partitions drive (rtl-buddy/rtl_buddy#684), on top of
-the `cfg-pdks.pdn-config`, `.placement` and `.dont-use-cells` keys, a
-list-valued `cfg-pnr-platforms.cts-buffer` (rtl-buddy/rtl_buddy#625), the
-size-aware macro packer (rtl-buddy/rtl_buddy#632) and macro Liberty
-inheritance in `rb power` (rtl-buddy/rtl_buddy#630).
+The sky130hd platforms read their wire RC from `cfg-pdks.layer-rc-tcl`
+(rtl-buddy/rtl_buddy#716). The assembly stays DRC-clean through the macro cell
+halo (rtl-buddy/rtl_buddy#673) and the size-aware macro packer
+(rtl-buddy/rtl_buddy#632); `macro-placement: rtl-mp` places the macros with
+OpenROAD's RTL macro placer instead. `rb power` inherits the SRAM Liberty from
+the P&R run it reads (rtl-buddy/rtl_buddy#630) and counts the switching the
+partitions drive (rtl-buddy/rtl_buddy#684).
+
+### Multi-corner signoff on sky130hd
+
+[`pnr/demo_tiny_alu_subsys_mc/`](pnr/demo_tiny_alu_subsys_mc/) places and
+routes the flat netlist on `sky130hd_mc`, a platform with three corners:
+`tt`, `ss` and `ff`. Each corner is timed in an SDC mode of its own, from its
+own constraints file, and times the SRAM from its own Liberty through a
+per-corner `lib-paths` map. A `signoff:` block judges setup at `ss` and hold at
+`ff` and fails the run on negative slack there or on any routing DRC.
+
+```bash
+./synth/demo_tiny_alu_subsys_hier/download_pdk.sh     # sky130hd + the OpenRAM macro
+./pnr/demo_tiny_alu_subsys_mc/derive_sram_liberty.sh   # per-corner SRAM Liberty (not characterised)
+rb pnr demo_tiny_alu_subsys_sky130_mc_pnr -c pnr/demo_tiny_alu_subsys_mc/pnr.yaml -l 1000 --synth --gds
+```
+
+The OpenRAM SRAM ships Liberty for one corner only, so the script derives `ss`
+and `ff` copies by scaling its clock-to-output tables. They show the mechanism;
+they are not characterised data.
+[`pnr/demo_tiny_alu_subsys_mc/README.md`](pnr/demo_tiny_alu_subsys_mc/README.md)
+has the per-corner timing, the SRAM arc at each corner and the signoff record
+in the result row.
+
+Each corner's SDC there sources a shared `clocks_io.sdc`. rb does not read the
+files an SDC or a hook `source`s, so a run lists them under `inputs:`. They are
+fingerprinted with the run's other inputs, and `rb pnr --resume` refuses a run
+whose listed file has changed, naming it. Every P&R run in this project whose
+SDC or hooks source another file lists it there.
 
 ### ASAP7 from an ORFS platform
 
@@ -1027,10 +1077,7 @@ per corner, `.lib.gz`, and ps time units. Synthesis, P&R and
 read that one corner.
 
 ASAP7 is BSD-3-Clause (ASU/ARM), packaged by The OpenROAD Project in ORFS
-(BSD-3-Clause). It needs rtl_buddy >= 6.70.0, which this project pins
-(rtl-buddy/rtl_buddy#716-#718); list-valued `corners:` (rtl-buddy/rtl_buddy#699,
-for ASAP7's split Liberty files) make `root_config.yaml` unloadable on older
-releases.
+(BSD-3-Clause).
 
 ---
 

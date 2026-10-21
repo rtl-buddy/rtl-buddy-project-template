@@ -15,8 +15,7 @@ rtl-buddy-filetype: synth_config
 #
 #   rb synth demo_tiny_alu_subsys_sky130_flat -c synth/demo_tiny_alu_subsys_hier/synth.yaml
 #
-# Needs rtl_buddy >= 6.63.0 — see
-# ../../pnr/demo_tiny_alu_subsys_hier/README.md.
+# See ../../pnr/demo_tiny_alu_subsys_hier/README.md.
 syntheses:
 
   # ── flat reference ─────────────────────────────────────────────────────────

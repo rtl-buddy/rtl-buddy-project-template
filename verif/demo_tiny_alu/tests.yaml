@@ -11,13 +11,13 @@ testbenches:
       - "../../verif/demo_tiny_alu/cov_alu.sv"
       - "tb_top.sv"
     # Default Slurm reservation for this testbench's tests under
-    # `rb regression --dispatch slurm` (rtl_buddy >= 6.21). Overrides the
+    # `rb regression --dispatch slurm`. Overrides the
     # cluster-wide cfg-dispatch.resources; a per-test `resources:` overrides
     # this in turn, field by field. Ignored by the default in-process run —
     # and by `--dispatch local-parallel`, which cannot cap a subprocess and
     # warns that it is ignoring these (see cfg-dispatch in root_config.yaml).
     #
-    # `modes:` (rtl_buddy >= 6.57) adds a per-builder-mode override. The
+    # `modes:` adds a per-builder-mode override. The
     # full precedence for one field is
     #   test.modes[m] > tb.modes[m] > cfg.modes[m] > test > tb > cfg
     # i.e. ANY mode block beats EVERY base field: under `-M cov` the

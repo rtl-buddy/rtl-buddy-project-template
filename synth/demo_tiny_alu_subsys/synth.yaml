@@ -44,9 +44,8 @@ rtl-buddy-filetype: synth_config
 # clk/rst_n ports ARE read by the subtree loses them silently — so do not
 # copy this pattern without checking the netlist, and prefer
 # `tool_overrides.yosys.frontend: "slang"` (see synth/demo_slang_pkg/) when
-# yosys-slang is available. Tracked upstream as rtl_buddy#628; since
-# rtl_buddy 6.56.0 (rtl_buddy#629) the `unresolved-interfaces` synth gate
-# also reports the unbound instance itself, at `warn` by default — leave it
+# yosys-slang is available (rtl_buddy#628). The `unresolved-interfaces`
+# synth gate (rtl_buddy#629) also reports the unbound instance itself, at `warn` by default — leave it
 # there for this design, or set `error` on runs where the interface's own
 # clk/rst_n are consumed.
 syntheses:

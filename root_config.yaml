@@ -303,8 +303,6 @@ cfg-pdks:
       vertical: "met2"
 
     # ── PDK flow parameterisation (rtl_buddy#625) ────────────────────────
-    # `placement`, `dont-use-cells` and `pdn-config` need rtl_buddy >= 6.55.0;
-    # the pin in pyproject.toml carries them.
 
     # ORFS PLACE_DENSITY for sky130hd. The 0.70 that the flow used to spell
     # out is calibrated for FreePDK45's 10-track cells; sky130hd's 9-track
@@ -324,7 +322,7 @@ cfg-pdks:
     # assembly. 3 µm clears it.
     #
     # For a congested block, `routability-driven: true` adds
-    # `-routability_driven` to `global_placement` (rtl_buddy >= 6.77), and
+    # `-routability_driven` to `global_placement`, and
     # `routability-use-grt: true` estimates the congestion with the global
     # router instead of RUDY. use-grt needs routability-driven. Either can
     # also be set per platform under `cfg-pnr-platforms[].placement`.
@@ -382,12 +380,17 @@ cfg-pdks:
     # pnr/ so it is not caught by the project's `**.tcl` gitignore rule.
     pdn-config: "pnr/sky130hd/pdn.tcl"
 
+    # ORFS TAPCELL_TCL. Cuts the standard-cell rows 2 um around each placed
+    # macro, as far as the macro grids' halo in pdn.tcl reaches; pdngen fails
+    # with PDN-0008 when a halo reaches an uncut row. Inherited by
+    # `sky130hd_block` below, where a block with no macros has nothing to cut.
+    tapcell-tcl: "pnr/sky130hd/tapcell.tcl"
+
     # ORFS RCX_RULES. With it set, `rb pnr` runs OpenRCX after fill, writes
     # `<top>.routed.spef` and times its final reports on it, and `rb power`
     # with `netlist-source: pnr` reads that SPEF instead of re-estimating
     # parasitics from the global routes (rtl_buddy#101). Fetched by
-    # download_pdk.sh with the rest of the PDK. An older rtl_buddy ignores
-    # the key and keeps the estimate.
+    # download_pdk.sh with the rest of the PDK.
     rcx-rules: "pdk/sky130hd/rcx_patterns.rules"
 
     # ORFS SET_RC_TCL (rtl-buddy/rtl_buddy#716). The sky130hd tech LEF carries
@@ -395,8 +398,7 @@ cfg-pdks:
     # (EST-0018 / CTS-0104) and only the extracted final timing sees the real
     # wires — a hold escape a hardened block's parent then inherits. OpenROAD's
     # own sky130hd test layer RC and signal / clock wire layers; see the
-    # file's header. Inherited by `sky130hd_block` below. Needs rtl_buddy
-    # >= 6.70.0 (#716); older ones ignore the key.
+    # file's header. Inherited by `sky130hd_block` below.
     layer-rc-tcl: "pnr/sky130hd/setRC.tcl"
 
   # The same PDK, with the block-level power grid in place of the top-level
@@ -421,11 +423,9 @@ cfg-pdks:
   # The ASAP7 Liberty `time_unit` is 1 ps, not 1 ns: the SDC is written in ps,
   # and rb reads the unit from the Liberty and reports in ps either way.
   #
-  # Needs rtl_buddy >= 6.70.0, which the pin in pyproject.toml carries:
-  # rtl-buddy/rtl_buddy#716 (the four Tcl hooks), #717
-  # (`post-cts-setup-repair`, `routing-layer-adjustment`) and #718 (routed /
-  # physical cell counts). The list-valued `corners.tt` (#699, 6.68.0) makes
-  # this file unloadable on anything older.
+  # The four Tcl hooks are rtl-buddy/rtl_buddy#716, `post-cts-setup-repair`
+  # and `routing-layer-adjustment` #717, routed / physical cell counts #718,
+  # and the list-valued `corners.tt` #699.
   - name: "asap7"
     site: "asap7sc7p5t"
     # ORFS TC_NLDM_LIB_FILES with PRIMARY_VT=RVT: the cells are split across
@@ -523,10 +523,6 @@ cfg-pnr-platforms:
     # stage, and a single buffer has to be strong enough for the worst sink
     # group and is then far too strong everywhere else. The first entry is the
     # root buffer (`-root_buf`).
-    #
-    # A list-valued `cts-buffer` breaks config load on rtl_buddy < 6.55.0 —
-    # it is a type change to an existing key — so this needs the pin in
-    # pyproject.toml, not just this example.
     cts-buffer:
       - "sky130_fd_sc_hd__clkbuf_4"
       - "sky130_fd_sc_hd__clkbuf_8"
@@ -540,12 +536,13 @@ cfg-pnr-platforms:
       clock: "met3-met5"
 
   # Multi-corner signoff (rtl_buddy#104 / rtl_buddy#105): `sky130hd_tt` at all
-  # three corners, in one OpenROAD session. Timing repair (setup and hold)
-  # sees every corner and the scalar WNS / TNS / power results are the worst
-  # across them, with each corner's own numbers beside them. The first entry
-  # is the primary corner — the one CTS characterises its buffers at — so tt
-  # comes first and CTS behaves exactly as it does on `sky130hd_tt`.
-  # Needs rtl_buddy with `corners:` support and the ss / ff Liberty that
+  # three corners, in one OpenROAD session, each corner timed in an SDC mode
+  # and scene of its own (OpenROAD 26Q4 or newer). Timing repair (setup and
+  # hold) sees every corner and the scalar WNS / TNS / power results are the
+  # worst across them, with each corner's own numbers beside them. The first
+  # entry is the primary corner — the one CTS characterises its buffers at and
+  # hooks constrain — so tt comes first and CTS behaves exactly as it does on
+  # `sky130hd_tt`. Needs the ss / ff Liberty that
   # synth/demo_tiny_alu_subsys_hier/download_pdk.sh fetches.
   - name: "sky130hd_mc"
     pdk: "sky130hd"
@@ -571,7 +568,7 @@ cfg-pnr-platforms:
       - "sky130_fd_sc_hd__clkbuf_8"
       - "sky130_fd_sc_hd__clkbuf_16"
     # The cell `buffer_ports` puts on every port of a `harden: true` run
-    # (rtl_buddy >= 6.78, rtl-buddy/rtl_buddy#772), so the parent drives one
+    # (rtl-buddy/rtl_buddy#772), so the parent drives one
     # buffer, not the block's internal fanout. ORFS' sky130hd MIN_BUF_CELL.
     # Left unset, OpenROAD picks the delay cell clkdlybuf4s50_1, which costs
     # the csr partition about 0.9 ns of setup.
@@ -582,7 +579,7 @@ cfg-pnr-platforms:
       clock: "met3-met4"
 
   # ASAP7 at TT, RVT. ORFS flow/platforms/asap7/config.mk values; see the
-  # `asap7` PDK entry above for the rtl_buddy release these keys need.
+  # `asap7` PDK entry above for the rtl_buddy issues behind these keys.
   - &asap7_tt
     name: "asap7_tt"
     pdk: "asap7"
@@ -678,18 +675,17 @@ cfg-rtl-reg:
     reg-cfg-path: "regression.yaml",
     # The CDC manifest lives with its analyses under lint/cdc/, away from
     # the project root where the ./cdc_regression.yaml filename convention
-    # would find it. This per-flow key (rtl_buddy >= 6.35, rtl_buddy#389)
-    # lets bare `rb cdc-regression` and `rb graph build` discover it; the
+    # would find it. This per-flow key (rtl_buddy#389) lets bare `rb cdc-regression` and `rb graph build` discover it; the
     # synth/fpv/fpga manifests sit at the root and need no such entry.
     cdc-reg-cfg-path: "lint/cdc/cdc_regression.yaml"
   }
 
-# Parallel dispatch (rtl_buddy >= 6.21). By default a regression runs
+# Parallel dispatch. By default a regression runs
 # in-process, one test at a time. Two backends fan the tests out in parallel
 # after a single shared build:
 #
 #   rb regression --dispatch slurm                  # a cluster
-#   rb regression --dispatch local-parallel -j 4    # this machine (>= 6.24)
+#   rb regression --dispatch local-parallel -j 4    # this machine
 #
 # `backend` is intentionally left unset so the default stays local
 # (in-process) — nothing here affects a plain `rb regression`. Selecting
@@ -720,15 +716,13 @@ cfg-dispatch:
     time: "00:30:00"        # QUOTE time values — an unquoted 4:00:00 is
                             # YAML sexagesimal (14400), which Slurm reads as
                             # minutes. rtl_buddy rejects the unquoted form.
-    # Per-builder-mode overrides (rtl_buddy >= 6.57), layered over the
-    # resolved base for the run's effective `-M`. A `-M cov` build carries
-    # per-point counters and routinely needs about an order of magnitude
-    # more memory than the same sim under `-M reg`; a mode no block names
-    # (here `reg`) reserves exactly the base. Mode blocks are strict — an
-    # unknown key, a nested `modes:`, or `parallel` inside one is a load
-    # error. An unknown key in the base block above (e.g. `memory:` for
-    # `mem:`) is ignored with a `config.unknown_key` warning naming the
-    # nearest key (rtl_buddy >= 6.71); a later major release makes it fatal.
+    # Per-builder-mode overrides, layered over the resolved base for the
+    # run's effective `-M`. A `-M cov` build carries per-point counters and
+    # routinely needs about an order of magnitude more memory than the same
+    # sim under `-M reg`; a mode no block names (here `reg`) reserves exactly
+    # the base. Every block is strict: an unknown key (e.g. `memory:` for
+    # `mem:`), a nested `modes:`, or `parallel` inside a mode block is a load
+    # error (`config.unknown_key_rejected`) naming the nearest key.
     modes:
       cov:
         mem: 16G
@@ -772,7 +766,7 @@ cfg-dispatch:
 
   # Under Slurm a `-M cov` run's coverage tail (merge, coverage-model.json,
   # LCOV exports, manifest) runs as one `rb:coverage` job after the sims
-  # instead of on the submit host (rtl_buddy >= 6.71). It inherits
+  # instead of on the submit host. It inherits
   # `resources` field by field; size it here, usually under `modes.cov`.
   # coverage:
   #   modes:

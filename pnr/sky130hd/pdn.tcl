@@ -71,7 +71,10 @@ add_pdn_connect -grid {grid} -layers {met4 met5}
 # with it. `-grid_over_boundary` lets the top-level met4/met5 straps run across
 # the macro and drop vias onto its pins, which is how a hard macro — an OpenRAM
 # SRAM or a hardened partition — is tied into the top-level supply. The 2 um
-# halo keeps the via stacks off the macro edge.
+# halo keeps the via stacks and strap ends off the macro edge. It needs the
+# standard-cell rows cut at least as far around each macro, which tapcell.tcl
+# does: pdngen fails with PDN-0008 when a halo reaches a row the macro does not
+# sit on.
 #
 # This is the half of the hierarchical convention that lives at the top. The
 # other half is the block-level grid above: a block hardened for consumption

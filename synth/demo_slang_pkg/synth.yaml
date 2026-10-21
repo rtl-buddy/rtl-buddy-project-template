@@ -21,10 +21,6 @@
 #        uv run rb synth demo_slang_pkg_synth_slang \
 #            -c synth/demo_slang_pkg/synth.yaml
 #
-# Requires rtl_buddy>=4.1.0 for the `frontend` field to be honored;
-# the RTL_BUDDY_SLANG_PLUGIN / `.rtl-buddy/.env` fallback needs
-# >=6.11.0 (this template pins newer).
-#
 # `reglvl: 1000` excludes this block from default `rb synth-regression`
 # runs so the template's regression stays green on a vanilla install
 # (no yosys-slang installed, no rtl_buddy bump). Bump `--reg-level` to

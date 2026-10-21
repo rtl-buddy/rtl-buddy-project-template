@@ -1,0 +1,22 @@
+# Pin plan for demo_tiny_alu_subsys_top, as a floorplanner would write it, read
+# by `floorplan.pins-file`. JSON with the same entries is read the same way.
+#
+# Exact pins: `name` and `location`, the pin's centre in die microns; `layer`
+# and `size` ([x extent, y extent], microns) are optional. The run sets
+# `pin-snap: false`, so each centre is kept to the database unit: not moved onto
+# the die edge or a routing track. The left edge takes met3 and the bottom edge
+# met2; a pin on an edge has its centre half its depth (0.5 um) inside the die.
+- {name: "paddr[0]",  location: [0.5, 68.34], layer: met3, size: [1.0, 0.3]}
+- {name: "paddr[1]",  location: [0.5, 71.06], layer: met3, size: [1.0, 0.3]}
+- {name: "paddr[2]",  location: [0.5, 73.78], layer: met3, size: [1.0, 0.3]}
+- {name: "paddr[3]",  location: [0.5, 76.50], layer: met3, size: [1.0, 0.3]}
+- {name: "pwdata[0]", location: [92.23, 0.5], layer: met2, size: [0.3, 1.0]}
+- {name: "pwdata[1]", location: [94.53, 0.5], layer: met2, size: [0.3, 1.0]}
+
+# Side rules cover every other port, as `floorplan.pins` entries do: the tool
+# places them on the side, in the range if one is given. A port that has an exact
+# pin above keeps it when a rule also matches it (`paddr*`, `pwdata*`).
+- {names: "paddr*", side: left, start: 200, end: 450}
+- {names: ["pwdata*", "pstrb*"], side: bottom}
+- {names: ["prdata*", pready, pslverr], side: right}
+- {names: [apb_clk, apb_rst_n, "pprot*", psel, penable, pwrite, cclk, crst_n], side: top}

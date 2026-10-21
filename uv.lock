@@ -941,7 +941,7 @@ wheels = [
 
 [[package]]
 name = "rtl-buddy"
-version = "6.81.0"
+version = "7.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -953,9 +953,9 @@ dependencies = [
     { name = "typer" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4e/90/204879ca4e58c5a78b7ce27180cac712cafe3c0c9a639ff0b281b855395c/rtl_buddy-6.81.0.tar.gz", hash = "sha256:6fa9960c74b8d0d409190a2bd3c5209bc2d2ff30540a01b233e575ab190488d7", size = 1323512, upload-time = "2026-10-13T14:37:23.395Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/69/a8/2463d00e5575de195294b90be51ad2b4e6fcc791407ba14690525c61bac7/rtl_buddy-7.0.1.tar.gz", hash = "sha256:983e372f1f2ca7229e415b4a8177841d51d897c7cb2b1091c3716e6c9f6c52ec", size = 1484008, upload-time = "2026-10-21T05:48:28.351Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/87/65/ed0eb1aa17a0af1174b165767f0a5c787050b86ac6534ad4058734db5008/rtl_buddy-6.81.0-py3-none-any.whl", hash = "sha256:a755defecfca1bc05145d1ab574e651784802eec35fdb23bcf4020b368533feb", size = 1492371, upload-time = "2026-10-13T14:37:21.09Z" },
+    { url = "https://files.pythonhosted.org/packages/76/06/48871c173c99d968cc864e90e573c7d213f027adfdbf88a00f7a409e5186/rtl_buddy-7.0.1-py3-none-any.whl", hash = "sha256:fa950e5b92f474abbfdac9d34ff96ae923e864df6e5965069ce5cefe748c56b3", size = 1665357, upload-time = "2026-10-21T05:48:25.936Z" },
 ]
 
 [package.optional-dependencies]
@@ -1033,7 +1033,7 @@ requires-dist = [
     { name = "peakrdl", git = "https://github.com/rtl-buddy/PeakRDL.git?subdirectory=peakrdl" },
     { name = "peakrdl-regblock", git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "rtl-buddy", extras = ["elab", "graph-extract"], specifier = "==6.81.0" },
+    { name = "rtl-buddy", extras = ["elab", "graph-extract"], specifier = "==7.0.1" },
     { name = "rtl-buddy-axi-profiler", extras = ["notebook"], git = "https://github.com/rtl-buddy/rtl-buddy-axi-profiler.git" },
     { name = "rtl-buddy-cdc", extras = ["slang"], git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.5.0" },
     { name = "rtl-buddy-xeno", extras = ["verible", "slang"] },

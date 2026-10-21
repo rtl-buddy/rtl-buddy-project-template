@@ -6,5 +6,5 @@ models:
     filelist  : [ "-F pp_axi.f" ]
     # A vendored library collection: no module is named pp_axi, so the
     # design graph elaborates the crossbar as this model's root instead
-    # (rtl_buddy >=6.44.0, rtl-buddy/rtl_buddy#479).
+    # (rtl-buddy/rtl_buddy#479).
     top       : "axi_xbar"

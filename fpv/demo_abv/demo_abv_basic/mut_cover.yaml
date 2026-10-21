@@ -2,7 +2,7 @@
 rtl-buddy-filetype: mut_config
 
 # ─── PREREQUISITES ───
-# Same as mut.yaml: rb mut ships in rtl_buddy (template pins 6.1.0) and the
+# Same as mut.yaml: rb mut ships in rtl_buddy and the
 # rtl-buddy-xeno engine is pinned as a git source in pyproject.toml
 # ([verible,slang] extras), so a clean `uv sync` installs it. Running a
 # campaign needs a built yosys-slang plugin (the kill oracle below is the

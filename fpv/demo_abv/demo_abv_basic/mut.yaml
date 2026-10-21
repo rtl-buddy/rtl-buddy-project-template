@@ -2,7 +2,7 @@
 rtl-buddy-filetype: mut_config
 
 # ─── PREREQUISITES ───
-# `rb mut` ships in rtl_buddy (this template pins 6.1.0) and drives the
+# `rb mut` ships in rtl_buddy and drives the
 # rtl-buddy-xeno mutation engine. xeno isn't on PyPI yet
 # (rtl-buddy/rtl-buddy-xeno#18), so this template pins it as a git source
 # in pyproject.toml (with the [verible,slang] extras that pull the Verible
