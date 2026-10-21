@@ -39,12 +39,6 @@ rtl-buddy-filetype: pnr_config
 # Or all of it, from nothing, partitions before the assembly (rtl_buddy#95):
 #
 #   rb pnr -c pnr/demo_tiny_alu_subsys_hier/pnr.yaml -l 1000 --synth -j 2 --gds
-#
-# Needs rtl_buddy >= 6.65.0 for that and for `macro-placement: rtl-mp`
-# (6.63.0 for `harden:` and `blocks:`), a release with planner files
-# (rtl-buddy/rtl_buddy#850) for `..._planner_pnr`, and a release with staged
-# runs, repair and probe (rtl-buddy/rtl_buddy#848, #849) and timing-driven
-# placement (#867) for the last three; see README.md.
 runs:
 
   # ── flat reference ─────────────────────────────────────────────────────────
@@ -75,12 +69,12 @@ runs:
   # partition placed and routed as a top of its own and signed off at tt, ss
   # and ff in one OpenROAD session — see `sky130hd_mc` in root_config.yaml.
   #
-  # Not the flat run: its OpenRAM SRAM ships one (TT) Liberty whose input pins
-  # carry `max_transition: 0.04` ns. rb reads that Liberty into every corner,
-  # and at ss (1.40 V, -40 C) the fastest sky130hd driver cannot meet 40 ps,
-  # so `repair_design` stops with RSZ-0090. That is a real finding about the
-  # macro's characterisation, not a flow bug; a multi-corner run of the SRAM
-  # design needs per-corner SRAM Liberty.
+  # Not the flat run: its OpenRAM SRAM ships one (TT) Liberty whose address
+  # and write-mask pins carry `max_transition: 0.04` ns. On a multi-corner
+  # platform `repair_design` checks every corner's limit against the fastest
+  # buffer at the slowest corner (0.061 ns at ss) and stops with RSZ-0090.
+  # The flat design signed off at three corners, with SRAM Liberty derived per
+  # corner, is pnr/demo_tiny_alu_subsys_mc/.
   - name: "demo_tiny_alu_subsys_sky130_compute_mc_pnr"
     desc: "sky130hd P&R of the compute partition, multi-corner signoff (tt/ss/ff)"
     tool: "openroad"

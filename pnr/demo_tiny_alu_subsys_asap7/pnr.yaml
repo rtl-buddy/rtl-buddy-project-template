@@ -21,7 +21,7 @@ rtl-buddy-filetype: pnr_config
 #
 #   rb pnr -c pnr/demo_tiny_alu_subsys_asap7/pnr.yaml -l 1000 --synth
 #
-# Needs rtl_buddy >= 6.70.0 (rtl-buddy/rtl_buddy#716-#718); see README.md.
+# See README.md.
 runs:
 
   - name: "demo_tiny_alu_subsys_asap7_compute_pnr"

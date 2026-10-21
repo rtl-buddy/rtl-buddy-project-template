@@ -1,14 +1,12 @@
-# demo_tiny_alu_subsys on sky130hd — hierarchical P&R pipeclean
+# demo_tiny_alu_subsys on sky130hd — hierarchical P&R
 
 Hardening two partitions of `demo_tiny_alu_subsys` separately, then placing and
 routing the top with those two as hard macros next to a real OpenRAM SRAM.
 
-This is the template example rtl-buddy/rtl_buddy#95 step 6 asks for, and the
-record of that issue's **step 0 spike**. Each partition's P&R run sets
-`harden: true`, which publishes its abstract LEF, Liberty timing model and GDS;
-the assembly's synthesis and P&R entries name the two partitions under
-`blocks:` and take those views from there. Nothing is wired by hand except the
-third-party SRAM.
+Each partition's P&R run sets `harden: true`, which publishes its abstract LEF,
+Liberty timing model and GDS; the assembly's synthesis and P&R entries name the
+two partitions under `blocks:` and take those views from there
+(rtl-buddy/rtl_buddy#95). Nothing is wired by hand except the third-party SRAM.
 
 ```text
 demo_tiny_alu_subsys_synth_top              ← the run's top, both ways
@@ -27,31 +25,29 @@ standard-cell logic, where `rb cdc` already analyses it. The SRAM is at the top
 and on `apb_clk` only, so the assembly exercises a hardened partition and a
 third-party macro side by side.
 
+The same `pnr.yaml` also holds runs on the flat netlist that show other P&R
+features: planner files (step 5), staged runs, repair and probe (step 6), and
+the compute partition signed off at three corners on the `sky130hd_mc`
+platform (`..._compute_mc_pnr`). The flat design signed off at three corners,
+with per-corner SRAM Liberty and signoff gates, is
+[`../demo_tiny_alu_subsys_mc/`](../demo_tiny_alu_subsys_mc/README.md).
+
 ## What you need
 
-- `openroad` and `klayout` on `PATH`, and `yosys`.
-- **rtl_buddy >= 6.70.0**, and 6.78.0 for the numbers below (`pyproject.toml`
-  pins 6.78.0, which buffers a hardened block's ports; 6.70.0 is needed for
-  the sky130hd wire RC below; the rest needs 6.65.0). 6.63.0 added
-  `harden:` and `blocks:` (rtl-buddy/rtl_buddy#95); 6.64.0 the standard-cell
-  keep-out around macros that keeps the assembly DRC-clean
-  (`cfg-pdks.placement.macro-cell-halo`, rtl-buddy/rtl_buddy#673); 6.65.0 the
-  whole-suite `rb pnr` that orders blocks before the assembly, with `--synth`
-  and `-j`, `floorplan.macro-placement: rtl-mp`, and an `rb power` that no
-  longer zeroes the switching the partitions drive (rtl-buddy/rtl_buddy#684).
-  The sky130hd wire RC (`cfg-pdks.layer-rc-tcl`) needs 6.70.0
-  (rtl-buddy/rtl_buddy#716); an older rtl_buddy ignores the key and runs
-  repair and CTS on zero-RC wires. The rest of the example needs what 6.56.0 added:
-  - `cfg-pdks.placement`, `cfg-pdks.dont-use-cells` and `cfg-pdks.pdn-config`
-    (rtl-buddy/rtl_buddy#625). An older rtl_buddy loads `root_config.yaml`
-    fine and silently ignores all three — which means **no power grid at all**
-    in the resulting layout.
-  - a list-valued `cfg-pnr-platforms.cts-buffer` (also
-    rtl-buddy/rtl_buddy#625), which an older rtl_buddy refuses to load at all.
-  - the size-aware shelf macro packer (rtl-buddy/rtl_buddy#632), which is what
-    lets the assembly use the flat run's floorplan.
-  - macro Liberty inheritance in `rb power` (rtl-buddy/rtl_buddy#630), without
-    which every macro reports 0 W.
+- `openroad` (26Q4), `klayout` and `yosys` on `PATH`.
+- The configuration this example relies on, all in
+  [`root_config.yaml`](../../root_config.yaml):
+  - `cfg-pdks.pdn-config`, `.placement` and `.dont-use-cells` for the sky130hd
+    PDK, and a list-valued `cfg-pnr-platforms.cts-buffer`
+    (rtl-buddy/rtl_buddy#625);
+  - the sky130hd wire RC, `cfg-pdks.layer-rc-tcl` (rtl-buddy/rtl_buddy#716),
+    so repair and CTS see real wires;
+  - the standard-cell keep-out around macros,
+    `cfg-pdks.placement.macro-cell-halo` (rtl-buddy/rtl_buddy#673), which
+    keeps the assembly DRC-clean;
+  - the row cut around macros, `cfg-pdks.tapcell-tcl`
+    ([`../sky130hd/tapcell.tcl`](../sky130hd/tapcell.tcl)), which the
+    macro grids' 2 µm halo in `pdn.tcl` needs.
 - The PDK and the macro, which are not vendored:
 
 ```sh
@@ -79,7 +75,7 @@ the assembly runs that consume it (rtl-buddy/rtl_buddy#95). `--synth` runs
 each P&R run's own synthesis just before it, which is what puts the assembly's
 synthesis *after* the partitions are hardened: it reads their abstracts. `-j 2`
 hardens the two partitions side by side. From an empty tree that is every
-synthesis and every P&R below, in under seven minutes on a laptop. A partition
+synthesis and every P&R below, about seven minutes with `-j 4`. A partition
 that fails leaves the assembly runs `FAIL` with `fail_stage: blocked`, naming
 the partition, rather than running them against a missing abstract.
 
@@ -169,14 +165,14 @@ rb power demo_tiny_alu_subsys_sky130_flat_power -c power/demo_tiny_alu_subsys_hi
 rb power demo_tiny_alu_subsys_sky130_asm_power  -c power/demo_tiny_alu_subsys_hier/power.yaml -l 1000
 ```
 
-Neither run names a `lib-paths`: since rtl-buddy/rtl_buddy#630 a
-`netlist-source: pnr` power run inherits the macro Liberty from the P&R run it
-reads, so the SRAM is characterised rather than counted as zero. The
-assembly's run also reads both partitions' abstract Liberty through the P&R
-run's `blocks:` resolved (rtl-buddy/rtl_buddy#679), but deliberately not
-their abstract Liberty (rtl-buddy/rtl_buddy#684): it carries no power tables,
-so the partitions count as 0 W either way, and the result names them. A macro
-with no library at all is the `power.missing_macro_inputs` ERROR.
+Neither run names a `lib-paths`: a `netlist-source: pnr` power run inherits
+the macro Liberty from the P&R run it reads (rtl-buddy/rtl_buddy#630), so the
+SRAM is characterised rather than counted as zero. The assembly's run resolves
+the partitions through the P&R run's `blocks:` (rtl-buddy/rtl_buddy#679) but
+leaves out their abstract Liberty (rtl-buddy/rtl_buddy#684): it carries no
+power tables, so the partitions count as 0 W either way, and the result names
+them. A macro with no library at all is the `power.missing_macro_inputs`
+ERROR.
 
 ### 5. Planner files (optional)
 
@@ -188,8 +184,8 @@ of entries into `pnr.yaml`. For a handful of hand-chosen entries, write
 computed in Tcl, use a [`macro-placement` hook](../../synth/demo_synth_macro/README.md#placing-the-macro-with-a-run-hook).
 
 `demo_tiny_alu_subsys_sky130_planner_pnr` is the flat reference floorplanned
-from the two files in `plan/`. It needs an rtl_buddy release that has planner
-files (rtl-buddy/rtl_buddy#850) and the same synthesis as step 1:
+from the two files in `plan/` (rtl-buddy/rtl_buddy#850). It needs the same
+synthesis as step 1:
 
 ```sh
 rb synth demo_tiny_alu_subsys_sky130_flat -c synth/demo_tiny_alu_subsys_hier/synth.yaml
@@ -242,10 +238,10 @@ To check the supply, read the routed `.odb` back into OpenROAD and run
 
 ### 6. Staged runs and timing repair (optional)
 
-Three more runs on the flat reference. They need an rtl_buddy release that has
-staged runs, repair and probe (rtl-buddy/rtl_buddy#848, #849) and timing-driven
-placement (#867), and the same synthesis as step 1. Post-route repair also needs
-the PDK's `rcx-rules`, which the sky130hd entry sets.
+Three more runs on the flat reference, showing staged runs, repair and probe
+(rtl-buddy/rtl_buddy#848, #849) and timing-driven placement (#867). They need
+the same synthesis as step 1. Post-route repair also needs the PDK's
+`rcx-rules`, which the sky130hd entry sets.
 
 ```sh
 rb synth demo_tiny_alu_subsys_sky130_flat -c synth/demo_tiny_alu_subsys_hier/synth.yaml
@@ -372,174 +368,124 @@ needs a host with `sbatch`.
 
 ## Results — flat vs assembled
 
-Measured with OpenROAD `26Q2-911-g731f8ff5a4`, KLayout 0.30.8 and the released
-rtl_buddy 6.78.0 wheel this project pins, all from an empty
-tree with the one command above, on the PDK revisions `download_pdk.sh` pins,
-with `harden: true` on both partitions and the assembly built from `blocks:`.
-`apb_clk` 20 ns, `cclk` 25 ns. Every final timing and power number is on
-OpenRCX-extracted parasitics (sky130hd sets `rcx-rules`).
-
-These numbers are with wire RC through the whole flow: the sky130hd PDK entry
-sets `layer-rc-tcl: pnr/sky130hd/setRC.tcl` and `placement.macro-cell-halo: 3`
-(see below). Partitions hardened before this change have stale abstracts and
-need re-hardening, which the one command above does.
+Measured with OpenROAD 26Q4 and KLayout 0.30, from an empty tree with the one
+command above, on the PDK revisions `download_pdk.sh` pins, one OpenROAD
+thread per run. `apb_clk` 20 ns, `cclk` 25 ns. Every final timing and power
+number is on OpenRCX-extracted parasitics (sky130hd sets `rcx-rules`).
 
 | | flat | csr partition | compute partition | **assembled** | assembled, RTL-MP |
 |---|---|---|---|---|---|
 | verdict | PASS | PASS | PASS | **PASS** | PASS |
-| standard-cell instances, input / routed | 1217 / 1455 | 376 / 559 | 297 / 362 | **554 / 824** | 554 / 759 |
+| standard-cell instances, input / routed | 1217 / 1456 | 376 / 558 | 297 / 362 | **554 / 829** | 554 / 762 |
 | die (µm) | 697.5 × 697.5 | 99.3 × 99.3 | 89.6 × 89.6 | **717.2 × 717.2** | 717.2 × 717.2 |
-| design area (µm²) | 208 812 | 4 644 | 3 057 | **221 328** | 220 718 |
+| design area (µm²) | 208 925 | 4 623 | 3 057 | **221 463** | 220 757 |
 | core area (µm²) | 456 758 | 7 767 | 6 241 | **483 370** | 483 370 |
 | core utilization | 46% | 60% | 49% | **46%** | 46% |
-| setup WNS (ns) | +2.95 | +10.69 | +13.49 | **+2.76** | +3.18 |
+| setup WNS (ns) | +3.00 | +10.72 | +13.53 | **+2.72** | +3.20 |
 | setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** | 0.00 |
-| hold WNS (ns) | +0.15 | +0.47 | +0.67 | **+0.29** | +0.25 |
+| hold WNS (ns) | +0.36 | +0.47 | +0.68 | **+0.28** | +0.14 |
 | DRC violations | 0 | 0 | 0 | **0** | 0 |
-| max-slew / max-cap violators | 27 / 13 | 0 / 0 | 0 / 0 | **36 / 14** | 28 / 3 |
+| max-slew / max-cap violators | 77 / 15 | 59 / 2 | 0 / 0 | **34 / 10** | 22 / 2 |
 | GDS | `complete` | `complete` | `complete` | **`complete`** | `complete` |
 | abstract published | — | yes | yes | — | — |
 | port buffers, in / out | — | 85 / 78 | 42 / 15 | — | — |
-| largest abstract input pin cap (pF) | — | 0.016 | 0.014 | — | — |
-| static power (mW) | 3.55 | — | — | **4.73** — see below |
-| of which the SRAM (mW) | 1.93 | — | — | **1.93** |
+| largest abstract input pin cap (pF) | — | 0.017 | 0.012 | — | — |
+| static power (mW) | 3.62 | — | — | **4.73** — see below | — |
+| of which the SRAM (mW) | 1.93 | — | — | **1.93** | — |
 
 Reading it:
 
 - **Worst setup is the same path both ways**: the SRAM's read data out to
-  `prdata` — `u_sram` → `prdata[9]` flat, → `prdata[1]` assembled — which no
-  partitioning moves. It is 0.19 ns worse assembled. The three macros sit in a
-  different place in the assembly's floorplan, and with extracted parasitics
-  the longer route from the SRAM to the output pins shows up in full. TNS is
-  zero both ways and hold is within 0.15 ns.
+  `prdata`, which no partitioning moves. It is 0.28 ns worse assembled: the
+  three macros sit in a different place in the assembly's floorplan, and with
+  extracted parasitics the longer route from the SRAM to the output pins shows
+  up in full. TNS is zero both ways and hold is within 0.1 ns.
 - **Design area is +6.0%** assembled: the partitions' own core margin and
   filler are counted at their hardened size rather than as loose cells. **Core
   area is +5.8%**: the assembly uses the flat run's floorplan, and the
   size-aware shelf packer (rtl-buddy/rtl_buddy#632) packs the three macros at
-  their real sizes.
+  their real sizes, with `placement.macro-halo` (20 µm by default) of clearance
+  around each for the PDN channels.
 - **RTL-MP recovers the setup slack.** `..._asm_rtlmp_pnr` is the same
   assembly with `floorplan.macro-placement: rtl-mp`: OpenROAD's
-  `rtl_macro_placer` places the three macros by connectivity, and rotates the
-  two partitions (R180 and MY), instead of the packer filling rows from a
-  corner. The worst path is still the SRAM-to-`prdata` one, and it gains
-  0.42 ns, which puts it 0.23 ns ahead of the flat run. Everything else is unchanged: 0 DRCs, the power grid connected to both
-  rotated partitions, strict GDS complete.
-- **DRC-clean on every run.** 6.62.0 and 6.63.0 left two met1 spacing
-  violations in the assembly, where a standard cell abutted the `u_csr` macro
-  edge (rtl-buddy/rtl_buddy#673). 6.64.0 surrounds every macro with a
-  standard-cell keep-out, `cfg-pdks.placement.macro-cell-halo` (default
-  1 µm). That keep-out also moves the placement and routing a little, which
-  accounts for the small shifts in the flat run's timing and area from the
-  6.63.0 numbers.
+  `rtl_macro_placer` places the three macros by connectivity, and turns the
+  compute partition and the SRAM 180 degrees, instead of the packer filling
+  rows from a corner. The worst path is still the SRAM-to-`prdata` one, and it gains 0.48 ns, which puts it
+  0.20 ns ahead of the flat run. 0 DRCs, the power grid connected to the
+  rotated macros, strict GDS complete.
+- **DRC-clean on every run.** `cfg-pdks.placement.macro-cell-halo` keeps
+  standard cells off every macro edge. The sky130hd entry sets it to 3 µm:
+  `repair_design` buffers the SRAM's long read-data nets, and at the 1 µm
+  default those buffers sit against the SRAM's pin edge and overflow the
+  global router's GCell row along it (GRT-0116).
 - **Power is not like for like.** The SRAM is 1.93 mW in both. The hardened
   partitions contribute 0 W: `write_timing_model` writes timing arcs and no
   power tables, and the assembly's `rb power` says so, naming both cells as
   having no Liberty power data. So the assembly's total leaves out the
-  partitions' own cell power. What it adds is 1.1 mW more switching power on
-  the top-level nets (1.57 vs 0.47 mW), which now carry extracted wire
+  partitions' own cell power. What it adds is about 1.0 mW more switching power
+  on the top-level nets (1.53 vs 0.49 mW), which carry extracted wire
   capacitance between three macros spread over the die, and whose drivers
   inside the partitions switch at OpenSTA's default input activity, since an
-  abstract says nothing about them.
-- **Wire RC changes repair, not just the final report.** Before
-  `layer-rc-tcl`, the sky130hd tech LEF's zero wire RC was all that
-  `repair_design`, CTS and hold repair saw (OpenROAD warned EST-0018 and
-  CTS-0104), and only the final OpenRCX timing saw real wires. With it,
-  `repair_design` buffers the SRAM's long read-data nets (125 buffers on the
-  flat run, up from 17), which is where most of the setup gain
-  on the SRAM-to-`prdata` path comes from; hold slack shrinks (flat +0.36 →
-  +0.15 ns) but stays positive everywhere. Those buffers sat against the SRAM's
-  pin edge at the default 1 µm `macro-cell-halo` and overflowed the global
-  router's GCell row along it (GRT-0116 on the flat run and the assembly), so
-  the sky130hd entry raises the halo to 3 µm.
-- **6.64.0 read 3.34 mW here** (rtl-buddy/rtl_buddy#684). It read the
-  partitions' abstract Liberty, whose outputs have no `function`, so OpenSTA's
-  activity propagation never reached them and every net they drive counted as
-  static. 6.65.0 leaves that Liberty out of `rb power`.
-- **Hardened partitions have buffered ports** (rtl_buddy 6.78.0,
-  rtl-buddy/rtl_buddy#772). `harden: true` now runs `buffer_ports` before
-  global placement, with the cell `sky130hd_tt_block` names in `port-buffer`
-  (`sky130_fd_sc_hd__buf_4`): 163 buffers on csr, 57 on compute. The largest
-  input pin capacitance either abstract presents to the parent falls from
-  0.227 pF (csr `rst_n`) and 0.107 pF (compute `rst_n`) to 0.016 and 0.014 pF,
-  and the summed input capacitance by 40% and 50%. The partitions grow
-  (csr 3 480 → 4 644 µm², compute 2 606 → 3 057 µm²) with timing within
-  0.06 ns, and the assembly gains 0.10 ns of setup (RTL-MP 0.15 ns). Without
-  `port-buffer`, OpenROAD picks the delay cell `clkdlybuf4s50_1` and csr loses
-  0.9 ns of setup. Abstracts hardened on an older rtl_buddy are refused as
-  stale (`config changed (buffer_ports)`); the one command above re-hardens
-  them.
-- **Electrical violators are counted** (rtl_buddy 6.78.0). Every run reports
-  its max-slew and max-capacitance violators; the flat run and both
-  assemblies have some, mostly on the SRAM's read path: its `dout1` pins
-  have a 0.03 pF max-capacitance limit their read-data nets exceed, and the
-  slews downstream reach 1.67 ns against a 1.5 ns limit. They pass with an
-  "electrical" note. The counts
-  vary a little between identical runs. `fail-on-electrical: true` on a run
-  makes them fail it. The partitions have none.
+  abstract says nothing about them. `rb power` leaves the partitions' abstract
+  Liberty out (rtl-buddy/rtl_buddy#684): its outputs have no `function`, so
+  activity propagation would stop at them.
+- **Wire RC drives repair, not just the final report.** `layer-rc-tcl` gives
+  `repair_design`, CTS and hold repair the sky130hd wire RC, which the tech LEF
+  lacks; without it OpenROAD warns EST-0018 and CTS-0104 and only the final
+  OpenRCX timing sees real wires. With it, `repair_design` buffers the SRAM's
+  long read-data nets, which is where most of the setup slack on the
+  SRAM-to-`prdata` path comes from.
+- **Hardened partitions have buffered ports.** `harden: true` runs
+  `buffer_ports` before global placement, with the cell `sky130hd_tt_block`
+  names in `port-buffer` (`sky130_fd_sc_hd__buf_4`): 163 buffers on csr, 57 on
+  compute. Each abstract then presents one buffer's input capacitance to the
+  parent rather than its internal fanout. Without `port-buffer`, OpenROAD picks
+  the delay cell `clkdlybuf4s50_1` and csr loses about 0.9 ns of setup.
+- **Electrical violators are counted.** Every run reports its max-slew and
+  max-capacitance violators; the flat run and both assemblies have some,
+  mostly on the SRAM's read path: its `dout1` pins have a 0.03 pF
+  max-capacitance limit their read-data nets exceed, and the slews downstream
+  pass the 1.5 ns limit. They pass with an "electrical" note. The counts vary
+  a little between identical runs. `fail-on-electrical: true` on a run, or
+  `electrical` in its `signoff.fail-on`, makes them fail it.
+- **Supply connections.** `rb pnr` applies the PDK's global connections again
+  at the end of every stage, so the buffers, CTS cells and fill added after
+  `pdngen` have their supply pins connected in the routed database.
+  `<top>.routed.v` is the logical netlist, with no supply ports;
+  `<top>.routed.pwr.v` is the powered one, for LVS. A hardened block's
+  abstract Liberty lists `VDD` and `VSS` as `input` pins.
 
-## Step-0 spike findings
+## Design notes
 
-These are the questions rtl-buddy/rtl_buddy#95 step 0 asks, answered against
-this design. They were measured on rtl_buddy 6.56.0, before extracted
-parasitics, with the hand-wired abstract flow this example used before
-`harden:` existed.
-
-### Does `write_timing_model` output load cleanly?
-
-**Yes, in both consumers, with no warnings.**
+### `write_timing_model` abstracts load cleanly
 
 - **Yosys** — `synth.ys` reads each abstract with `read_liberty -lib` and the
   log says `Imported 1 cell types from liberty file` for each, with nothing
-  else. rtl_buddy also hands each abstract to a `dfflibmap` pass (it runs one
-  per Liberty file); those passes find no sequential cells to map and are
-  silent. ABC is given only the platform Liberty, which is correct — a macro
-  must never be a mapping target.
+  else. rtl_buddy also hands each abstract to a `dfflibmap` pass; those passes
+  find no sequential cells to map and are silent. ABC is given only the
+  platform Liberty, so a macro is never a mapping target.
 - **OpenROAD / OpenSTA at the top** — the abstracts load and produce real
   boundary arcs. `report_checks -to [get_pins u_inner/u_csr/*]` ends paths on
   the macro's input pins against the abstract's setup checks, and
   `report_checks -from [get_pins u_inner/u_compute/*]` starts paths at its
-  output pins with clock-to-out delay. No `STA-` warnings about missing arcs or
-  unconstrained pins on either block.
+  output pins with clock-to-out delay. There are no `STA-` warnings about
+  missing arcs or unconstrained pins on either block.
 
-**Verdict: OpenSTA `write_timing_model` is fit to be the standard path.**
+The model is extracted with the clocks propagated through the tree CTS built,
+so the block's own insertion delay is in the numbers. `harden: true` extracts
+it in the P&R session after routing for that reason; extracting under ideal
+clocks would understate the delay the parent needs.
 
-One caveat worth recording: the model is extracted with the clocks
-propagated through the tree CTS actually built, so the block's own insertion
-delay is in the numbers. `harden: true` extracts it in the P&R session after
-routing for exactly that reason; extracting under ideal clocks understates the
-delay the parent needs.
+To compare a boundary path between the flat run and the assembly, read the
+run's `*.routed.odb` and `*.routed.sdc` back into OpenROAD with the
+`read_liberty` lines from its own `pnr.tcl`, then `set_propagated_clock
+[all_clocks]` and `read_spef` the run's `*.routed.spef` before `report_checks`.
 
-### Is the boundary timing defensible against a flat run?
+### The abstract LEF power pins connect to the top PDN
 
-**Yes — within 0.7 ns on a 20–25 ns period, and in both directions**, which is
-what rules out a model that is simply optimistic.
-
-| path | flat | assembled | delta |
-|---|---|---|---|
-| worst setup overall | +3.68 (`u_sram` → `prdata[9]`) | +3.76 (`u_sram` → `prdata[9]`) | +0.08 |
-| `psel` → CSR boundary | +15.35 (to an internal D pin) | +15.72 (to the `u_csr` macro) | +0.37 |
-| async FIFO → compute boundary | +21.25 (to an internal D pin) | +20.81 (to the `u_compute` macro) | −0.44 |
-| worst hold | +0.27 | +0.28 | +0.01 |
-
-Reproduce either column by reading the run's `*.routed.odb` and `*.routed.sdc`
-back into OpenROAD with the `read_liberty` lines from its own `pnr.tcl`, then
-`set_propagated_clock [all_clocks]` and `estimate_parasitics -global_routing`
-before `report_checks` — the same conditions the flow's own final STA uses.
-
-The CSR input check comes out 0.37 ns *less* pessimistic than the flat path it
-stands for, and the compute input check 0.44 ns *more*. Both are under 2% of
-the period, and the sign changes between blocks, so this looks like extraction
-noise rather than a systematic bias. On a design with real margin pressure the
-policy question in step 0 — fail the hardening run versus warn with a result
-qualifier — would want a tighter bound than this design can demonstrate.
-
-### Do the abstract LEF power pins connect to the top PDN?
-
-**Yes, after fixing the block-level grid** — `check_power_grid` reports
-`[INFO PSM-0040] All shapes on net VDD are connected` and the same for VSS, on
-the assembly and on all three other runs.
-
-Getting there was the one real design decision in this example.
+`check_power_grid` reports `[INFO PSM-0040] All shapes on net VDD are
+connected` and the same for VSS, on the assembly and on the flat and
+partition runs. That depends on the block-level PDN convention.
 
 #### Block-level PDN convention
 
@@ -559,8 +505,8 @@ That rule is implemented as a second PDK entry and a second P&R platform:
 The two PDK entries share everything else through a YAML merge key in
 `root_config.yaml`.
 
-The first attempt used one grid for both, straight from ORFS' sky130hd
-`pdn.tcl`, which exposes on met5. The assembly then failed:
+A block grid that exposes on met5, as ORFS' sky130hd `pdn.tcl` does, makes
+the assembly fail:
 
 ```text
 [WARNING PDN-0232] The grid "CORE_macro_grid_1 - u_inner/u_csr" (Instance) does not contain any shapes or vias.
@@ -577,78 +523,45 @@ The cause is the interaction of two things:
    one power strap on met5 blocks met5 across itself, and the parent's straps
    cannot cross it.
 
-With the block grid on met5, the CSR abstract's `OBS` section listed
-`li1 met1 met2 met3 met4 met5` and its VDD/VSS pins were met5 horizontals.
+With the block grid on met5, the CSR abstract's `OBS` section lists
+`li1 met1 met2 met3 met4 met5` and its VDD/VSS pins are met5 horizontals.
 With the block grid stopped at met4, the same abstract's `OBS` lists
 `li1 met1 met2 met3 met4` — no met5 — and its VDD/VSS pins are met4 verticals.
 
-The confirmation that this is the right convention and not just a working one:
-it is what the third-party macro already does. The OpenRAM SRAM exposes
+It is also what the third-party macro does. The OpenRAM SRAM exposes
 `vccd1` / `vssd1` on met4 and met3. A hardened partition that does the same is
 indistinguishable from it at the top, which is the property the whole flow
 depends on.
 
-### Is the SRAM really in the assembled GDS?
+#### Rows around macros
 
-Yes. `def2stream.report.json` says `"complete": true` with
-`"missing_cells": []` and `"allowed_empty_cells": []`, and the layout itself
-carries all three macros:
+The top-level grid's macro grids in `pnr/sky130hd/pdn.tcl` keep a 2 µm halo
+around each macro, which keeps strap ends and via stacks clear of the macro's
+pin edges. `pdngen` fails a halo that reaches a standard-cell row the macro
+does not sit on (`PDN-0008`), so `pnr/sky130hd/tapcell.tcl`, the PDK's
+`tapcell-tcl`, cuts the rows 2 µm around every macro first, as ORFS' tapcell
+step does.
 
-```text
-sky130_sram_1kbyte_1rw1r_32x256_8: own_shapes=20517 child_insts=6085  bbox=(0,0;479.78,397.5)
-demo_tiny_alu_subsys_csr:          own_shapes=4168  child_insts=4754  bbox=(0,0;98.94,98.94)
-demo_tiny_alu_subsys_compute:      own_shapes=2671  child_insts=3607  bbox=(0,0;89.47,89.47)
-demo_tiny_alu_subsys_synth_top:    own_shapes=17301 child_insts=46916 bbox=(0,0;716.98,716.98)
-```
+### The SRAM is in the assembled GDS
 
-## rtl_buddy gaps
+`def2stream.report.json` says `"complete": true` with `"missing_cells": []`
+and `"allowed_empty_cells": []`, and the layout carries all three macros:
+the SRAM, `demo_tiny_alu_subsys_csr` and `demo_tiny_alu_subsys_compute`, each
+streamed from its own GDS.
 
-### Fixed since this example was first drafted
+### The interface port at the synthesis top
 
-The first draft of this example carried four gaps, all worked around in
-configuration. Three of them are gone in rtl_buddy 6.56.0 and the fourth is
-moot now the pin is on it — the git history of this directory shows the
-work-arounds they needed:
-
-- **Macro placement gave every macro a slot sized for the largest.** The old
-  rectangular grid refused `utilization: 0.45, aspect: 1.0` outright ("macros
-  do not fit any rectangular grid in the floorplan core") and forced a 1 × 3
-  strip, and the thin channels that left around the SRAM then defeated
-  `pdngen` (`[ERROR PDN-0179] Unable to repair all channels`). The size-aware
-  shelf packer (rtl-buddy/rtl_buddy#632) packs macros from the bottom-left
-  corner at their real sizes and keeps `placement.macro-halo` (20 µm by
-  default) of clearance around each, which is what the PDN channels need. The
-  assembly now uses the flat run's floorplan; see the table above for what
-  that saved.
-- **`rb power` could not be given a macro's Liberty**, so every macro reported
-  exactly 0 W and the flat and assembled totals were not comparable.
-  rtl-buddy/rtl_buddy#630 makes a `netlist-source: pnr` power run inherit the
-  macro Liberty from the P&R run it reads (and lets a power run add its own
-  `lib-paths`), with `power.missing_macro_inputs` as a hard ERROR when a macro
-  has no library at all. The SRAM now reports real power (1.93 mW, both ways).
-  What is left is not rtl_buddy's: a `write_timing_model` abstract carries no
-  power tables, so a hardened partition is still 0 W in its parent's report.
-- **`cts-buffer` as a list was a load-time break.** rtl-buddy/rtl_buddy#625
-  widens `cfg-pnr-platforms.cts-buffer` to a list (first entry = `-root_buf`);
-  before that pin, a list-valued key made `root_config.yaml` refuse to load for
-  *every* flow in the repo, so the single-name form was kept with the list in a
-  comment. `root_config.yaml` now carries the list.
-
-### 1. Pre-existing: the interface port at the synthesis top
-
-Not introduced here, but it shows up in every log on this design and is worth
-naming so it is not mistaken for something this example did. Yosys'
-`read_verilog` warns about `apb_intf` at `demo_tiny_alu_subsys_synth_top`:
+Yosys' `read_verilog` warns about `apb_intf` at
+`demo_tiny_alu_subsys_synth_top` on the flat and assembly synthesis:
 
 ```text
 Warning: Could not find interface instance for `bus' in `demo_tiny_alu_subsys_synth_top'
 Warning: Range select [5:0] out of bounds on signal `\apb.paddr': Setting all 6 result bits to undef.
 ```
 
-Since rtl-buddy/rtl_buddy#629 rtl_buddy classifies that warning itself, through
-the `unresolved-interfaces` synth gate (`cfg-synth-tools`, `error` / `warn` /
-`allow`, default `warn`). **It fires on the flat and assembly runs here**, once
-per unbound instance:
+rtl_buddy classifies that warning through the `unresolved-interfaces` synth
+gate (`cfg-synth-tools`, `error` / `warn` / `allow`, default `warn`,
+rtl-buddy/rtl_buddy#629), once per unbound instance:
 
 ```text
 WARNING  interface instance demo_tiny_alu_subsys_synth_top.bus could not be
@@ -657,24 +570,21 @@ WARNING  interface instance demo_tiny_alu_subsys_synth_top.bus could not be
          undriven. frontend: slang binds it correctly
 ```
 
-The default is deliberately left alone. The warning is **benign on this
-design** — the netlist is connected. The out-of-bounds select comes from a
-throwaway elaboration made before the interface port is derived; the derived
-module carries the full-width `paddr` and the correct slice into the CSR block,
-and the design is formally equivalent at its outputs to a `read_slang`
-elaboration of the same sources. The only undriven nets are `apb_intf`'s own
-`clk` / `rst_n` ports, which this subsystem never reads (it clocks off
-`apb_clk` / `apb_rst_n`).
+The warning is **benign on this design** — the netlist is connected. The
+out-of-bounds select comes from a throwaway elaboration made before the
+interface port is derived; the derived module carries the full-width `paddr`
+and the correct slice into the CSR block, and the design is formally
+equivalent at its outputs to a `read_slang` elaboration of the same sources.
+The only undriven nets are `apb_intf`'s own `clk` / `rst_n` ports, which this
+subsystem never reads (it clocks off `apb_clk` / `apb_rst_n`).
 
-The general hazard behind the warning is real, though: `read_verilog` drops an
+The general hazard behind the warning is real: `read_verilog` drops an
 interface *instance's* own port connections, so a design that does read
-`bus.clk` would synthesize clockless. That is exactly what the gate is for —
-a project whose design reads through an interface instance should set
-`unresolved-interfaces: error` (or move that run to `frontend: slang`, which
-binds it correctly). rtl-buddy/rtl_buddy#628 tracks the remaining work; the
-warnings reproduce on `origin/main` with the pre-change RTL, and it is the same
-limitation `lint/cdc/cdc.yaml` documents when it puts
-`demo_tiny_alu_subsys_lint` on the pyslang frontend.
+`bus.clk` would synthesize clockless. A project whose design reads through an
+interface instance should set `unresolved-interfaces: error`, or move that run
+to `frontend: slang`, which binds it correctly (rtl-buddy/rtl_buddy#628).
+`lint/cdc/cdc.yaml` puts `demo_tiny_alu_subsys_lint` on the pyslang frontend
+for the same reason.
 
 ## What is still manual
 

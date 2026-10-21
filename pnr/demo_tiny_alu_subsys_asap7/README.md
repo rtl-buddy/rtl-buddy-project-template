@@ -14,11 +14,11 @@ configuration for them.
 
 ## What you need
 
-- **rtl_buddy >= 6.70.0** (`pyproject.toml` pins 6.81.0): rtl-buddy/rtl_buddy#716 (the Tcl hooks), #717
-  (`post-cts-setup-repair`, `routing-layer-adjustment`, hold TNS) and #718
-  (`routed_cell_count` / `physical_cell_count`), on top of #699 (list-valued
-  corners for ASAP7's split Liberty, the ps Liberty `time_unit`, gzipped
-  Liberty).
+- **rtl_buddy** as pinned in `pyproject.toml`. The runs use the platform Tcl
+  hooks (rtl-buddy/rtl_buddy#716), `post-cts-setup-repair` and
+  `routing-layer-adjustment` (#717), the routed and physical cell counts
+  (#718), and list-valued corners for ASAP7's split Liberty, read in ps and
+  gzipped (#699).
 - **Yosys** and **OpenROAD** on `PATH`. **KLayout** only for `--gds` / `--png`.
 - The PDK, fetched once per checkout into the gitignored `pdk/asap7/`:
 
@@ -72,15 +72,14 @@ upstream files.
 
 ## Expected results
 
-Measured with the released rtl_buddy 6.70.0 wheel and again, unchanged, with
-the 6.77.0, 6.78.0 and 6.81.0 wheels (6.81.0 is the one this project pins), OpenROAD and Yosys
-from rtl-buddy-tools, ORFS at the commit pinned in `download_pdk.sh`.
+Measured with the rtl_buddy that `pyproject.toml` pins, OpenROAD 26Q4 and
+Yosys from rtl-buddy-tools, and ORFS at the commit pinned in `download_pdk.sh`.
 
 | Run | Clock | Platform | Cells in / routed / physical | Area | WNS setup | TNS setup | WNS hold | DRC |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `..._compute_pnr` | 600 ps | `asap7_tt` | 330 / 359 / 610 | 43 µm² | +63.6 ps | 0 | +63.2 ps | 0 |
-| `..._compute_tight_pnr` | 250 ps | `asap7_tt` | 330 / 360 / 611 | 43 µm² | −286.4 ps | −2432.5 ps | +7.5 ps | 0 |
-| `..._compute_tight_setup_pnr` | 250 ps | `asap7_tt_setup_repair` | 330 / 385 / 616 | 46 µm² | −126.7 ps | −908.7 ps | +7.5 ps | 0 |
+| `..._compute_pnr` | 600 ps | `asap7_tt` | 330 / 359 / 634 | 43 µm² | +59.8 ps | 0 | +61.9 ps | 0 |
+| `..._compute_tight_pnr` | 250 ps | `asap7_tt` | 330 / 360 / 635 | 43 µm² | −290.7 ps | −2462.8 ps | +7.4 ps | 0 |
+| `..._compute_tight_setup_pnr` | 250 ps | `asap7_tt_setup_repair` | 330 / 385 / 641 | 46 µm² | −131.6 ps | −933.4 ps | +7.0 ps | 0 |
 
 Synthesis alone reports 330 cells, 38.96 µm² and +321.7 ps at 600 ps; it does
 not see wire RC or the high-fanout nets that placement exposes.
@@ -95,7 +94,7 @@ What to look for in `artefacts/<run>/pnr.log`:
   prints when every wire has zero RC, which is what the ASAP7 tech LEF gives
   without `layer-rc-tcl`.
 - No `STA-1212` warnings from the Liberty reads.
-- `RB-CELL-COUNT: routed 359 physical 610`. The physical count is the 70
+- `RB-CELL-COUNT: routed 359 physical 634`. The physical count is the 70
   endcaps plus the filler and decap cells that the `fill-cells` patterns match.
 - `route.drc.rpt` empty.
 
@@ -117,9 +116,9 @@ files, three of them `.lib.gz`, in ps (rtl-buddy/rtl_buddy#699).
 | Run | Netlist | Activity | Total | Internal | Switching | Leakage | Clock |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `..._power_static` | synthesised | Liberty defaults | 205 µW | 138 µW | 67 µW | 28 nW | 0 |
-| `..._power_postpnr` | routed `..._compute_pnr`, SPEF | 0.2 toggle, 0.5 duty | 194 µW | 119 µW | 75 µW | 24 nW | 42 µW |
+| `..._power_postpnr` | routed `..._compute_pnr`, SPEF | 0.2 toggle, 0.5 duty | 200 µW | 125 µW | 75 µW | 24 nW | 48 µW |
 
-Only the post-P&R run has a clock tree to report. It warns that the 610
+Only the post-P&R run has a clock tree to report. It warns that the 634
 physical-only instances (eight masters: the `DECAP*` and `FILLER*` cells and
 the `TAPCELL` endcaps) have no Liberty power data and are reported at 0 W. That is expected: the TT Liberty
 does not characterise them.

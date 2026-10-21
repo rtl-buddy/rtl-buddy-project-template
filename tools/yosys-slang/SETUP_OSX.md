@@ -86,8 +86,7 @@ lands at `build/slang.so` — the plugin file rtl_buddy points at via
 
 ## Install (where to put `slang.so`)
 
-Wherever the file lives, tell rtl_buddy about it the machine-local way
-(rtl_buddy >= 6.11.0): the `RTL_BUDDY_SLANG_PLUGIN` environment
+Wherever the file lives, tell rtl_buddy about it the machine-local way: the `RTL_BUDDY_SLANG_PLUGIN` environment
 variable, either exported from a toolchain env script or set in the
 gitignored `.rtl-buddy/.env` at the project root (`KEY=VALUE`; rb loads
 it automatically). That keeps `root_config.yaml` free of

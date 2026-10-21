@@ -87,9 +87,8 @@ cd lint/cdc && uv run rb cdc -c cdc.yaml demo_cdc_open_lint \
   scoped emit addresses each synchronizer by its instance path, which only
   survives elaboration under slang — the default yosys frontend `flatten`s it
   away (`rb cdc --emit-constraints --scoped` errors rather than emit over-broad
-  `<top>/*` wildcards). Requires `rtl-buddy-cdc[slang] >= 0.3.3` and
-  `rtl_buddy >= 6.17.1` (the latter emits Vivado-bindable selectors — rooted
-  `[get_cells <rel>/* -filter {IS_SEQUENTIAL}]`).
+  `<top>/*` wildcards). rtl_buddy emits Vivado-bindable selectors — rooted
+  `[get_cells <rel>/* -filter {IS_SEQUENTIAL}]`.
 
 **Open-flow caveat:** nextpnr-xilinx does not act on `set_max_delay` /
 `set_bus_skew` / `set_clock_groups` (it never times unrelated clock domains

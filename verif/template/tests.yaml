@@ -62,7 +62,7 @@ tests:
       path: "example_preproc.py"
     # This hook writes stimulus and changes a runtime plusarg, never a
     # plusdefine, so the dispatched build reservation can count this test
-    # with the hook-less ones on the same compile key (rtl_buddy >= 6.71).
+    # with the hook-less ones on the same compile key.
     preproc-sets-plusdefines: false
 
   - name: "sweep"

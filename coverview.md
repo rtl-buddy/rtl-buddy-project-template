@@ -43,7 +43,7 @@ uv run rb -M cov regression -c regression.yaml \
   --coverage-source-summary
 ```
 
-`--coverage-source-summary` (rtl_buddy >= 6.58) adds
+`--coverage-source-summary` adds
 `Coverage source points <metric>:` lines scoring each source point once,
 with the per-elaboration figure in brackets. They differ only where a
 module is elaborated more than once (e.g. `demo_tiny_alu_subsys`); for

@@ -101,16 +101,13 @@ binds to the zero-area Verilog module instead: the macro is gone from the
 OpenROAD database, its area is not counted, and its timing arcs are not in the
 graph.
 
-Measured on this demo when it still used hand-written Nangate45 views,
-changing nothing but which `rtl_buddy` runs it:
+Measured with hand-written Nangate45 views of this macro, with and without
+the stub read beside them:
 
-| rtl_buddy | reported area | WNS | macro instances after `link_design` |
+| stub read | reported area | WNS | macro instances after `link_design` |
 |---|---|---|---|
-| 6.37.0 and earlier | 54 um^2 | +3.906 ns | 0 |
-| 6.37.2 onwards | 8054 um^2 | +3.850 ns | 1 |
-
-Fixed in rtl_buddy **6.37.2** (rtl-buddy/rtl_buddy#471), which this project pins.
-6.37.1 does **not** have it.
+| yes | 54 um^2 | +3.906 ns | 0 |
+| no | 8054 um^2 | +3.850 ns | 1 |
 
 Both runs **PASS**. That is the whole problem: no error, no warning, and a
 plausible-looking table. The area is out by 149x, and the WNS is worse than

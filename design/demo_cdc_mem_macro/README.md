@@ -52,5 +52,4 @@ signed-off IP) are the intended case.
 This is a **slang-required** example (issue #21). The `--blackbox` path needs
 `rtl-buddy-cdc` ≥ 0.3.0 (rtl-buddy-cdc#259) and `rtl_buddy` with the `blackbox:`
 cdc.yaml key (rtl_buddy#318), run with the yosys-slang plugin
-(`RTL_BUDDY_SLANG_PLUGIN`). Both are released and pinned here
-(`rtl-buddy-cdc[slang]` v0.3.3, `rtl_buddy` 6.15.0).
+(`RTL_BUDDY_SLANG_PLUGIN`). `pyproject.toml` pins both.
