@@ -1,8 +1,9 @@
 rtl-buddy-filetype: pnr_config
 
 # The hard macro of demo_synth_macro, hardened on sky130hd, and the top that
-# instances it. One command runs everything in order -- the macro's synthesis
-# and P&R, then the top's synthesis (which reads the macro's abstract) and P&R:
+# instances it, placed twice: once with rb's macro packer and once with run
+# hooks. One command runs everything in order -- the macro's synthesis and
+# P&R, then the top's synthesis (which reads the macro's abstract) and P&R:
 #
 #   synth/demo_tiny_alu_subsys_hier/download_pdk.sh
 #   rb pnr -c pnr/demo_synth_macro/pnr.yaml --synth -l 1000
@@ -49,4 +50,34 @@ runs:
       aspect: 1.0
       core-margin: 5.0
     harden: true
+    reglvl: 1000
+
+  # The same top with two run hooks: Tcl files `rb pnr` sources at fixed
+  # points of its flow, so a run can add a step without editing the generated
+  # pnr.tcl. Paths are relative to this file. pnr.log announces each file as
+  # `>>> Hook <point>: <path>`.
+  #
+  #   macro-placement  replaces rb's macro packer; hooks/place_macro.tcl puts
+  #                    the macro at an explicit location.
+  #   after-cts        runs right after clock tree synthesis;
+  #                    hooks/clock_report.tcl writes clock_tree.rpt into this
+  #                    run's artefact directory.
+  - name: "demo_synth_macro_sky130_hooks_pnr"
+    desc: "The top with its macro placed by a hook and a clock report after CTS"
+    tool: "openroad"
+    synth: "demo_synth_macro_sky130"
+    synth-path: "../../synth/demo_synth_macro/synth.yaml"
+    constraints: "../../synth/demo_synth_macro/constraints.sdc"
+    platform: "sky130hd_tt"
+    floorplan:
+      utilization: 0.10
+      aspect: 1.0
+      core-margin: 5.0
+    blocks:
+      - name: demo_hard_macro
+        pnr: demo_hard_macro_sky130_pnr
+    hooks:
+      macro-placement: hooks/place_macro.tcl
+      after-cts: hooks/clock_report.tcl
+    gds-mode: strict
     reglvl: 1000

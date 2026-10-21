@@ -1,0 +1,12 @@
+# Macro plan for the flat demo_tiny_alu_subsys netlist, as a floorplanner would
+# write it: a list of `floorplan.macros` entries, read by `floorplan.macros-file`.
+#
+# `location` is the lower-left corner of the macro's box after it is oriented,
+# in die microns. The SRAM is 479.78 x 397.5 um; rotated 180 degrees (R180) its
+# box keeps that size and spans x 80.04..559.82, y 100.64..498.14. R180 keeps
+# the SRAM's supply sides vertical, which is what the PDK's macro grid expects.
+#
+# The corner is on the core's site and row grid (sites 0.46 um from x = 10.12,
+# rows 2.72 um from y = 10.88, the first whole site and row inside core-area),
+# because the run sets `macro-snap: false` and the macro is placed exactly here.
+- {instance: u_inner/u_hist_mem/u_sram, location: [80.04, 100.64], orientation: R180}

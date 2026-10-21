@@ -185,9 +185,10 @@ uv run rb skill install --project
 │   └── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 power, synthesised and routed
 ├── pnr/
 │   ├── demo_tiny_alu_subsys/     # demo — `rb pnr` Nangate45 flow (OpenROAD)
-│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks: (see its README)
+│   ├── demo_tiny_alu_subsys_hier/ # demo — sky130hd hierarchical P&R: harden: + blocks:, planner files, staged runs and repair (see its README)
 │   ├── demo_tiny_alu_subsys_asap7/ # demo — ASAP7 flat P&R from an ORFS platform (see its README)
-│   ├── sky130hd/                 # sky130hd PDN snippets: pdn.tcl (top) + pdn_block.tcl (block)
+│   ├── demo_synth_macro/         # demo — sky130hd hard macro hardened and placed in a top; run hooks
+│   ├── sky130hd/                 # sky130hd hooks: pdn.tcl (top) + pdn_block.tcl (block) + tapcell.tcl (row cuts)
 │   └── asap7/                    # asap7 hooks: pdn.tcl + tapcell.tcl (ORFS, filled in)
 ├── fpv/
 │   ├── demo_abv_basic/   # demo — `rb fpv` saturating counter (bmc + cover)
@@ -938,11 +939,36 @@ passes with an "electrical" note; `fail-on-electrical: true` would fail it.
 [`pnr/demo_tiny_alu_subsys/pnr.yaml`](pnr/demo_tiny_alu_subsys/pnr.yaml)
 carries a commented-out `floorplan.pins` block (side, edge-range, ordered-group
 and exact-location pin constraints, rtl_buddy >= 6.78). The other floorplan
-controls 6.78 added are not shown in these examples: `floorplan.macros`
-(fixed macro location, orientation and halo), explicit `die-area` /
-`core-area`, `core-cutouts` for L- or T-shaped cores, and a run's own
-`pdn-config` or declarative `pdn:` grid. See the
+controls 6.78 added are not shown in these examples: `core-cutouts` for L- or
+T-shaped cores and a run's declarative `pdn:` grid. See the
 [rtl_buddy P&R docs](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/pnr/).
+
+Run hooks, Tcl files a P&R run's `hooks:` names for `rb pnr` to source at
+fixed points of its flow (rtl-buddy/rtl_buddy#847), are shown by
+`demo_synth_macro_sky130_hooks_pnr` in
+[`pnr/demo_synth_macro/pnr.yaml`](pnr/demo_synth_macro/pnr.yaml): a
+`macro-placement` hook puts the hard macro at an explicit location and an
+`after-cts` hook writes a clock tree report. See
+[`synth/demo_synth_macro/README.md`](synth/demo_synth_macro/README.md#placing-the-macro-with-a-run-hook).
+
+Planner files, macro and pin plans a floorplanner writes and `floorplan.macros-file`
+and `floorplan.pins-file` read (rtl-buddy/rtl_buddy#850), are shown by
+`demo_tiny_alu_subsys_sky130_planner_pnr` in
+[`pnr/demo_tiny_alu_subsys_hier/pnr.yaml`](pnr/demo_tiny_alu_subsys_hier/pnr.yaml):
+the SRAM rotated 180 degrees at an explicit location, six exact pins plus side rules with
+`pins-complete: true`, a global-placement-only blockage, and the routed-floorplan
+check. See
+[`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md#5-planner-files-optional).
+
+Staged runs, repair and probe (rtl-buddy/rtl_buddy#848, #849) and timing-driven
+placement (#867) are shown by three runs on the same flat reference:
+`demo_tiny_alu_subsys_sky130_tight_pnr` misses setup at a 14 ns clock,
+`demo_tiny_alu_subsys_sky130_repair_pnr` runs it stage by stage with
+global-route and post-route repair, and `demo_tiny_alu_subsys_sky130_probe_pnr`
+checks a denser floorplan in seconds with `mode: probe`. The README shows how
+to stop a staged run after a stage, resume it from a checkpoint and dispatch
+its stages to Slurm. See
+[`pnr/demo_tiny_alu_subsys_hier/README.md`](pnr/demo_tiny_alu_subsys_hier/README.md#6-staged-runs-and-timing-repair-optional).
 
 ### Hierarchical P&R on sky130hd
 
