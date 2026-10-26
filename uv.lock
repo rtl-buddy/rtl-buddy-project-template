@@ -8,7 +8,7 @@ resolution-markers = [
 ]
 
 [manifest]
-constraints = [{ name = "rtl-buddy-sch", specifier = ">=0.11.0" }]
+constraints = [{ name = "rtl-buddy-sch", specifier = ">=0.13.0" }]
 
 [[package]]
 name = "altair"
@@ -941,7 +941,7 @@ wheels = [
 
 [[package]]
 name = "rtl-buddy"
-version = "7.0.1"
+version = "7.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -953,9 +953,9 @@ dependencies = [
     { name = "typer" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/69/a8/2463d00e5575de195294b90be51ad2b4e6fcc791407ba14690525c61bac7/rtl_buddy-7.0.1.tar.gz", hash = "sha256:983e372f1f2ca7229e415b4a8177841d51d897c7cb2b1091c3716e6c9f6c52ec", size = 1484008, upload-time = "2026-10-21T05:48:28.351Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f5/e3/d3a35b6b181aabff8fea95341cb1a57f4cb6b549377ece045b2b4be88588/rtl_buddy-7.1.0.tar.gz", hash = "sha256:563bcb6c37b7d3210f8c43aeff6910ad2171c19cfe5df9ccce525b274a270bbc", size = 1490170, upload-time = "2026-10-26T09:22:20.78Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/06/48871c173c99d968cc864e90e573c7d213f027adfdbf88a00f7a409e5186/rtl_buddy-7.0.1-py3-none-any.whl", hash = "sha256:fa950e5b92f474abbfdac9d34ff96ae923e864df6e5965069ce5cefe748c56b3", size = 1665357, upload-time = "2026-10-21T05:48:25.936Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/42/b42c8df7654a316dd13211d9eedba996a4aedcacdcd10f34d3e048d4ac6d/rtl_buddy-7.1.0-py3-none-any.whl", hash = "sha256:3c09a49d6ccd1d9dcb5735c0d46d496873c616d8a7a063363699892001db667f", size = 1671105, upload-time = "2026-10-26T09:22:18.912Z" },
 ]
 
 [package.optional-dependencies]
@@ -1033,7 +1033,7 @@ requires-dist = [
     { name = "peakrdl", git = "https://github.com/rtl-buddy/PeakRDL.git?subdirectory=peakrdl" },
     { name = "peakrdl-regblock", git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "rtl-buddy", extras = ["elab", "graph-extract"], specifier = "==7.0.1" },
+    { name = "rtl-buddy", extras = ["elab", "graph-extract"], specifier = "==7.1.0" },
     { name = "rtl-buddy-axi-profiler", extras = ["notebook"], git = "https://github.com/rtl-buddy/rtl-buddy-axi-profiler.git" },
     { name = "rtl-buddy-cdc", extras = ["slang"], git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.5.0" },
     { name = "rtl-buddy-xeno", extras = ["verible", "slang"] },
@@ -1041,14 +1041,14 @@ requires-dist = [
 
 [[package]]
 name = "rtl-buddy-sch"
-version = "0.11.0"
+version = "0.13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jsonschema" },
     { name = "typer" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/83/26cbd5ae46daba2d11a7dbde6208e9d39eca41bdb0d01202cc057db226c0/rtl_buddy_sch-0.11.0-py3-none-any.whl", hash = "sha256:2c394ee7d63d9dcb28ede8ee7a7a20c402dd2a700154ef0fb0f9c50023ddc4c6", size = 1324999, upload-time = "2026-09-18T10:27:24.185Z" },
+    { url = "https://files.pythonhosted.org/packages/04/f5/e5369df7e6d437db186fb1519658b38ae1e49350e835a54c0865bae44253/rtl_buddy_sch-0.13.0-py3-none-any.whl", hash = "sha256:9c89b4be79ed4b3b9a75d1f0406f2ffca7b5dfe2f81e1818e3c3b0285ebbedd4", size = 1353009, upload-time = "2026-10-26T08:23:56.917Z" },
 ]
 
 [[package]]

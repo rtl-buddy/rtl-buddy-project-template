@@ -27,6 +27,42 @@ demo_cdc_open_top                 (clk_a, clk_b — asynchronous)
     └── u_sync_ack  : cdc_open_sync        (ack → clk_a)
 ```
 
+## Document figures
+
+`rb hier --block-diagram` draws this design as a block diagram. Three options
+trim that figure for a spec page (`rtl-buddy-sch >= 0.12.0`):
+
+```bash
+# From the project root. Drop parameter rows and the root ports no edge
+# lands on:
+uv run rb hier demo_cdc_open_top -c design/demo_cdc_open/models.yaml \
+  --format dot --block-diagram --params none --prune-flags \
+  | dot -Tsvg -o demo_cdc_open_top.svg
+
+# Add clock domains with fixed colours. The domain map comes from the
+# `rb cdc --emit-constraints` run in the scoped constraint loop
+# (../../fpga/demo_cdc_open/README.md):
+uv run rb hier demo_cdc_open_top -c design/demo_cdc_open/models.yaml \
+  --format dot --block-diagram --params none --prune-flags \
+  --cdc-annotations lint/cdc/artefacts/demo_cdc_open_lint/domain_map.json \
+  --clock-colors design/demo_cdc_open/clock-colors.json \
+  | dot -Tsvg -o demo_cdc_open_top_clocks.svg
+```
+
+- `--params none` removes the `WIDTH`/`STAGES` rows from every box.
+- `--prune-flags` drops `clk_a`, `clk_b` and `flag_a`. The clocks reach the
+  instances without a drawn edge, and `flag_a` feeds the top-level
+  `flag_a_q` flop, which the block diagram does not draw. With the clock
+  annotations, `clk_a` stays, because the `clk_a → clk_b` crossing edges
+  start there.
+- [`clock-colors.json`](clock-colors.json) pins `clk_a` to blue and `clk_b`
+  to orange, so every figure of this design colours the domains the same
+  way. Without it, the renderer assigns swatches in its own order.
+
+`rb hier` refuses (exit 2) a combination the renderer would ignore, such as
+`--params` with `--format tree` or `--clock-colors` without
+`--cdc-annotations`.
+
 ## Crossing styles demonstrated
 
 | Crossing | Module | Why it is safe |

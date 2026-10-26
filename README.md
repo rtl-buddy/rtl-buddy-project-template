@@ -605,20 +605,19 @@ Two shipped models are legitimately not elaborable as a module top, and
   `top: axi_xbar` and the crossbar is exported as that model's root.
 
 A fresh clone's `rb graph build` therefore reports no design-tier
-failures. **A model failing with `top module 'X' not found. Known
-modules: []` — while the module is plainly in the file — is a
-poisoned CST cache, not a parse error.** `rb mut` (rtl-buddy-xeno)
+failures. A model failing with `top module 'X' not found. Known
+modules: []` while the module is plainly in the file used to mean a
+poisoned CST cache, not a parse error: `rb mut` (rtl-buddy-xeno)
 and the graph/hier exports (rtl-buddy-sch) share a user-global
-content-hash CST cache but store incompatible entry shapes, so a
-mutation campaign silently breaks later graph builds of the exact
-same file content — across checkouts, until the file changes or the
-cache is cleared (rtl-buddy/rtl-buddy-sch#186,
+content-hash CST cache, and older xeno releases stored entries in a
+shape older sch releases could not read (rtl-buddy/rtl-buddy-sch#186,
 rtl-buddy/rtl-buddy-xeno#27; misdiagnosed as an RTL-construct
-problem in template#109). Remedy:
+problem in template#109). rtl-buddy-sch >= 0.12.0, which this project
+requires, unwraps such an entry on read and rewrites it in place, and
+names the source line if a file's CST still yields no module. To rule
+the cache out anyway:
 
 ```bash
-rm -rf ~/.cache/rtl-buddy/sv-cst ~/.cache/rtl-buddy-view/cst   # both roots
-# or bypass for one run:
 RTL_BUDDY_NO_CACHE=1 uv run rb graph build --force
 ```
 

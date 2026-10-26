@@ -3,7 +3,7 @@ name = "rtl-buddy-project-template"
 version = "0.0.0"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-  "rtl_buddy[elab,graph-extract]==7.0.1",
+  "rtl_buddy[elab,graph-extract]==7.1.0",
   "rtl-buddy-cdc[slang]",
   "rtl-buddy-xeno[verible,slang]",
   "rtl-buddy-axi-profiler[notebook]",
@@ -16,7 +16,7 @@ dependencies = [
 
 [tool.uv]
 package = false
-# Aggregator-level floor: force rtl-buddy-sch >=0.7.0 across every transitive
+# Aggregator-level floor: force rtl-buddy-sch >=0.13.0 across every transitive
 # path, regardless of what each consumer (rtl_buddy, rtl-buddy-xeno, ...)
 # declares. The viewer distribution renamed for 0.7.0+ (releases <=0.5.0
 # shipped as rtl-buddy-view, now frozen on PyPI); rtl_buddy >=6.32.1
@@ -27,13 +27,17 @@ package = false
 # both installed is a collision, not a fallback. The consumers carry
 # floors + runtime guards of their own; this constraint is
 # belt-and-suspenders so no transitive path can ever drag the resolution
-# below 0.11.0 — the release that makes the schematic readable (0.10.0:
-# a pin fed by procedural logic names the net it binds (rb.net), a
-# bundle marks the pins it stands for with junction dots, and
-# producer-baked CDC/RDC accents survive the theme re-tint) and adds the
-# phys overlay on the hierarchy schematic (0.11.0, `--overlay phys=`
-# over the phys-manifest.json the phys examples here produce).
-constraint-dependencies = ["rtl-buddy-sch>=0.11.0"]
+# below 0.13.0. 0.10.0 makes the schematic readable (a pin fed by
+# procedural logic names the net it binds (rb.net), a bundle marks the
+# pins it stands for with junction dots, and producer-baked CDC/RDC
+# accents survive the theme re-tint); 0.11.0 adds the phys overlay on the
+# hierarchy schematic (`--overlay phys=` over the phys-manifest.json the
+# phys examples here produce); 0.12.0 heals xeno-shaped CST cache entries
+# on read and adds the document-figure controls `rb hier` forwards
+# (`--params`, `--prune-flags`, `--clock-colors`; see
+# design/demo_cdc_open/README.md); 0.13.0 keeps interface instances off
+# the hub's schematic canvas and makes ported CDC edges clickable.
+constraint-dependencies = ["rtl-buddy-sch>=0.13.0"]
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
