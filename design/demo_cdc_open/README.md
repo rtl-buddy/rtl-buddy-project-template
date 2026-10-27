@@ -50,11 +50,17 @@ uv run rb hier demo_cdc_open_top -c design/demo_cdc_open/models.yaml \
 ```
 
 - `--params none` removes the `WIDTH`/`STAGES` rows from every box.
-- `--prune-flags` drops `clk_a`, `clk_b` and `flag_a`. The clocks reach the
-  instances without a drawn edge, and `flag_a` feeds the top-level
-  `flag_a_q` flop, which the block diagram does not draw. With the clock
-  annotations, `clk_a` stays, because the `clk_a → clk_b` crossing edges
-  start there.
+- `--prune-flags` drops `clk_a` and `clk_b`, which reach the instances
+  without a drawn edge. `flag_a` stays: it is registered into `flag_a_q`
+  before `u_flag_sync`, and the diagram draws that as a `flag_a → u_flag_sync`
+  edge labelled `flag_a_q` (`rtl-buddy-sch >= 0.14.0`). With the clock
+  annotations, `clk_a` stays too, because the `clk_a → clk_b` crossing
+  edges start there.
+- The two crossings drawn at this level, the flag synchronizer and the
+  handshake, appear in teal and are labelled with their scheme (`2FF`,
+  `HANDSHAKE`), because `rb cdc` (`rtl-buddy-cdc >= 0.6.0`) records them as
+  recognised synchronizers with no findings. A crossing the linter flags is
+  drawn as a `⚠CDC` hazard instead.
 - [`clock-colors.json`](clock-colors.json) pins `clk_a` to blue and `clk_b`
   to orange, so every figure of this design colours the domains the same
   way. Without it, the renderer assigns swatches in its own order.
