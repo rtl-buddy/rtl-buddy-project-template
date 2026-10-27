@@ -16,7 +16,7 @@ dependencies = [
 
 [tool.uv]
 package = false
-# Aggregator-level floor: force rtl-buddy-sch >=0.13.0 across every transitive
+# Aggregator-level floor: force rtl-buddy-sch >=0.14.0 across every transitive
 # path, regardless of what each consumer (rtl_buddy, rtl-buddy-xeno, ...)
 # declares. The viewer distribution renamed for 0.7.0+ (releases <=0.5.0
 # shipped as rtl-buddy-view, now frozen on PyPI); rtl_buddy >=6.32.1
@@ -27,7 +27,7 @@ package = false
 # both installed is a collision, not a fallback. The consumers carry
 # floors + runtime guards of their own; this constraint is
 # belt-and-suspenders so no transitive path can ever drag the resolution
-# below 0.13.0. 0.10.0 makes the schematic readable (a pin fed by
+# below 0.14.0. 0.10.0 makes the schematic readable (a pin fed by
 # procedural logic names the net it binds (rb.net), a bundle marks the
 # pins it stands for with junction dots, and producer-baked CDC/RDC
 # accents survive the theme re-tint); 0.11.0 adds the phys overlay on the
@@ -36,8 +36,11 @@ package = false
 # on read and adds the document-figure controls `rb hier` forwards
 # (`--params`, `--prune-flags`, `--clock-colors`; see
 # design/demo_cdc_open/README.md); 0.13.0 keeps interface instances off
-# the hub's schematic canvas and makes ported CDC edges clickable.
-constraint-dependencies = ["rtl-buddy-sch>=0.13.0"]
+# the hub's schematic canvas and makes ported CDC edges clickable;
+# 0.14.0 draws crossings rtl-buddy-cdc >=0.6.0 recognises as synchronised
+# in teal instead of as ⚠CDC hazards, keeps procedurally-driven flag
+# inputs under `--prune-flags`, and unrolls generate blocks.
+constraint-dependencies = ["rtl-buddy-sch>=0.14.0"]
 
 [tool.uv.sources]
 info-process = { git = "https://github.com/rtl-buddy/info-process.git" }
@@ -45,9 +48,9 @@ peakrdl = { git = "https://github.com/rtl-buddy/PeakRDL.git", subdirectory = "pe
 peakrdl-regblock = { git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" }
 # Pinned CDC linter consumed via subprocess by `rb cdc`. No PyPI release
 # yet; pin to the git repo so `which rtl-buddy-cdc` works after `uv sync`.
-# Pinned to the v0.5.0 release tag for reproducibility — bump the tag
+# Pinned to the v0.6.0 release tag for reproducibility — bump the tag
 # (and re-lock) when consuming a newer rtl-buddy-cdc release.
-rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git", tag = "v0.5.0" }
+rtl-buddy-cdc = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git", tag = "v0.6.0" }
 # Mutation engine driven by `rb mut`, consumed from PyPI since its 0.1.1
 # release (rtl-buddy/rtl-buddy-xeno#18 resolved — the git pin predates it).
 # The [verible,slang] extras (declared on the dependency above) pull the
