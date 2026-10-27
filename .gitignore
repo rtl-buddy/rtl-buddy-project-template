@@ -54,6 +54,7 @@ tags
 **.nfs*
 **.json
 !.claude/settings.json
+!design/**/clock-colors.json
 **/sandbox/report/
 **/lint/cdc/reports/
 pdk/
