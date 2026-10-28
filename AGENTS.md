@@ -82,6 +82,7 @@ verif/demo_tiny_alu*/                    # SV, cocotb, and SystemC peer suites
 design/icarus_smoke/                     # minimal design for the Icarus smoke suite
 verif/icarus_smoke/                      # minimal Icarus builder-selection example
 .github/workflows/icarus.yml             # dedicated Icarus CI coverage
+.github/workflows/xezim.yml              # dedicated xezim CI coverage (builds xezim from source, cached per tag)
 lint/cdc/cdc.yaml                        # CDC analyses, including slang and blackbox examples
 power/demo_tiny_alu_subsys/power.yaml    # `rb power` runs; the static one carries `phys-run` for a merged physical model
 pnr/demo_tiny_alu_subsys/                # `rb pnr` Nangate45 flat flow
@@ -112,7 +113,7 @@ Required for the base sanity path:
 - **Verilator** - e.g. `brew install verilator` on macOS, or build from source.
 - **Verible** - deployed by [rtl-buddy-tools](https://github.com/rtl-buddy/rtl-buddy-tools) (`make verible`; one pinned version on macOS and Linux). A PATH install (e.g. the Verible releases) also works via rb's documented PATH fallback.
 
-Feature-dependent tools include Icarus Verilog (required for `verif/icarus_smoke/` and the dedicated Icarus CI path; `brew install icarus-verilog` on macOS, `apt install iverilog` on Debian/Ubuntu), VCS, SystemC, Yosys, yosys-slang, OpenROAD, KLayout, Surfer, Coverview, PeakRDL, SymbiYosys plus a solver, `rtl-buddy-cdc`, `rtl-buddy-xeno`, and `rtl-buddy-axi-profiler`. The README gives the current install notes and which demo uses each tool.
+Feature-dependent tools include Icarus Verilog (required for `verif/icarus_smoke/` and the dedicated Icarus CI path; `brew install icarus-verilog` on macOS, `apt install iverilog` on Debian/Ubuntu), xezim (`cargo install --git https://github.com/aionhw/xezim --tag 0.11.3 --locked`; `-B xezim` runs the same suites the xezim CI path does), VCS, SystemC, Yosys, yosys-slang, OpenROAD, KLayout, Surfer, Coverview, PeakRDL, SymbiYosys plus a solver, `rtl-buddy-cdc`, `rtl-buddy-xeno`, and `rtl-buddy-axi-profiler`. The README gives the current install notes and which demo uses each tool.
 
 If you plan to use `demo_pulp_platform_axi`, initialise the vendor submodules after cloning:
 
@@ -192,6 +193,10 @@ uv run rb --machine phys summary --limit 0
 (cd verif/icarus_smoke && uv run rb --machine test basic)
 (cd verif/demo_tiny_alu && uv run rb --machine -B icarus test basic)
 (cd verif/demo_tiny_alu_cocotb && uv run rb --machine -B icarus test cocotb_random)
+
+# xezim checks (requires xezim on PATH)
+(cd verif/icarus_smoke && uv run rb --machine -B xezim test basic)
+(cd verif/demo_tiny_alu && uv run rb --machine -B xezim -M cov test flags)
 
 # CDC constraint freshness/audit loop for the FPGA CDC demo
 ./lint/cdc/check_cdc_xdc.sh
