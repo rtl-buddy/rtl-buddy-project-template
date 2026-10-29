@@ -52,7 +52,7 @@ runs:
     harden: true
     reglvl: 1000
 
-  # The same top with two run hooks: Tcl files `rb pnr` sources at fixed
+  # The same top with three run hooks: Tcl files `rb pnr` sources at fixed
   # points of its flow, so a run can add a step without editing the generated
   # pnr.tcl. Paths are relative to this file. pnr.log announces each file as
   # `>>> Hook <point>: <path>`.
@@ -62,8 +62,11 @@ runs:
   #   after-cts        runs right after clock tree synthesis;
   #                    hooks/clock_report.tcl writes clock_tree.rpt into this
   #                    run's artefact directory.
+  #   after-reports    runs after the final reports, on the extracted
+  #                    parasitics; hooks/macro_paths.tcl writes the worst
+  #                    paths into and out of the macro to macro_paths.rpt.
   - name: "demo_synth_macro_sky130_hooks_pnr"
-    desc: "The top with its macro placed by a hook and a clock report after CTS"
+    desc: "The top with its macro placed by a hook, a clock report after CTS and macro paths after the final reports"
     tool: "openroad"
     synth: "demo_synth_macro_sky130"
     synth-path: "../../synth/demo_synth_macro/synth.yaml"
@@ -79,5 +82,6 @@ runs:
     hooks:
       macro-placement: hooks/place_macro.tcl
       after-cts: hooks/clock_report.tcl
+      after-reports: hooks/macro_paths.tcl
     gds-mode: strict
     reglvl: 1000

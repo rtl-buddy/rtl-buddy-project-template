@@ -36,13 +36,14 @@ so the top is synthesized after the macro's abstract exists:
 
 `hooks:` on a P&R run names Tcl files that `rb pnr` sources at fixed points of
 its flow, so a run can add or replace a step without editing the generated
-`pnr.tcl`. `demo_synth_macro_sky130_hooks_pnr` is the top run with two of
+`pnr.tcl`. `demo_synth_macro_sky130_hooks_pnr` is the top run with three of
 them:
 
 | point | file | what it does |
 |---|---|---|
 | `macro-placement` | `pnr/demo_synth_macro/hooks/place_macro.tcl` | replaces rb's macro packer: puts `i_macro` with its lower-left corner at (130, 130) um, snapped onto the site grid |
 | `after-cts` | `pnr/demo_synth_macro/hooks/clock_report.tcl` | right after clock tree synthesis, writes the clock tree's buffers, skew and latency to `clock_tree.rpt` |
+| `after-reports` | `pnr/demo_synth_macro/hooks/macro_paths.tcl` | after the final reports, on the parasitics extracted from the routed design, writes the worst path into `i_macro` and the worst path out of it to `macro_paths.rpt` |
 
 A fixed location alone can also be written in YAML, with `floorplan.macros`.
 Use a `macro-placement` hook when the placement has to be computed, for
@@ -63,6 +64,8 @@ In `pnr/demo_synth_macro/artefacts/demo_synth_macro_sky130_hooks_pnr/`:
 - `demo_synth_macro_top.def` has `i_macro` at `( 129720 127840 )`, where
   `demo_synth_macro_sky130_pnr` has it in the lower-left corner.
 - `clock_tree.rpt` is the after-CTS report.
+- `macro_paths.rpt` holds the two macro paths. Their slacks are on the same
+  parasitics as `timing.rpt`, which holds only the worst path of the design.
 
 The full list of hook points and the flow variables each one sees is in the
 [rtl_buddy P&R docs](https://rtl-buddy.github.io/rtl_buddy/latest/concepts/pnr/#run-tcl-hooks).
