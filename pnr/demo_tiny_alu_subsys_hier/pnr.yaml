@@ -138,12 +138,11 @@ runs:
     synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
     constraints: "../../synth/demo_tiny_alu_subsys_hier/constraints_flat.sdc"
     platform: "sky130hd_tt"
-    # The same floorplan as the flat reference. The size-aware shelf packer
-    # (rtl_buddy#632) packs the three macros from the bottom-left corner
-    # instead of giving each one an SRAM-sized slot in a rectangular grid, so
-    # the assembly no longer needs a wide flat strip to hold them. The channel
-    # widths that `pdngen` needs come from `placement.macro-halo` (20 µm by
-    # default; see root_config.yaml), not from an inflated core.
+    # The same floorplan as the flat reference. RTL-MP places and rotates the
+    # three macros by connectivity, so the assembly needs no wide flat strip
+    # to hold them. The channel widths that `pdngen` and global route need
+    # come from the PDK's `placement.macro-channel` (see root_config.yaml),
+    # not from an inflated core.
     floorplan:
       utilization: 0.45
       aspect: 1.0
@@ -162,42 +161,6 @@ runs:
     # The acceptance criterion for the whole example. All three macro layouts
     # are real, so `strict` must pass with no `gds-allow-empty` entries at all:
     # an empty cell here would mean a hardened partition streamed out as a hole.
-    gds-mode: strict
-    reglvl: 1000
-
-  # ── the same assembly, macros placed by OpenROAD's RTL-MP ─────────────────
-  # Identical to `..._asm_pnr` but for `floorplan.macro-placement: rtl-mp`:
-  # `rtl_macro_placer` places (and rotates) the two partitions and the SRAM by
-  # connectivity instead of the packer filling rows from a corner. Compare the
-  # two rows of the results table in README.md.
-  - name: "demo_tiny_alu_subsys_sky130_asm_rtlmp_pnr"
-    desc: "The assembly with RTL-MP macro placement instead of the packer"
-    tool: "openroad"
-    synth: "demo_tiny_alu_subsys_sky130_asm"
-    synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
-    constraints: "../../synth/demo_tiny_alu_subsys_hier/constraints_flat.sdc"
-    platform: "sky130hd_tt"
-    floorplan:
-      utilization: 0.45
-      aspect: 1.0
-      core-margin: 10.0
-      macro-placement: rtl-mp
-    # A 20 µm halo around each macro. Without one, RTL-MP leaves no channel
-    # between the macros and the core edge, and global route overflows there
-    # (GRT-0116).
-    placement:
-      macro-halo: 20
-    lef-paths:
-      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
-    lib-paths:
-      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8_TT_1p8V_25C.lib"
-    gds-paths:
-      - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.gds"
-    blocks:
-      - name: demo_tiny_alu_subsys_csr
-        pnr: demo_tiny_alu_subsys_sky130_csr_pnr
-      - name: demo_tiny_alu_subsys_compute
-        pnr: demo_tiny_alu_subsys_sky130_compute_pnr
     gds-mode: strict
     reglvl: 1000
 
@@ -345,6 +308,10 @@ runs:
       utilization: 0.70
       aspect: 1.0
       core-margin: 10.0
+    # The PDK's 80 µm channel does not fit the SRAM at this utilization
+    # (MPL-0006); 40 µm does.
+    placement:
+      macro-channel: 40
     lef-paths:
       - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
     lib-paths:

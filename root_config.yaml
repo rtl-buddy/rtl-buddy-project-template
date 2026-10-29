@@ -272,6 +272,10 @@ cfg-pdks:
     # Nangate45 tech LEF carries no wire RC, and setup repair stops with
     # RSZ-0089 without it. See the file's header.
     layer-rc-tcl: "pnr/nangate45/setRC.tcl"
+    # ORFS RTLMP_MIN_CHANNEL_SIZE. Applies only to a netlist with macros,
+    # which none of the Nangate45 demos has.
+    placement:
+      macro-channel: [44.8, 30.24]
     # No `pdn-config`: the Nangate45 demo flow has no power grid, which is one
     # of the reasons the hierarchical pipeclean runs on sky130hd instead.
 
@@ -318,10 +322,11 @@ cfg-pdks:
     # out is calibrated for FreePDK45's 10-track cells; sky130hd's 9-track
     # cells plus a large hard macro do not converge at it.
     #
-    # `macro-halo` (µm of keep-out the shelf macro packer, rtl_buddy#632,
-    # leaves around each macro and between a macro and the core edge) is left
-    # at its 20 µm default: that is what keeps the PDN channels around the
-    # OpenRAM SRAM wide enough for `pdngen` to repair.
+    # `macro-channel` ([width, height] in µm, ORFS RTLMP_MIN_CHANNEL_SIZE) is
+    # the channel RTL-MP leaves between macros and from the core edge. It
+    # keeps the PDN channels around the OpenRAM SRAM wide enough for `pdngen`
+    # to repair and leaves room for global route. A run that floorplans
+    # tighter overrides it.
     #
     # `macro-cell-halo` (µm of standard-cell keep-out around each placed
     # macro, rtl-buddy/rtl_buddy#673) is 3; the default is 0, no keep-out. With
@@ -339,6 +344,7 @@ cfg-pdks:
     placement:
       density: 0.60
       padding: 1
+      macro-channel: [80, 80]
       macro-cell-halo: 3.0
       # routability-driven: true
       # routability-use-grt: true
@@ -464,9 +470,10 @@ cfg-pdks:
     pin-layers:
       horizontal: "M4"
       vertical: "M5"
-    # ORFS PLACE_DENSITY.
+    # ORFS PLACE_DENSITY and RTLMP_MIN_CHANNEL_SIZE.
     placement:
       density: 0.60
+      macro-channel: [20, 20]
     # ORFS DONT_USE_CELLS: the fractional-drive cells (x1p*, xp*) to ease
     # congestion, plus scan flops and clock gaters this flow does not use.
     dont-use-cells:

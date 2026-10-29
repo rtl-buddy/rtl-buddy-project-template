@@ -1,5 +1,5 @@
 # `macro-placement` hook of demo_synth_macro_sky130_hooks_pnr: puts each hard
-# macro at a fixed location instead of letting rb's macro packer choose one.
+# macro at a fixed location instead of letting RTL-MP choose one.
 #
 # rb sources this in place of its own macro placement, only when the netlist
 # has a macro, with `$block` (the OpenROAD database block) and `$macros` (every
@@ -7,9 +7,10 @@
 # (`placement.macro-cell-halo`) around each macro and builds the power grid,
 # so this file only has to locate the macros.
 
-# Lower-left corner of each macro, in microns. Keep a macro at least
-# `placement.macro-halo` (20 um) from the core edges and from other macros, as
-# the packer does, or pdngen may be unable to fit its straps in the channel.
+# Lower-left corner of each macro, in microns. Keep a macro at least as far
+# from the core edges and from other macros as the PDK's
+# `placement.macro-channel` (80 um on sky130hd), the channel RTL-MP would leave,
+# or pdngen may be unable to fit its straps.
 set macro_locations {
   i_macro {130.0 130.0}
 }
