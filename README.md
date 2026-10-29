@@ -932,7 +932,7 @@ global router's per-layer congestion table (GRT-0096) and each detailed-route
 iteration's violation count appear as they happen
 (`detailed-route-verbose`). Every run also counts its max-slew,
 max-capacitance and max-fanout violators (the Slew/Cap/Fanout column). This
-design routes with 54 max-capacitance violators and 1 max-slew violator, so it
+design routes with 1 max-capacitance violator and 1 max-slew violator, so it
 passes with an "electrical" note; `fail-on-electrical: true` would fail it.
 
 [`pnr/demo_tiny_alu_subsys/pnr.yaml`](pnr/demo_tiny_alu_subsys/pnr.yaml)
@@ -1060,8 +1060,8 @@ uv run rb pnr -c pnr/demo_tiny_alu_subsys_asap7/pnr.yaml -l 1000 --synth
 uv run rb power -c power/demo_tiny_alu_subsys_asap7/power.yaml -l 1000
 ```
 
-At a 600 ps clock the routed design is DRC-clean with +63.6 ps setup and
-+63.2 ps hold slack, 359 routed cells plus 610 endcap, filler and decap cells.
+At a 600 ps clock the routed design is DRC-clean with +71.5 ps setup and
++62.6 ps hold slack, 359 routed cells plus 534 endcap, filler and decap cells.
 Two more runs at an over-constrained 250 ps clock compare P&R with and without
 post-CTS setup repair. Three of the hooks use the downloaded ORFS files as they
 are; [`pnr/asap7/`](pnr/asap7/) holds the two files that are committed, the

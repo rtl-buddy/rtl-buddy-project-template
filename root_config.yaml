@@ -324,7 +324,7 @@ cfg-pdks:
     # OpenRAM SRAM wide enough for `pdngen` to repair.
     #
     # `macro-cell-halo` (µm of standard-cell keep-out around each placed
-    # macro, rtl-buddy/rtl_buddy#673) is 3, up from the 1 µm default. With
+    # macro, rtl-buddy/rtl_buddy#673) is 3; the default is 0, no keep-out. With
     # wire RC set (`layer-rc-tcl` below), `repair_design` buffers the OpenRAM
     # SRAM's long read-data nets, and at 1 µm those buffers sit against the
     # SRAM's pin edge: the global router then overflows the GCell row along
@@ -531,8 +531,8 @@ cfg-pnr-platforms:
     corner: "tt"
     # A list, not one name (rtl_buddy#625): CTS picks a drive strength per
     # stage, and a single buffer has to be strong enough for the worst sink
-    # group and is then far too strong everywhere else. The first entry is the
-    # root buffer (`-root_buf`).
+    # group and is then far too strong everywhere else. CTS picks the root
+    # buffer from the list too; `cts-root-buffer` would fix one.
     cts-buffer:
       - "sky130_fd_sc_hd__clkbuf_4"
       - "sky130_fd_sc_hd__clkbuf_8"
@@ -594,7 +594,7 @@ cfg-pnr-platforms:
     name: "asap7_tt"
     pdk: "asap7"
     corner: "tt"
-    # The first entry is the root buffer.
+    # CTS picks the root buffer from the list.
     cts-buffer:
       - "BUFx4_ASAP7_75t_R"
       - "BUFx8_ASAP7_75t_R"
@@ -607,14 +607,15 @@ cfg-pnr-platforms:
     # routing on ASAP7's tight M2/M3 pitch finishes DRC-clean.
     routing-layer-adjustment: 0.25
 
-  # The same platform with setup repair after CTS (rtl-buddy/rtl_buddy#717).
-  # The default flow repairs only hold after CTS, so setup paths the clock
-  # tree's insertion delay broke stay broken. Off by default because it adds
-  # buffers and resizes cells; pnr/demo_tiny_alu_subsys_asap7/ compares the two
-  # on an over-constrained clock.
+  # The same platform without setup repair after CTS (rtl-buddy/rtl_buddy#717).
+  # The flow repairs setup and hold after CTS by default, as ORFS does; with
+  # `post-cts-setup-repair: false` it repairs only hold there, and the setup
+  # paths the clock tree's insertion delay broke are left to the global-route
+  # repair. pnr/demo_tiny_alu_subsys_asap7/ compares the two on an
+  # over-constrained clock.
   - <<: *asap7_tt
-    name: "asap7_tt_setup_repair"
-    post-cts-setup-repair: true
+    name: "asap7_tt_no_cts_setup_repair"
+    post-cts-setup-repair: false
 # End synth / pnr configuration
 
 # Power analysis tool defaults — `tool:` in power.yaml selects the entry.

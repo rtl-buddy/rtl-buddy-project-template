@@ -55,7 +55,7 @@ Each run takes about 30 seconds. Outputs land in `artefacts/<run>/`.
 | [`root_config.yaml`](../../root_config.yaml) `cfg-pdks` `asap7` | ORFS `flow/platforms/asap7/config.mk`, key by key: site, split TT Liberty, LEF, ties, fill and decap cells, pin layers, density, dont-use cells, PDN, RCX rules, and the four hooks |
 | `cfg-synth-platforms` `asap7_tt` | The synthesis platform |
 | `cfg-pnr-platforms` `asap7_tt` | CTS buffers, routing layers M2-M7 (clock M4-M7), `routing-layer-adjustment: 0.25` |
-| `cfg-pnr-platforms` `asap7_tt_setup_repair` | The same, plus `post-cts-setup-repair: true` |
+| `cfg-pnr-platforms` `asap7_tt_no_cts_setup_repair` | The same, plus `post-cts-setup-repair: false` |
 | [`../asap7/tapcell.tcl`](../asap7/tapcell.tcl) | `tapcell-tcl`: ORFS' `openRoad/tapcell.tcl` with `TAP_CELL_NAME` and `MACRO_ROWS_HALO_X/Y` filled in, since rb sources hooks with no ORFS environment |
 | [`../asap7/pdn.tcl`](../asap7/pdn.tcl) | `pdn-config`: ORFS' `grid_strategy-M1-M2-M5-M6.tcl`, committed like `../sky130hd/pdn.tcl` |
 | `pdk/asap7/liberty_suppressions.tcl` | `platform-tcl`, used verbatim: suppresses STA-1212 before the Liberty reads |
@@ -77,9 +77,9 @@ Yosys from rtl-buddy-tools, and ORFS at the commit pinned in `download_pdk.sh`.
 
 | Run | Clock | Platform | Cells in / routed / physical | Area | WNS setup | TNS setup | WNS hold | DRC |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `..._compute_pnr` | 600 ps | `asap7_tt` | 330 / 359 / 634 | 43 µm² | +59.8 ps | 0 | +61.9 ps | 0 |
-| `..._compute_tight_pnr` | 250 ps | `asap7_tt` | 330 / 360 / 635 | 43 µm² | −290.7 ps | −2462.8 ps | +7.4 ps | 0 |
-| `..._compute_tight_setup_pnr` | 250 ps | `asap7_tt_setup_repair` | 330 / 385 / 641 | 46 µm² | −131.6 ps | −933.4 ps | +7.0 ps | 0 |
+| `..._compute_pnr` | 600 ps | `asap7_tt` | 330 / 359 / 534 | 43 µm² | +71.5 ps | 0 | +62.6 ps | 0 |
+| `..._compute_tight_pnr` | 250 ps | `asap7_tt_no_cts_setup_repair` | 330 / 395 / 533 | 46 µm² | −132.7 ps | −1002.6 ps | +8.9 ps | 0 |
+| `..._compute_tight_setup_pnr` | 250 ps | `asap7_tt` | 330 / 409 / 513 | 48 µm² | −120.3 ps | −966.5 ps | +8.7 ps | 0 |
 
 Synthesis alone reports 330 cells, 38.96 µm² and +321.7 ps at 600 ps; it does
 not see wire RC or the high-fanout nets that placement exposes.
@@ -90,19 +90,22 @@ What to look for in `artefacts/<run>/pnr.log`:
   endcap cells`, one per hook.
 - `[INFO TAP-0004] Inserted 70 endcaps.` No tap cells are needed at this size:
   the core is narrower than the 25 µm tap distance.
-- No `EST-0018` / `EST-0027` / `CTS-0104` warnings. They are what OpenROAD
-  prints when every wire has zero RC, which is what the ASAP7 tech LEF gives
-  without `layer-rc-tcl`.
+- No `EST-0018` / `CTS-0104` warnings, and one `EST-0027`, from the setup
+  repair at the end of the floorplan, which runs before placement and so on
+  wire load models. They are what OpenROAD prints when every wire has zero
+  RC, which is what the ASAP7 tech LEF gives without `layer-rc-tcl`.
 - No `STA-1212` warnings from the Liberty reads.
-- `RB-CELL-COUNT: routed 359 physical 634`. The physical count is the 70
-  endcaps plus the filler and decap cells that the `fill-cells` patterns match.
+- `RB-CELL-COUNT: routed 359 physical 534`. The physical count is the 70
+  endcaps plus the 464 filler and decap cells that the `fill-cells` patterns
+  match.
 - `route.drc.rpt` empty.
 
-The 250 ps pair shows what `post-cts-setup-repair` buys: the default flow only
-repairs hold after CTS, so the setup violations stay as synthesis left them.
-With setup repair after CTS, 25 more cells and 3 µm² more area recover 160 ps of
-WNS and about 60% of the TNS. Neither closes at 250 ps; the clock is
-over-constrained on purpose.
+The 250 ps pair shows what `post-cts-setup-repair` adds. The flow repairs
+setup at the end of the floorplan, after CTS and after global route, as ORFS
+does; `asap7_tt_no_cts_setup_repair` turns off only the repair after CTS, so
+its setup violations wait for the global-route repair. With setup repair
+after CTS, 14 more cells and 2 µm² more area recover 12 ps of WNS and 36 ps of
+TNS. Neither closes at 250 ps; the clock is over-constrained on purpose.
 
 Without `tracks-tcl` the run stops at `make_tracks` with `IFP-0039`.
 
@@ -116,9 +119,9 @@ files, three of them `.lib.gz`, in ps (rtl-buddy/rtl_buddy#699).
 | Run | Netlist | Activity | Total | Internal | Switching | Leakage | Clock |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `..._power_static` | synthesised | Liberty defaults | 205 µW | 138 µW | 67 µW | 28 nW | 0 |
-| `..._power_postpnr` | routed `..._compute_pnr`, SPEF | 0.2 toggle, 0.5 duty | 200 µW | 125 µW | 75 µW | 24 nW | 48 µW |
+| `..._power_postpnr` | routed `..._compute_pnr`, SPEF | 0.2 toggle, 0.5 duty | 191 µW | 117 µW | 74 µW | 24 nW | 40 µW |
 
-Only the post-P&R run has a clock tree to report. It warns that the 634
+Only the post-P&R run has a clock tree to report. It warns that the 534
 physical-only instances (eight masters: the `DECAP*` and `FILLER*` cells and
 the `TAPCELL` endcaps) have no Liberty power data and are reported at 0 W. That is expected: the TT Liberty
 does not characterise them.

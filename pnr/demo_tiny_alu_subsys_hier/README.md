@@ -376,31 +376,31 @@ number is on OpenRCX-extracted parasitics (sky130hd sets `rcx-rules`).
 | | flat | csr partition | compute partition | **assembled** | assembled, RTL-MP |
 |---|---|---|---|---|---|
 | verdict | PASS | PASS | PASS | **PASS** | PASS |
-| standard-cell instances, input / routed | 1217 / 1456 | 376 / 558 | 297 / 362 | **554 / 829** | 554 / 762 |
+| standard-cell instances, input / routed | 1217 / 1493 | 376 / 561 | 297 / 362 | **554 / 961** | 554 / 782 |
 | die (µm) | 697.5 × 697.5 | 99.3 × 99.3 | 89.6 × 89.6 | **717.2 × 717.2** | 717.2 × 717.2 |
-| design area (µm²) | 208 925 | 4 623 | 3 057 | **221 463** | 220 757 |
+| design area (µm²) | 209 823 | 4 720 | 3 073 | **222 693** | 221 683 |
 | core area (µm²) | 456 758 | 7 767 | 6 241 | **483 370** | 483 370 |
-| core utilization | 46% | 60% | 49% | **46%** | 46% |
-| setup WNS (ns) | +3.00 | +10.72 | +13.53 | **+2.72** | +3.20 |
+| core utilization | 46% | 61% | 49% | **46%** | 46% |
+| setup WNS (ns) | +3.35 | +10.80 | +13.57 | **+3.06** | +3.45 |
 | setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** | 0.00 |
-| hold WNS (ns) | +0.36 | +0.47 | +0.68 | **+0.28** | +0.14 |
+| hold WNS (ns) | +0.35 | +0.47 | +0.66 | **+0.32** | +0.16 |
 | DRC violations | 0 | 0 | 0 | **0** | 0 |
-| max-slew / max-cap violators | 77 / 15 | 59 / 2 | 0 / 0 | **34 / 10** | 22 / 2 |
+| max-slew / max-cap violators | 8 / 2 | 0 / 0 | 0 / 0 | **29 / 6** | 8 / 0 |
 | GDS | `complete` | `complete` | `complete` | **`complete`** | `complete` |
 | abstract published | — | yes | yes | — | — |
 | port buffers, in / out | — | 85 / 78 | 42 / 15 | — | — |
-| largest abstract input pin cap (pF) | — | 0.017 | 0.012 | — | — |
-| static power (mW) | 3.62 | — | — | **4.73** — see below | — |
+| largest abstract input pin cap (pF) | — | 0.016 | 0.012 | — | — |
+| static power (mW) | 3.90 | — | — | **5.14** — see below | — |
 | of which the SRAM (mW) | 1.93 | — | — | **1.93** | — |
 
 Reading it:
 
 - **Worst setup is the same path both ways**: the SRAM's read data out to
-  `prdata`, which no partitioning moves. It is 0.28 ns worse assembled: the
+  `prdata`, which no partitioning moves. It is 0.29 ns worse assembled: the
   three macros sit in a different place in the assembly's floorplan, and with
   extracted parasitics the longer route from the SRAM to the output pins shows
   up in full. TNS is zero both ways and hold is within 0.1 ns.
-- **Design area is +6.0%** assembled: the partitions' own core margin and
+- **Design area is +6.1%** assembled: the partitions' own core margin and
   filler are counted at their hardened size rather than as loose cells. **Core
   area is +5.8%**: the assembly uses the flat run's floorplan, and the
   size-aware shelf packer (rtl-buddy/rtl_buddy#632) packs the three macros at
@@ -410,20 +410,20 @@ Reading it:
   assembly with `floorplan.macro-placement: rtl-mp`: OpenROAD's
   `rtl_macro_placer` places the three macros by connectivity, and turns the
   compute partition and the SRAM 180 degrees, instead of the packer filling
-  rows from a corner. The worst path is still the SRAM-to-`prdata` one, and it gains 0.48 ns, which puts it
-  0.20 ns ahead of the flat run. 0 DRCs, the power grid connected to the
+  rows from a corner. The worst path is still the SRAM-to-`prdata` one, and it gains 0.39 ns, which puts it
+  0.10 ns ahead of the flat run. 0 DRCs, the power grid connected to the
   rotated macros, strict GDS complete.
 - **DRC-clean on every run.** `cfg-pdks.placement.macro-cell-halo` keeps
   standard cells off every macro edge. The sky130hd entry sets it to 3 µm:
-  `repair_design` buffers the SRAM's long read-data nets, and at the 1 µm
-  default those buffers sit against the SRAM's pin edge and overflow the
-  global router's GCell row along it (GRT-0116).
+  `repair_design` buffers the SRAM's long read-data nets, and at 1 µm those
+  buffers sit against the SRAM's pin edge and overflow the global router's
+  GCell row along it (GRT-0116).
 - **Power is not like for like.** The SRAM is 1.93 mW in both. The hardened
   partitions contribute 0 W: `write_timing_model` writes timing arcs and no
   power tables, and the assembly's `rb power` says so, naming both cells as
   having no Liberty power data. So the assembly's total leaves out the
-  partitions' own cell power. What it adds is about 1.0 mW more switching power
-  on the top-level nets (1.53 vs 0.49 mW), which carry extracted wire
+  partitions' own cell power. What it adds is about 1.1 mW more switching power
+  on the top-level nets (1.63 vs 0.51 mW), which carry extracted wire
   capacitance between three macros spread over the die, and whose drivers
   inside the partitions switch at OpenSTA's default input activity, since an
   abstract says nothing about them. `rb power` leaves the partitions' abstract
@@ -443,9 +443,10 @@ Reading it:
   the delay cell `clkdlybuf4s50_1` and csr loses about 0.9 ns of setup.
 - **Electrical violators are counted.** Every run reports its max-slew and
   max-capacitance violators; the flat run and both assemblies have some,
-  mostly on the SRAM's read path: its `dout1` pins have a 0.03 pF
-  max-capacitance limit their read-data nets exceed, and the slews downstream
-  pass the 1.5 ns limit. They pass with an "electrical" note. The counts vary
+  mostly at the SRAM: its `dout1` pins have a 0.03 pF max-capacitance limit
+  their read-data nets exceed, and its address pins a 0.04 ns max-slew limit.
+  The packer assembly also has top-level nets past the 1.5 ns slew limit. They
+  pass with an "electrical" note. The counts vary
   a little between identical runs. `fail-on-electrical: true` on a run, or
   `electrical` in its `signoff.fail-on`, makes them fail it.
 - **Supply connections.** `rb pnr` applies the PDK's global connections again
