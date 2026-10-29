@@ -21,7 +21,9 @@ runs:
     synth-path: "../../synth/demo_synth_macro/synth.yaml"
     constraints: "../../synth/demo_synth_macro/constraints.sdc"
     platform: "sky130hd_tt"
-    # Sized for the macro, not the handful of cells around it.
+    # Sized for the macro, not the handful of cells around it: the core must
+    # hold the macro and the PDK's 80 um `placement.macro-channel` on each
+    # side, which a utilization of 0.40 would not leave room for.
     floorplan:
       utilization: 0.10
       aspect: 1.0

@@ -7,10 +7,9 @@
 # (`placement.macro-cell-halo`) around each macro and builds the power grid,
 # so this file only has to locate the macros.
 
-# Lower-left corner of each macro, in microns. Keep a macro at least as far
-# from the core edges and from other macros as the PDK's
-# `placement.macro-channel` (80 um on sky130hd), the channel RTL-MP would leave,
-# or pdngen may be unable to fit its straps.
+# Lower-left corner of each macro, in microns. A hook gets no channel from
+# `placement.macro-channel`: leave room around each macro for its power grid
+# straps and for routing.
 set macro_locations {
   i_macro {130.0 130.0}
 }
