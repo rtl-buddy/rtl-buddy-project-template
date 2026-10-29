@@ -22,7 +22,7 @@ rtl-buddy-filetype: pnr_config
 #
 # And three more on the flat reference, all needing only that synthesis:
 # `..._tight_pnr` and `..._repair_pnr` run it at a tighter apb_clk, the second
-# as a staged run with global-route and post-route repair, and `..._probe_pnr`
+# as a staged run with post-route repair, and `..._probe_pnr`
 # checks a denser floorplan in seconds. See README.md, "Staged runs and timing
 # repair".
 #
@@ -242,13 +242,14 @@ runs:
     reglvl: 1000
 
   # ── the flat reference at a tighter clock ──────────────────────────────────
-  # apb_clk at 14 ns (constraints_flat_tight.sdc) instead of 20 ns, and
+  # apb_clk at 12.6 ns (constraints_flat_tight.sdc) instead of 20 ns, and
   # `placement.timing-driven` (rtl-buddy/rtl_buddy#867): global placement
-  # weights the nets on the worst setup paths. The SRAM's read path misses
-  # setup and nothing repairs it after routing. The reference for
+  # weights the nets on the worst setup paths. The flow's default repairs run,
+  # the last of them after global route; the SRAM's read path still misses
+  # setup and nothing repairs it after detailed routing. The reference for
   # `..._repair_pnr`.
   - name: "demo_tiny_alu_subsys_sky130_tight_pnr"
-    desc: "Flat sky130hd P&R at a 14 ns apb_clk with timing-driven placement, no repair"
+    desc: "Flat sky130hd P&R at a 12.6 ns apb_clk with timing-driven placement, no post-route repair"
     tool: "openroad"
     synth: "demo_tiny_alu_subsys_sky130_flat"
     synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
@@ -277,7 +278,9 @@ runs:
   #                        (`--stop-after`), resume from one (`--resume`), or
   #                        run each stage as a Slurm job (`--dispatch slurm`).
   #   global-route-repair  after global route, `repair_design` for slew and
-  #                        capacitance with a 20% margin.
+  #                        capacitance with a 20% margin. A written block runs
+  #                        only what it sets, so this run leaves out the setup
+  #                        and hold repair the default block runs there.
   #   post-route-repair    rounds that extract the routed design and, while
   #                        setup slack is negative, repair setup with a 0.05 ns
   #                        margin (0.10 ns in round 2) and route the changed
@@ -287,7 +290,7 @@ runs:
   #                        `--dispatch slurm`; ignored otherwise. OpenROAD
   #                        runs on one thread unless `threads:` says more.
   - name: "demo_tiny_alu_subsys_sky130_repair_pnr"
-    desc: "Staged flat sky130hd P&R at a 14 ns apb_clk with global-route and post-route repair"
+    desc: "Staged flat sky130hd P&R at a 12.6 ns apb_clk with global-route and post-route repair"
     tool: "openroad"
     synth: "demo_tiny_alu_subsys_sky130_flat"
     synth-path: "../../synth/demo_tiny_alu_subsys_hier/synth.yaml"
