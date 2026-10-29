@@ -182,6 +182,11 @@ runs:
       aspect: 1.0
       core-margin: 10.0
       macro-placement: rtl-mp
+    # A 20 µm halo around each macro. Without one, RTL-MP leaves no channel
+    # between the macros and the core edge, and global route overflows there
+    # (GRT-0116).
+    placement:
+      macro-halo: 20
     lef-paths:
       - "../../pdk/sky130_sram/sky130_sram_1kbyte_1rw1r_32x256_8.lef"
     lib-paths:

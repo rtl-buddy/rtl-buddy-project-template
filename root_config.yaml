@@ -262,6 +262,16 @@ cfg-pdks:
       - FILLCELL_X8
       - FILLCELL_X16
       - FILLCELL_X32
+    # `rb pnr` needs both pin layers; neither OpenROAD nor ORFS has a default.
+    # ORFS IO_PLACER_H / IO_PLACER_V for Nangate45 are metal5 / metal6; this
+    # small demo keeps its pins on metal3 / metal2.
+    pin-layers:
+      horizontal: "metal3"
+      vertical: "metal2"
+    # ORFS SET_RC_TCL, committed under pnr/ like the sky130hd one. The
+    # Nangate45 tech LEF carries no wire RC, and setup repair stops with
+    # RSZ-0089 without it. See the file's header.
+    layer-rc-tcl: "pnr/nangate45/setRC.tcl"
     # No `pdn-config`: the Nangate45 demo flow has no power grid, which is one
     # of the reasons the hierarchical pipeclean runs on sky130hd instead.
 
