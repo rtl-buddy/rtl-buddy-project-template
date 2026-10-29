@@ -946,8 +946,9 @@ Run hooks, Tcl files a P&R run's `hooks:` names for `rb pnr` to source at
 fixed points of its flow (rtl-buddy/rtl_buddy#847), are shown by
 `demo_synth_macro_sky130_hooks_pnr` in
 [`pnr/demo_synth_macro/pnr.yaml`](pnr/demo_synth_macro/pnr.yaml): a
-`macro-placement` hook puts the hard macro at an explicit location and an
-`after-cts` hook writes a clock tree report. See
+`macro-placement` hook puts the hard macro at an explicit location, an
+`after-cts` hook writes a clock tree report and an `after-reports` hook writes
+the worst paths into and out of the macro on the routed parasitics. See
 [`synth/demo_synth_macro/README.md`](synth/demo_synth_macro/README.md#placing-the-macro-with-a-run-hook).
 
 Planner files, macro and pin plans a floorplanner writes and `floorplan.macros-file`
