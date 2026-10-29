@@ -946,7 +946,7 @@ Run hooks, Tcl files a P&R run's `hooks:` names for `rb pnr` to source at
 fixed points of its flow (rtl-buddy/rtl_buddy#847), are shown by
 `demo_synth_macro_sky130_hooks_pnr` in
 [`pnr/demo_synth_macro/pnr.yaml`](pnr/demo_synth_macro/pnr.yaml): a
-`macro-placement` hook puts the hard macro at an explicit location, an
+`macro-placement` hook, which replaces the macro placer, puts the hard macro at an explicit location, an
 `after-cts` hook writes a clock tree report and an `after-reports` hook writes
 the worst paths into and out of the macro on the routed parasitics. See
 [`synth/demo_synth_macro/README.md`](synth/demo_synth_macro/README.md#placing-the-macro-with-a-run-hook).
@@ -1009,11 +1009,11 @@ input capacitance to the parent rather than its internal fanout.
 
 The sky130hd platforms read their wire RC from `cfg-pdks.layer-rc-tcl`
 (rtl-buddy/rtl_buddy#716). The assembly stays DRC-clean through the macro cell
-halo (rtl-buddy/rtl_buddy#673) and the size-aware macro packer
-(rtl-buddy/rtl_buddy#632); `macro-placement: rtl-mp` places the macros with
-OpenROAD's RTL macro placer instead. `rb power` inherits the SRAM Liberty from
-the P&R run it reads (rtl-buddy/rtl_buddy#630) and counts the switching the
-partitions drive (rtl-buddy/rtl_buddy#684).
+halo (rtl-buddy/rtl_buddy#673) and the PDK's `placement.macro-channel`, the
+channel OpenROAD's RTL macro placer leaves between macros and from the core
+edge. `rb power` inherits the SRAM Liberty from the P&R run it reads
+(rtl-buddy/rtl_buddy#630) and counts the switching the partitions drive
+(rtl-buddy/rtl_buddy#684).
 
 ### Multi-corner signoff on sky130hd
 

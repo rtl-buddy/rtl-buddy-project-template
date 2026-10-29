@@ -42,6 +42,9 @@ with per-corner SRAM Liberty and signoff gates, is
     (rtl-buddy/rtl_buddy#625);
   - the sky130hd wire RC, `cfg-pdks.layer-rc-tcl` (rtl-buddy/rtl_buddy#716),
     so repair and CTS see real wires;
+  - the channel RTL-MP leaves between macros and from the core edge,
+    `cfg-pdks.placement.macro-channel` (80 µm on sky130hd, as ORFS), which the
+    power grid and global route need;
   - the standard-cell keep-out around macros,
     `cfg-pdks.placement.macro-cell-halo` (rtl-buddy/rtl_buddy#673), which
     keeps the assembly DRC-clean;
@@ -263,7 +266,7 @@ run the same synthesised netlist and the same floorplan.
 | `global-route-repair` | `..._repair_pnr` | after global route, `repair_design` with a 20% slew and capacitance margin. A written block runs only what it sets, so this run leaves out the setup and hold repair that the default block, which `..._tight_pnr` runs, adds there |
 | `post-route-repair` | `..._repair_pnr` | up to two rounds that extract the routed design and, while setup slack is negative, run `repair_timing -setup` with a 0.05 ns margin (0.10 ns in round 2), then route the changed nets again and keep every other wire (`reroute: eco`) |
 | `resources` | `..._repair_pnr` | the Slurm reservation of each stage job under `--dispatch slurm`; ignored otherwise |
-| `mode: probe` | `..._probe_pnr` | placement and global route only, at 70% utilization instead of 45%; no timing repair, no routed design |
+| `mode: probe` | `..._probe_pnr` | placement and global route only, at 70% utilization instead of 45% and with a 40 µm `placement.macro-channel`; no timing repair, no routed design |
 
 A round starts only when setup slack is negative: `setup-margin` sets how much
 slack the repair aims for, not when it runs. On a design that already meets
@@ -272,13 +275,13 @@ timing the stage runs its extraction and stops.
 | | tight | repair |
 |---|---|---|
 | verdict | PASS | PASS |
-| routed cells | 1 455 | 1 469 |
-| design area (µm²) | 209 508 | 209 656 |
-| setup WNS (ns) | **-0.12** | **-0.06** |
-| setup TNS (ns) | -0.15 | -0.10 |
-| hold WNS (ns) | +0.30 | +0.29 |
+| routed cells | 1 492 | 1 494 |
+| design area (µm²) | 209 690 | 209 777 |
+| setup WNS (ns) | **-0.01** | **+0.03** |
+| setup TNS (ns) | -0.01 | 0.00 |
+| hold WNS (ns) | +0.34 | +0.34 |
 | DRC violations | 0 | 0 |
-| max-slew / max-cap violators | 11 / 1 | 9 / 1 |
+| max-slew / max-cap violators | 8 / 1 | 8 / 0 |
 
 Measured with OpenROAD 26Q4 on a shared host, from the synthesis above, with
 `threads:` unset. Runs of the same configuration on the same host gave the
@@ -286,14 +289,15 @@ same numbers. Each run takes a few minutes.
 
 Reading it:
 
-- **A `PASS` is not timing met.** `..._tight_pnr` passes with -0.12 ns of
-  setup slack and a TNS of -0.15 ns; `wns_setup_ps` and `tns_ps` are the
+- **A `PASS` is not timing met.** `..._tight_pnr` passes with -0.01 ns of
+  setup slack and a TNS of -0.01 ns; `wns_setup_ps` and `tns_ps` are the
   verdict, as for every `rb pnr` run.
-- **Post-route repair recovers most of the setup slack.** After detailed route
-  the worst setup slack, on the SRAM read path, is -0.29 ns (TNS -0.81 ns).
-  Round 1 repairs it to -0.09 ns, round 2, with the margin raised to 0.10 ns,
-  to -0.06 ns (TNS -0.10 ns), and the final report is on the extracted
-  parasitics of that route. Neither run closes at 12.6 ns. `progress.jsonl` in
+- **Post-route repair closes the setup slack.** After detailed route the
+  worst setup slack, on the SRAM read path, is -0.20 ns (TNS -0.23 ns).
+  Round 1 repairs it to -0.10 ns, round 2, with the margin raised to 0.10 ns,
+  to +0.03 ns, and the final report is on the extracted parasitics of that
+  route. The stage stops with `timing_met`, and the tight run, with no
+  post-route repair, does not close at 12.6 ns. `progress.jsonl` in
   `artefacts/<run>/checkpoints/latest/` has a `post_route_round` event per
   round, and `pnr.log` has each round's `worst slack max` under
   `>>> Post-route repair timing, round N`. The two runs' routes differ from
@@ -327,7 +331,7 @@ rb pnr demo_tiny_alu_subsys_sky130_repair_pnr -c pnr/demo_tiny_alu_subsys_hier/p
 The first command ends once the `global_route` checkpoint is written, in about
 10 seconds. The result is a `PASS` with `routed: false` and
 `stopped_after: global_route`, with the timing on the global-route estimate
-(setup WNS -0.20 ns) and the overflow, and no routed DEF, ODB or SPEF.
+(setup WNS -0.28 ns) and the overflow, and no routed DEF, ODB or SPEF.
 
 The second starts a new run directory at `detailed_route` from that
 checkpoint: it routes in detail, runs both repair rounds and finishes. Its
@@ -378,45 +382,43 @@ command above, on the PDK revisions `download_pdk.sh` pins, with `threads:`
 unset. `apb_clk` 20 ns, `cclk` 25 ns. Every final timing and power
 number is on OpenRCX-extracted parasitics (sky130hd sets `rcx-rules`).
 
-| | flat | csr partition | compute partition | **assembled** | assembled, RTL-MP |
-|---|---|---|---|---|---|
-| verdict | PASS | PASS | PASS | **PASS** | PASS |
-| standard-cell instances, input / routed | 1217 / 1493 | 376 / 561 | 297 / 362 | **554 / 961** | 554 / 782 |
-| die (µm) | 697.5 × 697.5 | 99.3 × 99.3 | 89.6 × 89.6 | **717.2 × 717.2** | 717.2 × 717.2 |
-| design area (µm²) | 209 823 | 4 720 | 3 073 | **222 693** | 221 683 |
-| core area (µm²) | 456 758 | 7 767 | 6 241 | **483 370** | 483 370 |
-| core utilization | 46% | 61% | 49% | **46%** | 46% |
-| setup WNS (ns) | +3.35 | +10.80 | +13.57 | **+3.06** | +3.45 |
-| setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** | 0.00 |
-| hold WNS (ns) | +0.35 | +0.47 | +0.66 | **+0.32** | +0.16 |
-| DRC violations | 0 | 0 | 0 | **0** | 0 |
-| max-slew / max-cap violators | 8 / 2 | 0 / 0 | 0 / 0 | **29 / 6** | 8 / 0 |
-| GDS | `complete` | `complete` | `complete` | **`complete`** | `complete` |
-| abstract published | — | yes | yes | — | — |
-| port buffers, in / out | — | 85 / 78 | 42 / 15 | — | — |
-| largest abstract input pin cap (pF) | — | 0.016 | 0.012 | — | — |
-| static power (mW) | 3.90 | — | — | **5.14** — see below | — |
-| of which the SRAM (mW) | 1.93 | — | — | **1.93** | — |
+| | flat | csr partition | compute partition | **assembled** |
+|---|---|---|---|---|
+| verdict | PASS | PASS | PASS | **PASS** |
+| standard-cell instances, input / routed | 1217 / 1507 | 376 / 561 | 297 / 362 | **554 / 781** |
+| die (µm) | 697.5 × 697.5 | 99.3 × 99.3 | 89.6 × 89.6 | **717.2 × 717.2** |
+| design area (µm²) | 209 913 | 4 720 | 3 073 | **221 654** |
+| core area (µm²) | 456 758 | 7 767 | 6 241 | **483 370** |
+| core utilization | 46% | 61% | 49% | **46%** |
+| setup WNS (ns) | +3.66 | +10.80 | +13.57 | **+3.64** |
+| setup TNS (ns) | 0.00 | 0.00 | 0.00 | **0.00** |
+| hold WNS (ns) | +0.35 | +0.47 | +0.66 | **+0.15** |
+| DRC violations | 0 | 0 | 0 | **0** |
+| max-slew / max-cap violators | 8 / 0 | 0 / 0 | 0 / 0 | **8 / 0** |
+| GDS | `complete` | `complete` | `complete` | **`complete`** |
+| abstract published | — | yes | yes | — |
+| port buffers, in / out | — | 85 / 78 | 42 / 15 | — |
+| largest abstract input pin cap (pF) | — | 0.016 | 0.012 | — |
+| static power (mW) | 3.88 | — | — | **4.60** — see below |
+| of which the SRAM (mW) | 1.93 | — | — | **1.93** |
 
 Reading it:
 
 - **Worst setup is the same path both ways**: the SRAM's read data out to
-  `prdata`, which no partitioning moves. It is 0.29 ns worse assembled: the
-  three macros sit in a different place in the assembly's floorplan, and with
-  extracted parasitics the longer route from the SRAM to the output pins shows
-  up in full. TNS is zero both ways and hold is within 0.1 ns.
-- **Design area is +6.1%** assembled: the partitions' own core margin and
+  `prdata`, which no partitioning moves. It is within 0.02 ns assembled, with
+  extracted parasitics on both. TNS is zero both ways, and hold is 0.20 ns
+  tighter assembled.
+- **Design area is +5.6%** assembled: the partitions' own core margin and
   filler are counted at their hardened size rather than as loose cells. **Core
-  area is +5.8%**: the assembly uses the flat run's floorplan, and the
-  size-aware shelf packer (rtl-buddy/rtl_buddy#632) packs the three macros at
-  their real sizes, with `placement.macro-halo` (20 µm by default) of clearance
-  around each for the PDN channels.
-- **RTL-MP recovers the setup slack.** `..._asm_rtlmp_pnr` is the same
-  assembly with `floorplan.macro-placement: rtl-mp`: OpenROAD's
-  `rtl_macro_placer` places the three macros by connectivity, and turns the
-  compute partition and the SRAM 180 degrees, instead of the packer filling
-  rows from a corner. The worst path is still the SRAM-to-`prdata` one, and it gains 0.39 ns, which puts it
-  0.10 ns ahead of the flat run. 0 DRCs, the power grid connected to the
+  area is +5.8%**: the assembly uses the flat run's 45% utilization, counted
+  over its cells and the footprints of the three macros, and the two
+  partitions' footprints are larger than the cells they replace.
+- **RTL-MP places the macros.** OpenROAD's `rtl_macro_placer` places all three
+  by connectivity, turns the compute partition and the SRAM 180 degrees and
+  mirrors the csr partition, and leaves the PDK's 80 µm
+  `placement.macro-channel` (see `root_config.yaml`) between macros and from
+  the core edge, which is what the power grid and global route need. `pnr.log`
+  has one `placed` line per macro. 0 DRCs, the power grid connected to the
   rotated macros, strict GDS complete.
 - **DRC-clean on every run.** `cfg-pdks.placement.macro-cell-halo` keeps
   standard cells off every macro edge. The sky130hd entry sets it to 3 µm:
@@ -427,8 +429,8 @@ Reading it:
   partitions contribute 0 W: `write_timing_model` writes timing arcs and no
   power tables, and the assembly's `rb power` says so, naming both cells as
   having no Liberty power data. So the assembly's total leaves out the
-  partitions' own cell power. What it adds is about 1.1 mW more switching power
-  on the top-level nets (1.63 vs 0.51 mW), which carry extracted wire
+  partitions' own cell power. What it adds is about 0.6 mW more switching power
+  (1.10 vs 0.49 mW in total), on top-level nets that carry extracted wire
   capacitance between three macros spread over the die, and whose drivers
   inside the partitions switch at OpenSTA's default input activity, since an
   abstract says nothing about them. `rb power` leaves the partitions' abstract
@@ -448,11 +450,10 @@ Reading it:
   the delay cell `clkdlybuf4s50_1` and csr loses about 0.9 ns of setup.
 - **Electrical violators are counted.** Every run reports its max-slew and
   max-capacitance violators; the flat run and both assemblies have some,
-  mostly at the SRAM: its `dout1` pins have a 0.03 pF max-capacitance limit
-  their read-data nets exceed, and its address pins a 0.04 ns max-slew limit.
-  The packer assembly also has top-level nets past the 1.5 ns slew limit. They
-  pass with an "electrical" note. The counts vary
-  a little between identical runs. `fail-on-electrical: true` on a run, or
+  at the SRAM: its address pins have a 0.04 ns max-slew limit, which is the
+  whole of the flat run's and the assembly's 8, and its `dout1` pins a 0.03 pF
+  max-capacitance limit that their read-data nets can exceed. They pass with
+  an "electrical" note. `fail-on-electrical: true` on a run, or
   `electrical` in its `signoff.fail-on`, makes them fail it.
 - **Supply connections.** `rb pnr` applies the PDK's global connections again
   at the end of every stage, so the buffers, CTS cells and fill added after
@@ -607,7 +608,7 @@ for the same reason.
 | `synth/demo_tiny_alu_subsys_hier/constraints_flat.sdc` | top-level constraints, shared by the flat and assembly runs |
 | `synth/demo_tiny_alu_subsys_hier/constraints_csr.sdc` | partition A's single-clock constraints |
 | `synth/demo_tiny_alu_subsys_hier/constraints_compute.sdc` | partition B's single-clock constraints |
-| `pnr/demo_tiny_alu_subsys_hier/pnr.yaml` | the P&R runs: flat, the multi-corner partition, the two partitions, the assembly with the packer and with RTL-MP, the flat run floorplanned from planner files, and the flat run at a tight clock without and with staged repair, plus a probe of a denser floorplan |
+| `pnr/demo_tiny_alu_subsys_hier/pnr.yaml` | the P&R runs: flat, the multi-corner partition, the two partitions, the assembly, the flat run floorplanned from planner files, and the flat run at a tight clock without and with staged repair, plus a probe of a denser floorplan |
 | `pnr/demo_tiny_alu_subsys_hier/constraints_flat_tight.sdc` | the flat constraints with `apb_clk` at 12.6 ns, read by the tight and repair runs |
 | `pnr/demo_tiny_alu_subsys_hier/plan/macros.yaml` | the macro plan the planner-files run reads: the SRAM, rotated 180 degrees, at an explicit location |
 | `pnr/demo_tiny_alu_subsys_hier/plan/pins.yaml` | the pin plan it reads: six exact pins and a side rule for every other port |

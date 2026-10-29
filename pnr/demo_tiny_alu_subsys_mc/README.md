@@ -69,14 +69,14 @@ about 5 ns. `cclk` is 25 ns, as there.
 ## Results
 
 Measured with OpenROAD 26Q4, `threads:` unset. The run passes, DRC-clean, with
-5 max-slew violators and 1 max-capacitance violator, which `fail-on` does not
+3 max-slew violators and no max-capacitance violator, which `fail-on` does not
 gate.
 
 | corner | setup WNS (ns) | hold WNS (ns) | SRAM `clk1` → `dout1` (ns) |
 |---|---|---|---|
-| `tt` | +13.19 | +0.30 | 0.35 |
-| `ss` | **+5.59** | +0.43 | 0.70 |
-| `ff` | +14.31 | **+0.12** | 0.24 |
+| `tt` | +13.52 | +0.29 | 0.39 |
+| `ss` | **+5.32** | +0.38 | 0.79 |
+| `ff` | +14.49 | **+0.11** | 0.28 |
 
 The SRAM arc is the delay of the SRAM's read on the worst path of each corner,
 `u_inner/u_hist_mem/u_sram/clk1` to `dout1[n]`, read from `timing.rpt` in
@@ -87,23 +87,23 @@ the 0.25 ns setup uncertainty of `constraints_ss.sdc`.
 The result row carries the per-corner timing and the signoff record:
 
 ```json
-"wns_setup_ps": 5590.0,
-"wns_hold_ps": 120.0,
+"wns_setup_ps": 5320.0,
+"wns_hold_ps": 110.0,
 "worst_setup_corner": "ss",
 "worst_hold_corner": "ff",
 "corners": {
-  "tt": {"wns_setup_ps": 13190.0, "wns_hold_ps": 300.0, "tns_ps": 0.0, "tns_hold_ps": 0.0},
-  "ss": {"wns_setup_ps": 5590.0, "wns_hold_ps": 430.0, "tns_ps": 0.0, "tns_hold_ps": 0.0},
-  "ff": {"wns_setup_ps": 14310.0, "wns_hold_ps": 120.0, "tns_ps": 0.0, "tns_hold_ps": 0.0}
+  "tt": {"wns_setup_ps": 13520.0, "wns_hold_ps": 290.0, "tns_ps": 0.0, "tns_hold_ps": 0.0},
+  "ss": {"wns_setup_ps": 5320.0, "wns_hold_ps": 380.0, "tns_ps": 0.0, "tns_hold_ps": 0.0},
+  "ff": {"wns_setup_ps": 14490.0, "wns_hold_ps": 110.0, "tns_ps": 0.0, "tns_hold_ps": 0.0}
 },
 "signoff": {
   "timing": {
-    "setup": {"corners": ["ss"], "wns_ps": 5590.0, "worst_corner": "ss", "unconstrained": false},
-    "hold": {"corners": ["ff"], "wns_ps": 120.0, "worst_corner": "ff", "unconstrained": false},
+    "setup": {"corners": ["ss"], "wns_ps": 5320.0, "worst_corner": "ss", "unconstrained": false},
+    "hold": {"corners": ["ff"], "wns_ps": 110.0, "worst_corner": "ff", "unconstrained": false},
     "verdict": "pass"
   },
   "drc": {"count": 0, "verdict": "pass"},
-  "electrical": {"max_slew_violation_count": 5, "max_capacitance_violation_count": 1,
+  "electrical": {"max_slew_violation_count": 3, "max_capacitance_violation_count": 0,
                  "max_fanout_violation_count": 0, "verdict": "not_gated"}
 }
 ```
