@@ -3,7 +3,7 @@
 The flat `demo_tiny_alu_subsys` netlist placed, routed and signed off at three
 corners in one OpenROAD session: `tt`, `ss` (1.40 V, -40 C) and `ff` (1.95 V,
 -40 C). The OpenRAM SRAM is timed from its own Liberty at each corner. One run,
-`demo_tiny_alu_subsys_sky130_mc_pnr`, about three minutes on one OpenROAD thread.
+`demo_tiny_alu_subsys_sky130_mc_pnr`, about three minutes.
 
 It shows:
 
@@ -68,7 +68,7 @@ about 5 ns. `cclk` is 25 ns, as there.
 
 ## Results
 
-Measured with OpenROAD 26Q4 on one thread. The run passes, DRC-clean, with
+Measured with OpenROAD 26Q4, `threads:` unset. The run passes, DRC-clean, with
 5 max-slew violators and 1 max-capacitance violator, which `fail-on` does not
 gate.
 

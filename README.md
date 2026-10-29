@@ -962,7 +962,7 @@ check. See
 
 Staged runs, repair and probe (rtl-buddy/rtl_buddy#848, #849) and timing-driven
 placement (#867) are shown by three runs on the same flat reference:
-`demo_tiny_alu_subsys_sky130_tight_pnr` misses setup at a 14 ns clock,
+`demo_tiny_alu_subsys_sky130_tight_pnr` misses setup at a 12.6 ns clock,
 `demo_tiny_alu_subsys_sky130_repair_pnr` runs it stage by stage with
 global-route and post-route repair, and `demo_tiny_alu_subsys_sky130_probe_pnr`
 checks a denser floorplan in seconds with `mode: probe`. The README shows how

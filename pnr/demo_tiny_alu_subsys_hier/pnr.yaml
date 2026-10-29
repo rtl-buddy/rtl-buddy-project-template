@@ -288,7 +288,8 @@ runs:
   #                        `rcx-rules`, which sky130hd sets.
   #   resources            the Slurm reservation of each stage job under
   #                        `--dispatch slurm`; ignored otherwise. OpenROAD
-  #                        runs on one thread unless `threads:` says more.
+  #                        picks its own thread count unless `threads:` sets
+  #                        one.
   - name: "demo_tiny_alu_subsys_sky130_repair_pnr"
     desc: "Staged flat sky130hd P&R at a 12.6 ns apb_clk with global-route and post-route repair"
     tool: "openroad"
