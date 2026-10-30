@@ -1,9 +1,9 @@
 rtl-buddy-filetype: pnr_config
 
 # The hard macro of demo_synth_macro, hardened on sky130hd, and the top that
-# instances it, placed twice: once with rb's macro packer and once with run
-# hooks. One command runs everything in order -- the macro's synthesis and
-# P&R, then the top's synthesis (which reads the macro's abstract) and P&R:
+# instances it, placed twice: once by RTL-MP and once with run hooks. One
+# command runs everything in order -- the macro's synthesis and P&R, then the
+# top's synthesis (which reads the macro's abstract) and P&R:
 #
 #   synth/demo_tiny_alu_subsys_hier/download_pdk.sh
 #   rb pnr -c pnr/demo_synth_macro/pnr.yaml --synth -l 1000
@@ -21,8 +21,9 @@ runs:
     synth-path: "../../synth/demo_synth_macro/synth.yaml"
     constraints: "../../synth/demo_synth_macro/constraints.sdc"
     platform: "sky130hd_tt"
-    # Sized for the macro, not the handful of cells around it: the packer
-    # keeps placement.macro-halo (20 um) between the macro and every core edge.
+    # Sized for the macro, not the handful of cells around it: the core must
+    # hold the macro and the PDK's 80 um `placement.macro-channel` on each
+    # side, which a utilization of 0.40 would not leave room for.
     floorplan:
       utilization: 0.10
       aspect: 1.0
@@ -57,8 +58,8 @@ runs:
   # pnr.tcl. Paths are relative to this file. pnr.log announces each file as
   # `>>> Hook <point>: <path>`.
   #
-  #   macro-placement  replaces rb's macro packer; hooks/place_macro.tcl puts
-  #                    the macro at an explicit location.
+  #   macro-placement  replaces RTL-MP; hooks/place_macro.tcl puts the macro
+  #                    at an explicit location.
   #   after-cts        runs right after clock tree synthesis;
   #                    hooks/clock_report.tcl writes clock_tree.rpt into this
   #                    run's artefact directory.

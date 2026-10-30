@@ -932,7 +932,7 @@ global router's per-layer congestion table (GRT-0096) and each detailed-route
 iteration's violation count appear as they happen
 (`detailed-route-verbose`). Every run also counts its max-slew,
 max-capacitance and max-fanout violators (the Slew/Cap/Fanout column). This
-design routes with 54 max-capacitance violators and 1 max-slew violator, so it
+design routes with 1 max-capacitance violator and 1 max-slew violator, so it
 passes with an "electrical" note; `fail-on-electrical: true` would fail it.
 
 [`pnr/demo_tiny_alu_subsys/pnr.yaml`](pnr/demo_tiny_alu_subsys/pnr.yaml)
@@ -946,7 +946,7 @@ Run hooks, Tcl files a P&R run's `hooks:` names for `rb pnr` to source at
 fixed points of its flow (rtl-buddy/rtl_buddy#847), are shown by
 `demo_synth_macro_sky130_hooks_pnr` in
 [`pnr/demo_synth_macro/pnr.yaml`](pnr/demo_synth_macro/pnr.yaml): a
-`macro-placement` hook puts the hard macro at an explicit location, an
+`macro-placement` hook, which replaces the macro placer, puts the hard macro at an explicit location, an
 `after-cts` hook writes a clock tree report and an `after-reports` hook writes
 the worst paths into and out of the macro on the routed parasitics. See
 [`synth/demo_synth_macro/README.md`](synth/demo_synth_macro/README.md#placing-the-macro-with-a-run-hook).
@@ -962,7 +962,7 @@ check. See
 
 Staged runs, repair and probe (rtl-buddy/rtl_buddy#848, #849) and timing-driven
 placement (#867) are shown by three runs on the same flat reference:
-`demo_tiny_alu_subsys_sky130_tight_pnr` misses setup at a 14 ns clock,
+`demo_tiny_alu_subsys_sky130_tight_pnr` misses setup at a 12.6 ns clock,
 `demo_tiny_alu_subsys_sky130_repair_pnr` runs it stage by stage with
 global-route and post-route repair, and `demo_tiny_alu_subsys_sky130_probe_pnr`
 checks a denser floorplan in seconds with `mode: probe`. The README shows how
@@ -1009,11 +1009,11 @@ input capacitance to the parent rather than its internal fanout.
 
 The sky130hd platforms read their wire RC from `cfg-pdks.layer-rc-tcl`
 (rtl-buddy/rtl_buddy#716). The assembly stays DRC-clean through the macro cell
-halo (rtl-buddy/rtl_buddy#673) and the size-aware macro packer
-(rtl-buddy/rtl_buddy#632); `macro-placement: rtl-mp` places the macros with
-OpenROAD's RTL macro placer instead. `rb power` inherits the SRAM Liberty from
-the P&R run it reads (rtl-buddy/rtl_buddy#630) and counts the switching the
-partitions drive (rtl-buddy/rtl_buddy#684).
+halo (rtl-buddy/rtl_buddy#673) and the PDK's `placement.macro-channel`, the
+channel OpenROAD's RTL macro placer leaves between macros and from the core
+edge. `rb power` inherits the SRAM Liberty from the P&R run it reads
+(rtl-buddy/rtl_buddy#630) and counts the switching the partitions drive
+(rtl-buddy/rtl_buddy#684).
 
 ### Multi-corner signoff on sky130hd
 
@@ -1060,8 +1060,8 @@ uv run rb pnr -c pnr/demo_tiny_alu_subsys_asap7/pnr.yaml -l 1000 --synth
 uv run rb power -c power/demo_tiny_alu_subsys_asap7/power.yaml -l 1000
 ```
 
-At a 600 ps clock the routed design is DRC-clean with +63.6 ps setup and
-+63.2 ps hold slack, 359 routed cells plus 610 endcap, filler and decap cells.
+At a 600 ps clock the routed design is DRC-clean with +71.5 ps setup and
++62.6 ps hold slack, 359 routed cells plus 534 endcap, filler and decap cells.
 Two more runs at an over-constrained 250 ps clock compare P&R with and without
 post-CTS setup repair. Three of the hooks use the downloaded ORFS files as they
 are; [`pnr/asap7/`](pnr/asap7/) holds the two files that are committed, the

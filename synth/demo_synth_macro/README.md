@@ -41,7 +41,7 @@ them:
 
 | point | file | what it does |
 |---|---|---|
-| `macro-placement` | `pnr/demo_synth_macro/hooks/place_macro.tcl` | replaces rb's macro packer: puts `i_macro` with its lower-left corner at (130, 130) um, snapped onto the site grid |
+| `macro-placement` | `pnr/demo_synth_macro/hooks/place_macro.tcl` | replaces RTL-MP, rb's macro placer: puts `i_macro` with its lower-left corner at (130, 130) um, snapped onto the site grid |
 | `after-cts` | `pnr/demo_synth_macro/hooks/clock_report.tcl` | right after clock tree synthesis, writes the clock tree's buffers, skew and latency to `clock_tree.rpt` |
 | `after-reports` | `pnr/demo_synth_macro/hooks/macro_paths.tcl` | after the final reports, on the parasitics extracted from the routed design, writes the worst path into `i_macro` and the worst path out of it to `macro_paths.rpt` |
 

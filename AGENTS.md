@@ -89,7 +89,7 @@ pnr/demo_tiny_alu_subsys_hier/           # sky130hd hierarchical P&R pipeclean, 
 pnr/demo_tiny_alu_subsys_mc/             # sky130hd multi-corner P&R with per-corner SDC and SRAM Liberty and signoff gates (read its README first)
 pnr/sky130hd/                            # sky130hd hooks: PDN (top-level and block-level) + row cutting around macros
 pnr/demo_tiny_alu_subsys_asap7/          # ASAP7 flat P&R from an ORFS platform (read its README first)
-pnr/demo_synth_macro/                    # sky130hd hard macro hardened, then placed in a top by the packer and by a run hook
+pnr/demo_synth_macro/                    # sky130hd hard macro hardened, then placed in a top by RTL-MP and by a run hook
 pnr/asap7/                               # asap7 hooks: PDN + tap/endcap Tcl
 power/demo_tiny_alu_subsys_asap7/        # ASAP7 power on the split-Liberty TT corner, static and post-P&R
 fpga/demo_cdc_open/                      # openXC7 FPGA flow example
