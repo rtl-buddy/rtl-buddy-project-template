@@ -990,8 +990,8 @@ notebook = [
 
 [[package]]
 name = "rtl-buddy-cdc"
-version = "0.6.0"
-source = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.6.0#36a26fd628b561078e3331936e2182bc74ff20fa" }
+version = "0.7.2"
+source = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.7.2#a698b93fd4888f0ca9e7e4ed8a876fa92429ad86" }
 dependencies = [
     { name = "typer" },
 ]
@@ -1035,7 +1035,7 @@ requires-dist = [
     { name = "pytest", specifier = "==8.4.2" },
     { name = "rtl-buddy", extras = ["elab", "graph-extract"], specifier = "==8.0.0" },
     { name = "rtl-buddy-axi-profiler", extras = ["notebook"], git = "https://github.com/rtl-buddy/rtl-buddy-axi-profiler.git" },
-    { name = "rtl-buddy-cdc", extras = ["slang"], git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.6.0" },
+    { name = "rtl-buddy-cdc", extras = ["slang"], git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.7.2" },
     { name = "rtl-buddy-xeno", extras = ["verible", "slang"] },
 ]
 
