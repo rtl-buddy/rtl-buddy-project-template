@@ -1,0 +1,98 @@
+name: xezim Regression
+
+# Runs the xezim backend (github.com/aionhw/xezim, an open-source
+# SystemVerilog interpreter) on every push, the way icarus.yml keeps the
+# Icarus backend honest: the Verilator container in verilator.yml ships
+# neither, so a dedicated job is what catches a regression in the `xezim`
+# builder entry of root_config.yaml or in rtl_buddy's xezim family.
+#
+# xezim publishes no binaries, so the job builds it with cargo from the
+# tagged release and caches the resulting binary per tag: the first run
+# after a tag bump pays the build (around 20 minutes on a hosted runner),
+# every later run restores it in seconds.
+on: [push]
+
+env:
+  XEZIM_TAG: "0.11.3"
+
+jobs:
+  xezim-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install uv; the package cache is keyed on uv.lock so unchanged
+      # lockfiles skip downloads.
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked --python 3.11
+
+      # lcov/genhtml for the coverage-mode step below (cfg-coverage xezim
+      # has use-lcov: true, like the Verilator entry).
+      - name: Install lcov
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends lcov
+
+      - name: Restore xezim binary
+        id: xezim-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/xezim
+          key: xezim-${{ runner.os }}-${{ env.XEZIM_TAG }}
+
+      - name: Install Rust toolchain
+        if: steps.xezim-cache.outputs.cache-hit != 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      # `--locked` keeps the pinned xezim-core revision the tag was tested
+      # with. XEZIM_UVM_DIR points at an empty directory so the build script
+      # skips cloning the UVM sources, which only xezim's own UVM tests need.
+      - name: Build xezim
+        if: steps.xezim-cache.outputs.cache-hit != 'true'
+        env:
+          XEZIM_UVM_DIR: ${{ runner.temp }}/no-uvm
+        run: |
+          mkdir -p "$XEZIM_UVM_DIR"
+          cargo install --git https://github.com/aionhw/xezim --tag "$XEZIM_TAG" --locked
+
+      - name: xezim version
+        run: xezim -V
+
+      - name: Smoke suite on xezim
+        # icarus_smoke's suite default is `builder: icarus`; `-B xezim`
+        # overrides it, as `-B verilator` does in the Verilator CI.
+        working-directory: verif/icarus_smoke
+        run: uv run rtl-buddy --machine -B xezim test basic
+
+      - name: demo_tiny_alu on xezim
+        # The full testbench: cover-property SVA and the interface-class
+        # LVM hooks that Icarus has to skip run here, plus the functional
+        # checking against the Python golden.
+        working-directory: verif/demo_tiny_alu
+        run: |
+          for t in basic ops_sweep flags random; do
+            uv run rtl-buddy --machine -B xezim test "$t"
+          done
+
+      - name: demo_tiny_alu coverage on xezim
+        # Coverage mode: xezim writes coverage.json, rtl_buddy's xezim reader
+        # turns it into the line/branch/toggle/cover model and the LCOV export.
+        working-directory: verif/demo_tiny_alu
+        run: |
+          uv run rtl-buddy --machine -B xezim -M cov test flags
+          uv run rtl-buddy cov summary
+
+      - name: cocotb on xezim
+        # cocotb 2.0 ships no xezim library; rtl_buddy loads xezim through
+        # cocotb's plain-VPI (vcs-flavoured) library via `--vpi-lib`.
+        working-directory: verif/demo_tiny_alu_cocotb
+        run: |
+          for t in cocotb_flags cocotb_random; do
+            uv run rtl-buddy --machine -B xezim test "$t"
+          done

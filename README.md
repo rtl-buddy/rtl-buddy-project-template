@@ -83,6 +83,7 @@ reaches the saturated state via SymbiYosys + yices.
 template the supported flows are:
 
 - **Verilator** for the open-source compile/sim/regression/coverage path
+- **xezim** ([aionhw/xezim](https://github.com/aionhw/xezim)), an open-source SystemVerilog interpreter, as a second open-source simulator: no compile step, so a cold `rb test` runs in about the time Verilator takes warm; coverage (statement, branch, toggle, cover properties) flows into the same `rb cov` reports
 - **VCS** for teams using Synopsys flows
 - **SystemC + Verilator cosim** for C++-driven harnesses through `rb test`
 - **Yosys** (rtl-buddy fork) for synthesis (generic + tech-mapped)
@@ -100,7 +101,7 @@ template the supported flows are:
 External prerequisites:
 
 - `uv`, Python 3.11
-- A simulator on `PATH` — Verilator (open-source) and/or VCS
+- A simulator on `PATH` — Verilator (open-source), xezim (open-source; `cargo install --git https://github.com/aionhw/xezim --tag 0.11.3 --locked`, needs Rust 1.92 or newer, see [`.github/workflows/xezim.yml`](.github/workflows/xezim.yml)), and/or VCS
 - `lcov` for LCOV/HTML coverage export — `brew install lcov` on macOS; `apt-get install lcov` on Debian/Ubuntu (needed for the `--coverage-html` step of `rb -M cov regression`)
 - `coverview` (Antmicro) for the Coverview package path — see [`coverview.md`](coverview.md)
 - Verible — deployed by [rtl-buddy-tools](https://github.com/rtl-buddy/rtl-buddy-tools) (`make verible`: bazel source build on macOS, prebuilt static release binary on Linux — one pinned version everywhere; optional, for `rb verible …`)

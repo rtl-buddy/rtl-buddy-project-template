@@ -168,6 +168,33 @@ cfg-rtl-builder:
     # simv is a thin wrapper rtl_buddy writes around `vvp <snapshot>.vvp`
     builder-simv: "simv"
     # icarus
+  - <<: *rtl-builder-template
+    name: "xezim"
+    builder: "xezim" # executable name; built from source, see .github/workflows/xezim.yml
+    simulator-family: "xezim"
+    sim-rand-seed-prefix: "+seed="
+    builder-opts:
+      # xezim elaborates and runs in one invocation; rtl_buddy's `--compile`
+      # pass is the elaboration gate and the simv wrapper re-runs xezim with
+      # `--error-exit` so $error and failed assertions fail the test.
+      # debug-mode writes an FST trace (`$dumpvars` is a no-op without --wave)
+      debug:
+        compile-time: >-
+          --wave --fst dump.fst
+          -DDUMP
+        run-time: ""
+      # regression-mode w/o trace
+      reg:
+        compile-time: ""
+        run-time: ""
+      # coverage-mode: statement, branch and toggle counts plus cover
+      # properties land in coverage.json (see cfg-coverage below)
+      cov:
+        compile-time: >-
+          --code-coverage=all
+        run-time: ""
+    builder-simv: "simv"
+    # xezim
 # cfg-rtl-builder
 # End RTL builder configuration
 
@@ -204,6 +231,10 @@ cfg-coverage:
     use-lcov: true
     # merge-timeout: 1800   # seconds the raw merge may run; unset = no limit
   - name: "vcs"
+    use-lcov: true
+  # xezim's JSON coverage is read natively; LCOV/HTML export still goes
+  # through lcov/genhtml
+  - name: "xezim"
     use-lcov: true
 
 cfg-coverview:
