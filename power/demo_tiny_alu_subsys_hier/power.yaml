@@ -28,7 +28,7 @@ rtl-buddy-filetype: power_config
 # partitions are 0 W either way and the result names both as cells with no
 # Liberty power data, and read in, its function-less outputs would stop
 # activity propagation and zero the switching of everything they drive. The
-# assembly's total — 4.73 mW against 3.57 mW flat — is the top-level glue plus
+# assembly's total — 4.60 mW against 3.88 mW flat — is the top-level glue plus
 # the SRAM; it leaves out the partitions' own cell power.
 runs:
   - name: "demo_tiny_alu_subsys_sky130_flat_power"

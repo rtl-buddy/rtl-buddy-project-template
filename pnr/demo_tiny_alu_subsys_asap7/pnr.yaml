@@ -6,10 +6,11 @@ rtl-buddy-filetype: pnr_config
 # platform. Three runs:
 #
 #   ..._compute_pnr                  the example. 600 ps clock, `asap7_tt`.
-#   ..._compute_tight_pnr            250 ps clock, `asap7_tt`: hold repair
-#                                    only after CTS, so setup stays broken.
-#   ..._compute_tight_setup_pnr      250 ps clock, `asap7_tt_setup_repair`:
-#                                    the same with post-CTS setup repair.
+#   ..._compute_tight_pnr            250 ps clock,
+#                                    `asap7_tt_no_cts_setup_repair`: hold
+#                                    repair only after CTS.
+#   ..._compute_tight_setup_pnr      250 ps clock, `asap7_tt`: the same with
+#                                    the default post-CTS setup repair.
 #
 # Everything is reglvl 1000 — these need the downloaded PDK and openroad.
 # Synthesise first, then place and route, e.g.
@@ -45,7 +46,7 @@ runs:
     synth: "demo_tiny_alu_subsys_asap7_compute_tight"
     synth-path: "../../synth/demo_tiny_alu_subsys_asap7/synth.yaml"
     constraints: "../../synth/demo_tiny_alu_subsys_asap7/constraints_compute_tight.sdc"
-    platform: "asap7_tt"
+    platform: "asap7_tt_no_cts_setup_repair"
     floorplan:
       utilization: 0.40
       aspect: 1.0
@@ -58,7 +59,7 @@ runs:
     synth: "demo_tiny_alu_subsys_asap7_compute_tight"
     synth-path: "../../synth/demo_tiny_alu_subsys_asap7/synth.yaml"
     constraints: "../../synth/demo_tiny_alu_subsys_asap7/constraints_compute_tight.sdc"
-    platform: "asap7_tt_setup_repair"
+    platform: "asap7_tt"
     floorplan:
       utilization: 0.40
       aspect: 1.0

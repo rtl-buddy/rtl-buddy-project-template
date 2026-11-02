@@ -6,8 +6,8 @@
 # is in fF, the ASAP7 Liberty `capacitive_load_unit`.
 #
 # A 250 ps (4 GHz) clock that the post-CTS netlist misses, so the two P&R
-# platforms `asap7_tt` (hold repair only after CTS) and `asap7_tt_setup_repair`
-# (setup repair too) can be compared on it. See
+# platforms `asap7_tt_no_cts_setup_repair` (hold repair only after CTS) and
+# `asap7_tt` (setup repair too) can be compared on it. See
 # ../../pnr/demo_tiny_alu_subsys_asap7/README.md.
 # The I/O budget is 20% of the period at each boundary, as on sky130hd.
 
