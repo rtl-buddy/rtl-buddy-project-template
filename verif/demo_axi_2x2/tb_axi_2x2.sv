@@ -488,6 +488,56 @@ module tb_axi_2x2;
   //       response delay 5 / 3 cycles.
   `SLAVE_MEM(out1, 13, 3, 8, 3, 11, 2, 5, 3)
 
+  // ── Routing check ──────────────────────────────────────────────
+  // Every AW / AR a slave accepts must fall in that slave's 256 MiB
+  // window (addr[31:28] == WIN; see the address map in axi_2x2.sv), and
+  // each slave must see both writes and reads by the end. Without this,
+  // a crossbar that sends everything to one port still runs clean. The
+  // first misrouted request per slave is reported; the totals are
+  // checked at the end of the test.
+  `define ROUTE_CHECK(name, WIN, NAME_STR)                                      \
+    int unsigned name``_aw_cnt, name``_ar_cnt, name``_misrouted;                \
+    always_ff @(posedge clk or negedge rst_n) begin                             \
+      if (!rst_n) begin                                                         \
+        name``_aw_cnt    <= 0;                                                  \
+        name``_ar_cnt    <= 0;                                                  \
+        name``_misrouted <= 0;                                                  \
+      end else begin                                                            \
+        if (m_axi_``name``_awvalid && m_axi_``name``_awready) begin             \
+          name``_aw_cnt <= name``_aw_cnt + 1;                                   \
+          if (m_axi_``name``_awaddr[31:28] != WIN) begin                        \
+            if (name``_misrouted == 0)                                          \
+              `lvm_rpt_err(("%s accepted AW addr 0x%08h at cycle %0d",          \
+                  NAME_STR, m_axi_``name``_awaddr, cycle_count));               \
+            name``_misrouted <= name``_misrouted + 1;                           \
+          end                                                                   \
+        end                                                                     \
+        if (m_axi_``name``_arvalid && m_axi_``name``_arready) begin             \
+          name``_ar_cnt <= name``_ar_cnt + 1;                                   \
+          if (m_axi_``name``_araddr[31:28] != WIN) begin                        \
+            if (name``_misrouted == 0)                                          \
+              `lvm_rpt_err(("%s accepted AR addr 0x%08h at cycle %0d",          \
+                  NAME_STR, m_axi_``name``_araddr, cycle_count));               \
+            name``_misrouted <= name``_misrouted + 1;                           \
+          end                                                                   \
+        end                                                                     \
+      end                                                                       \
+    end
+
+  `ROUTE_CHECK(out0, 4'h0, "out0")
+  `ROUTE_CHECK(out1, 4'h1, "out1")
+
+  task automatic check_routing(input string name, input int unsigned aw_cnt,
+                               input int unsigned ar_cnt,
+                               input int unsigned misrouted);
+    if (misrouted != 0)
+      `lvm_rpt_err(("%s accepted %0d request(s) outside its address window",
+          name, misrouted));
+    if (aw_cnt == 0 || ar_cnt == 0)
+      `lvm_rpt_err(("%s saw no traffic on a channel (aw=%0d ar=%0d)",
+          name, aw_cnt, ar_cnt));
+  endtask
+
   // ── Test sequence ──────────────────────────────────────────────
   initial begin
     rst_n = 1'b0;
@@ -502,6 +552,10 @@ module tb_axi_2x2;
 
     `lvm_rpt_inf(("simulation done at cycle=%0d (in0 w=%0d r=%0d, in1 w=%0d r=%0d)",
         cycle_count, in0_w_idx, in0_r_idx, in1_w_idx, in1_r_idx));
+    `lvm_rpt_inf(("routing: out0 aw=%0d ar=%0d, out1 aw=%0d ar=%0d",
+        out0_aw_cnt, out0_ar_cnt, out1_aw_cnt, out1_ar_cnt));
+    check_routing("out0", out0_aw_cnt, out0_ar_cnt, out0_misrouted);
+    check_routing("out1", out1_aw_cnt, out1_ar_cnt, out1_misrouted);
     $finish(0);
   end
 
