@@ -80,6 +80,12 @@ module axi_2x2 #(
   // Wire flat slave-side ports to internal structs.
   `AXI_ASSIGN_SLAVE_TO_FLAT(in0, slv_reqs[0], slv_resps[0])
   `AXI_ASSIGN_SLAVE_TO_FLAT(in1, slv_reqs[1], slv_resps[1])
+  // The flat ports have no AWATOP, so the macro above leaves aw.atop
+  // undriven. Tie it to 0 (no atomics; the xbar is built with ATOPs = 0).
+  // Left floating, a 4-state simulator sees X and the demux's
+  // NoAtopAllowed assumption fires on every AW.
+  assign slv_reqs[0].aw.atop = '0;
+  assign slv_reqs[1].aw.atop = '0;
   // Wire flat master-side ports to internal structs.
   `AXI_ASSIGN_MASTER_TO_FLAT(out0, mst_reqs[0], mst_resps[0])
   `AXI_ASSIGN_MASTER_TO_FLAT(out1, mst_reqs[1], mst_resps[1])

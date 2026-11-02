@@ -50,7 +50,9 @@ uv run rb test basic_traffic
 
 The first run compiles `pp_axi.f` + the wrapper + the TB; subsequent runs are
 incremental. The test runs for a fixed 3,200 cycles (covering all four traffic
-phases plus a drain window) and passes as long as no protocol violations fire.
+phases plus a drain window). It fails if a protocol check fires, if either
+slave accepts a request outside its address window, or if either slave sees
+no writes or no reads, so a crossbar that misroutes cannot pass.
 
 ## AXI profiler integration
 
