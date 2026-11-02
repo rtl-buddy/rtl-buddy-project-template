@@ -87,12 +87,12 @@ class TestCore;
   local TestEndHook end_hooks[$];
 `endif
 
-  const integer RPT_INF = 0;
-  const integer RPT_WRN = 1;
-  const integer RPT_ERR = 2;
-  const integer RPT_FAT = 3;
+  const integer VERB_INF = 0;
+  const integer VERB_WRN = 1;
+  const integer VERB_ERR = 2;
+  const integer VERB_FAT = 3;
 
-  integer verbosity = RPT_ERR;
+  integer verbosity = VERB_ERR;
 
   // Under Verilator 5.050 these report MULTIDRIVEN when a testbench calls
   // rpt_err()/rpt_wrn() from inside an always_ff: it pairs the declaration
@@ -141,28 +141,28 @@ class TestCore;
   // report information 
   function void rpt_inf(string s);
     ninf++;
-    if (this.verbosity <= RPT_INF)
+    if (this.verbosity <= VERB_INF)
       $display("INF: %t %s", $time, s);
   endfunction
 
   // report warnings 
   function void rpt_wrn(string s);
     nwrn++;
-    if (this.verbosity <= RPT_WRN)
+    if (this.verbosity <= VERB_WRN)
       $display("WRN: %t %s", $time, s);
   endfunction
 
   // report errors 
   function void rpt_err(string s);
     nerr++;
-    if (this.verbosity <= RPT_ERR)
+    if (this.verbosity <= VERB_ERR)
       $display("ERR: %t %s", $time, s);
   endfunction
 
   // report fatals 
   function void rpt_fat(string s);
     nfat++;
-    if (this.verbosity <= RPT_FAT) begin
+    if (this.verbosity <= VERB_FAT) begin
       $display("FAT: %t %s", $time, s);
     end
     end_of_test();
