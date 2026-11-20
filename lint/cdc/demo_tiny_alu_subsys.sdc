@@ -18,3 +18,9 @@ set_clock_groups -asynchronous \
 # reset is captured on the clock edge like any data input, so it needs
 # SDC typing; rtl-buddy-cdc >= 0.5.0 flags the omission (CDC-011).
 set_input_delay -clock apb_clk 0 [get_ports apb_rst_n]
+
+# The members of the `apb` interface port are top-level ports named
+# `apb.<member>` (rtl-buddy-cdc >= 0.8.1; earlier releases had no port
+# for them). The APB host drives them from apb_clk, so type the inputs;
+# untyped, each one is an unconstrained source (CDC-011).
+set_input_delay -clock apb_clk 0 [get_ports {apb.psel apb.penable apb.pwrite apb.pprot apb.paddr apb.pwdata apb.pstrb}]
