@@ -8,6 +8,12 @@
 //   m_axi_out1 = [0x1000_0000, 0x2000_0000)
 //
 // Outside that range the xbar returns DECERR.
+
+// Same timescale as the testbench (common/lvm_core.sv). Without it, a
+// simulator that does not carry a timescale across files (xezim) warns and
+// falls back to 1ns/1ns for this module.
+`timescale 1ns/10ps
+
 `include "axi/typedef.svh"
 `include "axi/assign.svh"
 `include "axi/port.svh"
