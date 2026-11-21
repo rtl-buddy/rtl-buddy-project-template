@@ -941,7 +941,7 @@ wheels = [
 
 [[package]]
 name = "rtl-buddy"
-version = "8.1.1"
+version = "8.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -953,9 +953,9 @@ dependencies = [
     { name = "typer" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/80/f3/1237dd9b301cb7e98ce4648dbd2700f0907c31c24007188371f2f5e5abb2/rtl_buddy-8.1.1.tar.gz", hash = "sha256:5cc16cf747263fa08f260389b1b9052a9f0ba0ed0cf8de8838aacad01feaf87d", size = 1578839, upload-time = "2026-11-02T10:01:52.349Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/70/f5cffc5c318862651ac2b46b391d33eb5eee803c9b0386e3f10732b1492e/rtl_buddy-8.4.0.tar.gz", hash = "sha256:090e48f924ca861e7b183fb86e78016e238f2c38a86b5ad1d781bdb7346d2937", size = 1607662, upload-time = "2026-11-19T07:18:03.771Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/7c/eadabab5b4fc5ce913c70f8c88448afe926eeb85bf3c8e8b98fd140d80b8/rtl_buddy-8.1.1-py3-none-any.whl", hash = "sha256:483128d2a947d883159fc5c34d1fe673072ddd8477a46fa764c9367a925e229d", size = 1764619, upload-time = "2026-11-02T10:01:50.376Z" },
+    { url = "https://files.pythonhosted.org/packages/9c/15/17a4a6f02ad9a5930e7c9742c41c0bf72d1b16ff7d81b30053ecf4f2f280/rtl_buddy-8.4.0-py3-none-any.whl", hash = "sha256:8f0467f266cd8bf701036d578a7e0f3fecd7c3bf3883004f31252baa50e46a94", size = 1794717, upload-time = "2026-11-19T07:18:02.05Z" },
 ]
 
 [package.optional-dependencies]
@@ -990,8 +990,8 @@ notebook = [
 
 [[package]]
 name = "rtl-buddy-cdc"
-version = "0.7.2"
-source = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.7.2#a698b93fd4888f0ca9e7e4ed8a876fa92429ad86" }
+version = "0.8.1"
+source = { git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.8.1#7bd2800f89ecc61ed2c4bf7e872b7e8d8e5ce485" }
 dependencies = [
     { name = "typer" },
 ]
@@ -1033,31 +1033,31 @@ requires-dist = [
     { name = "peakrdl", git = "https://github.com/rtl-buddy/PeakRDL.git?subdirectory=peakrdl" },
     { name = "peakrdl-regblock", git = "https://github.com/rtl-buddy/PeakRDL-regblock.git" },
     { name = "pytest", specifier = "==8.4.2" },
-    { name = "rtl-buddy", extras = ["elab", "graph-extract"], specifier = "==8.1.1" },
+    { name = "rtl-buddy", extras = ["elab", "graph-extract"], specifier = "==8.4.0" },
     { name = "rtl-buddy-axi-profiler", extras = ["notebook"], git = "https://github.com/rtl-buddy/rtl-buddy-axi-profiler.git" },
-    { name = "rtl-buddy-cdc", extras = ["slang"], git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.7.2" },
+    { name = "rtl-buddy-cdc", extras = ["slang"], git = "https://github.com/rtl-buddy/rtl-buddy-cdc.git?tag=v0.8.1" },
     { name = "rtl-buddy-xeno", extras = ["verible", "slang"] },
 ]
 
 [[package]]
 name = "rtl-buddy-sch"
-version = "0.14.0"
+version = "0.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jsonschema" },
     { name = "typer" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/02/3f/61829b28810821e446481b83c12599e7dbb8115d2c21c7d8aaa8f7db3e90/rtl_buddy_sch-0.14.0-py3-none-any.whl", hash = "sha256:ef562f6f8c91d3d858abb616ba7fc0d24e14cf39ffd83851387cf0396c21e7ec", size = 1374431, upload-time = "2026-10-27T06:17:32.037Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/4b/6e94e3474e96113c365217be230a9f2f68ddadd2170478fc352f9b1ae02d/rtl_buddy_sch-0.15.0-py3-none-any.whl", hash = "sha256:0019253e9c4e6615fef68370677431723b2c210e42dc8f8ac9331f3580dffed0", size = 1380859, upload-time = "2026-10-27T07:18:43.42Z" },
 ]
 
 [[package]]
 name = "rtl-buddy-xeno"
-version = "0.1.1"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f6/7b/9cd9ea736e658830f31a023ca1c789d79c397a60e5b61345b796180e1e8e/rtl_buddy_xeno-0.1.1.tar.gz", hash = "sha256:26fd293d27a4f9eee6aef265c8fe3f1806b84dbb8714364126f080fd04546e55", size = 34514, upload-time = "2026-08-13T14:26:02.612Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/08/3e/8dd2a44d85038aefb38de6ff7d7bf36722288f15eced67d6ed38caf7da28/rtl_buddy_xeno-0.3.0.tar.gz", hash = "sha256:065cec49844cc86daf9c3f45bcc5d4c7039c26bb442219546b5b3dd456755ca5", size = 59932, upload-time = "2026-09-16T01:16:13.384Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8b/de/93568033f58d62db8618319ea722f20fec8f6475e3aa6837dca5e8815771/rtl_buddy_xeno-0.1.1-py3-none-any.whl", hash = "sha256:3300c15e05f645866f66761160e6ba87a190444900e2ab01b2190d0b90c4878f", size = 50150, upload-time = "2026-08-13T14:26:01.34Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/09/0483b6f983114f7cafed0503a444f08e4b5e9970e97bc9617af030c47212/rtl_buddy_xeno-0.3.0-py3-none-any.whl", hash = "sha256:ccad1bf0e09fe6e0d124a54eb63f33f1b5982ad63259cd7c134a8850a877e853", size = 81028, upload-time = "2026-09-16T01:16:11.81Z" },
 ]
 
 [package.optional-dependencies]
