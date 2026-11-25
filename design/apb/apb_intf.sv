@@ -18,20 +18,18 @@ interface apb_intf #(
 
   localparam int STRB_W = DATA_W / 8;
 
-  // `verilator public` keeps signals visible in waves and to virtual
-  // interface handles inside classes (Verilator 5.042+).
   /* verilator lint_off UNDRIVEN */
-  logic [ADDR_W-1:0]  paddr   /*verilator public*/;
-  logic [2:0]         pprot   /*verilator public*/;
-  logic               psel    /*verilator public*/;
-  logic               penable /*verilator public*/;
-  logic               pwrite  /*verilator public*/;
-  logic [DATA_W-1:0]  pwdata  /*verilator public*/;
-  logic [STRB_W-1:0]  pstrb   /*verilator public*/;
+  logic [ADDR_W-1:0]  paddr;
+  logic [2:0]         pprot;
+  logic               psel;
+  logic               penable;
+  logic               pwrite;
+  logic [DATA_W-1:0]  pwdata;
+  logic [STRB_W-1:0]  pstrb;
   /* verilator lint_on UNDRIVEN */
-  logic               pready  /*verilator public*/;
-  logic [DATA_W-1:0]  prdata  /*verilator public*/;
-  logic               pslverr /*verilator public*/;
+  logic               pready;
+  logic [DATA_W-1:0]  prdata;
+  logic               pslverr;
 
   modport manager (
     input  clk, rst_n,
